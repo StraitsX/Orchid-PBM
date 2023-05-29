@@ -1,0 +1,25 @@
+{
+  "name": "orchid-envelope-pbm",
+  "version": "1.0.0",
+  "description": "Smart Contracts for the Envelope PBM",
+  "main": "index.js",
+  "scripts": {
+    "sizereport": "hardhat size-contracts",
+    "lint": "prettier --list-different contracts",
+    "pretty": "prettier --write contracts",
+    "test": "REPORT_GAS=true hardhat test test/PBMRC2.spec.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "chai": "^4.3.7",
+    "hardhat": "^2.14.0",
+    "hardhat-contract-sizer": "^2.8.0",
+    "hardhat-gas-reporter": "^1.0.9",
+    "prettier": "^2.8.8",
+    "prettier-plugin-solidity": "^1.1.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.3",
+    "eth-sig-util": "^3.0.1"
+  }
+}
