@@ -1,0 +1,31 @@
+{
+  "name": "orchid-pbm",
+  "version": "1.0.0",
+  "description": "Smartcontract for the Orchid-PBM",
+  "main": "index.js",
+  "scripts": {
+    "lint": "prettier --list-different contracts",
+    "pretty": "prettier --write contracts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xfers/Orchid-PBM.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Xfers/Orchid-PBM/issues"
+  },
+  "homepage": "https://github.com/Xfers/Orchid-PBM#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.1",
+    "@truffle/hdwallet-provider": "^2.0.12",
+    "dotenv": "^16.0.2",
+    "truffle-contract-size": "^2.0.1",
+    "truffle-plugin-verify": "^0.5.28"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.8",
+    "prettier-plugin-solidity": "^1.1.3"
+  }
+}
