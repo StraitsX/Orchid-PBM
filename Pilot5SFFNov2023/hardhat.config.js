@@ -1,6 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require('hardhat-contract-sizer');
 require("hardhat-gas-reporter");
+require("hardhat-tracer");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {

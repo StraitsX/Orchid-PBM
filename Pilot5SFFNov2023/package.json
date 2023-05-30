@@ -7,7 +7,7 @@
     "sizereport": "hardhat size-contracts",
     "lint": "prettier --list-different contracts",
     "pretty": "prettier --write contracts",
-    "test": "REPORT_GAS=true hardhat test test/PBMRC2.spec.js"
+    "test": "REPORT_GAS=true hardhat test --v test/PBM.spec.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
@@ -15,6 +15,7 @@
     "hardhat": "^2.14.0",
     "hardhat-contract-sizer": "^2.8.0",
     "hardhat-gas-reporter": "^1.0.9",
+    "hardhat-tracer": "^2.3.2",
     "prettier": "^2.8.8",
     "prettier-plugin-solidity": "^1.1.3"
   },
