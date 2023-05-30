@@ -103,5 +103,99 @@ describe("PBM", async () => {
         });
     });
 
+    describe("PBM load transfer test", async () => {
+        let spot = null;
+        let pbm = null;
+        let addressList = null;
+
+        beforeEach(async () => {
+            let [_spot, _pbm, _addressList] = await init();
+            spot = _spot;
+            pbm = _pbm;
+            addressList = _addressList;
+
+            // create PBM envelope token type
+            let currentDate = new Date();
+            let currentEpoch = Math.floor(currentDate / 1000);
+            let targetEpoch = currentEpoch + 100000
+            await pbm.createPBMTokenType('STX10Discount', 10, targetEpoch, accounts[0].address, 'beforeExpiryURI', 'postExpiryURI');
+        })
+
+        it('Load ERC20 token without holding any envelope PBM throws an error', async () => {
+            await expect(pbm.connect(accounts[1]).load(accounts[1].address, 0, 100)).to.be.revertedWith("PBM: Don't have enough PBM envelope to load spot");
+        });
+
+        it('Load ERC20 token to PBM envelope with insufficient balance throws an error', async () => {
+            // mint the PBM envelope to accounts[1]
+            await pbm.mint(0, 1, accounts[1].address);
+            await expect(pbm.connect(accounts[1]).load(accounts[1].address, 0, 100)).to.be.revertedWith("ERC20: Insufficent balance or approval");
+        });
+
+        it('Load ERC20 token to PBM envelope with enough balance but without approval throws an error', async () => {
+            // mint the PBM envelope to accounts[1]
+            await pbm.mint(0, 1, accounts[1].address);
+            await spot.mint(accounts[1].address, 100);
+            await expect(pbm.connect(accounts[1]).load(accounts[1].address, 0, 50)).to.be.revertedWith("ERC20: Insufficent balance or approval");
+        });
+
+        it('Load ERC20 token to PBM envelope successfully', async () => {
+            // mint the PBM envelope to accounts[2]
+            await pbm.mint(0, 1, accounts[1].address);
+            // mint and approve PBM to pull erc20 token from accounts[1]
+            await spot.mint(accounts[1].address, 200);
+            await spot.connect(accounts[1]).approve(pbm.address, 200);
+            expect(await spot.balanceOf(accounts[1].address)).to.equal(200);
+            expect(await spot.balanceOf(pbm.address)).to.equal(0);
+            // load 100 ERC20 token to PBM envelope
+            await pbm.connect(accounts[1]).load(accounts[1].address, 0, 100);
+            expect(await pbm.userWalletBalance(accounts[1].address)).to.equal(100);
+            expect(await spot.balanceOf(accounts[1].address)).to.equal(100);
+            expect(await spot.balanceOf(pbm.address)).to.equal(100);
+        });
+
+        it('Transfer PBM envelope token to a non merchant address successfully', async () => {
+            // mint the PBM envelope to accounts[1]
+            await pbm.mint(0, 1, accounts[1].address);
+
+            // transfer the PBM envelope to accounts[2]
+            await pbm.connect(accounts[1]).safeTransferFrom(accounts[1].address, accounts[2].address, 0, 1, '0x');
+            expect(await pbm.balanceOf(accounts[1].address, 0)).to.equal(0);
+            expect(await pbm.balanceOf(accounts[2].address, 0)).to.equal(1);
+        })
+
+        it('Transfer PBM envelope token to a merchant address without loading ERC20 tokens', async () => {
+            // mint the PBM envelope to accounts[1]
+            await pbm.mint(0, 1, accounts[1].address);
+            // whitelist accounts[2] as a merchant
+            await addressList.addMerchantAddresses([accounts[2].address], 'testMerchant');
+            let spotAmount = 100;
+            let data = ethers.utils.defaultAbiCoder.encode(['uint256'], [spotAmount]);
+            let dataBytes = ethers.utils.arrayify(data);
+
+            // transfer the PBM envelope to merchant accounts[2]
+            await expect(pbm.connect(accounts[1]).safeTransferFrom(accounts[1].address, accounts[2].address, 0, 1, dataBytes)).to.be.revertedWith("PBM: Don't have enough spot to pay");
+        })
+
+        it('Transfer PBM envelope token to a merchant address successfully', async () => {
+            // mint the PBM envelope and spot to accounts[1]
+            await pbm.mint(0, 1, accounts[1].address);
+            await spot.mint(accounts[1].address, 100);
+
+            // whitelist accounts[2] as a merchant
+            await addressList.addMerchantAddresses([accounts[2].address], 'testMerchant');
+            let spotAmount = 100;
+            // load the payment spot to PBM envelope
+            await spot.connect(accounts[1]).approve(pbm.address, 100);
+            await pbm.connect(accounts[1]).load(accounts[1].address, 0, 100);
+            expect(await pbm.userWalletBalance(accounts[1].address)).to.equal(100);
+            let data = ethers.utils.defaultAbiCoder.encode(['uint256'], [spotAmount]);
+            let dataBytes = ethers.utils.arrayify(data);
+
+            // transfer the PBM envelope to merchant accounts[2]
+            await pbm.connect(accounts[1]).safeTransferFrom(accounts[1].address, accounts[2].address, 0, 1, dataBytes);
+            expect(await pbm.balanceOf(accounts[1].address, 0)).to.equal(0);
+            expect(await pbm.balanceOf(accounts[2].address, 0)).to.equal(1);
+        })
+    });
 
 })

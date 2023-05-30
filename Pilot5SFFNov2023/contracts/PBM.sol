@@ -27,6 +27,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     constructor() ERC1155("") {
         pbmTokenManager = address(new PBMTokenManager());
     }
+
     //mapping to keep track of how much an user has loaded to PBM
     mapping(address => uint256) public userWalletBalance;
 
@@ -141,7 +142,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - caller should have approved the PBM contract to spend the ERC-20 tokens
      */
 
-    function load(address originalCaller,uint256 tokenId, uint256 spotAmount) external whenNotPaused{
+    function load(address originalCaller, uint256 tokenId, uint256 spotAmount) external whenNotPaused {
         require(balanceOf(originalCaller, tokenId) >= 1, "PBM: Don't have enough PBM envelope to load spot");
         ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), spotAmount);
         userWalletBalance[originalCaller] += spotAmount;
@@ -158,9 +159,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - caller should have loaded to the PBM envelope before
      */
 
-    function unLoad(address originalCaller, uint256 spotAmount) external whenNotPaused{
+    function unLoad(address originalCaller, uint256 spotAmount) external whenNotPaused {
         require(userWalletBalance[originalCaller] > 0, "PBM: Don't have any spot to unload");
-        ERC20Helper.safeTransferFrom(spotToken,address(this), msg.sender, spotAmount);
+        ERC20Helper.safeTransferFrom(spotToken, address(this), msg.sender, spotAmount);
         userWalletBalance[originalCaller] -= spotAmount;
     }
 
@@ -198,7 +199,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, spotAmount);
         }
         _safeTransferFrom(from, to, id, amount, data);
-
     }
 
     /**
