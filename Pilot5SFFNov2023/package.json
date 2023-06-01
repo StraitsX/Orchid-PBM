@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "sizereport": "hardhat size-contracts",
-    "lint": "prettier --list-different contracts test",
-    "pretty": "prettier --write contracts test",
+    "lint": "prettier --list-different contracts test migrations",
+    "pretty": "prettier --write contracts test migrations",
     "test": "REPORT_GAS=true hardhat test --v test/PBM.spec.js",
     "export-abi": "hardhat export-abi",
     "clear-abi": "hardhat clear-abi",
