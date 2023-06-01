@@ -10,19 +10,16 @@ This implmentation of the PBM is developed to support mulitple issuers, issuing 
 The PBM contract is built on the  ERC-1155 semi-fungible contract. 
 
 ## Pre-requisites
-Ensure that you are using node 14.x, and using nvm is highly recommended. 
+Ensure that you are using node 18.x, and using nvm is highly recommended. 
 
 install nvm:
-`curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash`
+`curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash`
 
-install node 14.x (in this example, node 14.18.1):
-`nvm install 14.18.1`
+install node 18.x (in this example, node 18.16.0):
+`nvm install 18.16.0`
 ## Installation
-install truffle:
-`npm install -g truffle`
-
-install ganache-cli:
-`npm install -g ganache-cli`
+install hardhat:
+`npm install --save-dev hardhat`
 
 clone the repo and cd into it
 `git clone https://github.com/Xfers/Orchid-PBM.git`
@@ -32,8 +29,9 @@ install project npm dependencies:
 
 intall plug-in dependencies manually
 ```
-npm i truffle-plugin-verify
-npm i truffle-contract-size
+npm install --save-dev hardhat-contract-sizer
+npm install --save-dev hardhat-gas-reporter
+npm install --save-dev hardhat-tracer
 ```
 
 create .env file
@@ -47,7 +45,7 @@ edit the .env file
 
 -   If you wish to deploy to mainnet or testnets, including mumbai, you will also need to specify `DEPLOYER_MNEMONIC`, `ACCESS_TOKEN`.
 -   `DEPLOYER_MNEMONIC` is the mnemonic of a HD wallet with which the deployer account is the first address. This deployer account will be used for deploying the contracts and should already have some ETH in it. If you do not have this, you can generate a mnemonic [here](https://iancoleman.io/bip39/#english) and get some testnet eth from this [faucet](https://faucet.metamask.io/).
--   `ACCESS_TOKEN` is your infura/alechemy project id. If you do not have one, please make an account on the [official infura website](https://infura.io/) or [official Alchemy website](https://dashboard.alchemyapi.io/) and create a project.
+-   `ALCHEMY_ACCESS_TOKEN` is your infura/alechemy project id. If you do not have one, please make an account on the [official infura website](https://infura.io/) or [official Alchemy website](https://dashboard.alchemyapi.io/) and create a project.
 -   `POLYGON_SCAN_API_KEY` is the api key that you can retrieve from [polygonscan](https://polygonscan.com/myapikey)
 -   `ETH_SCAN_API_KEY` is the api key that you cna retrive from [etherscan](httsp://etherscan.com/myapikey)
 -   See the example .env file below for a full example.
@@ -55,25 +53,31 @@ edit the .env file
 #### Example .env file
 ```
 DEPLOYER_MNEMONIC="increase claim burden grief voyage kingdom crawl master body dice firm siren engage glow museum flash fatigue minute letter rubber learn whale goat mass"
-ACCESS_TOKEN=0123456789abcdef01234567abcdef01
+ALCHEMY_ACCESS_TOKEN=0123456789abcdef01234567abcdef01
 POLYGON_SCAN_API_KEY="testkeyadfkjaadfad"
 ETH_SCAN_API_KEY="testkeyadfkjaadfad"
 ```
 ## Setting up the RPC endpoint for your target blockchain newtork
 Find and add the RPC endpoint for your target blockchain. For example, in the case of matic that would be 
 ```
-    matic: {
-      provider: () => new HD_WALLET_PROVIDER(DEPLOYER_MNEMONIC, `wss://polygon-mainnet.g.alchemy.com/v2/${ACCESS_TOKEN}`),
-      network_id: 137,
-      confirmations: 2,
-      timeoutBlocks: 200,
-      gas: 4500000,
-      gasPrice: 35000000000,
-      skipDryRun: true
+    polygon: {
+        accounts: [
+            Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey,
+        ],
+        url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ACCESS_TOKEN}`,
+        network_id: 137,
+        confirmations: 2,
+        timeoutBlocks: 200,
+        gas: 4500000,
+        gasPrice: 35000000000,
+        skipDryRun: true,
+        saveDeployments: true,
+        deploy: [ 'migrations/' ],
+        tags: ["mainnet"],
     },
 
 ```
-Your ACCESS_TOKEN as mentioned above will need to be set up with a service provider like infura or alchemy. 
+Your ALCHEMY_ACCESS_TOKEN as mentioned above will need to be set up with a service provider like infura or alchemy. 
 
 # Deploying and setting up of smartcontracts
 
@@ -83,35 +87,71 @@ For Polygon initial deployment:
 
 Once your set up is done, in the root folder run the following commands. 
 Ensure that you have enough crypto in the provided addresses and that gas and gasPrice are tuned according to the network. 
-Replace "name" with your network identifier mentioned in [truffle-config.js]
+Replace "name" with your network identifier mentioned in [hardhat.config.js]
+```shell
+npm run deploy:mumbai
+npm run deploy:polygon
 ```
-truffle compile 
-truffle migrate --network <name>
-```
-
-To run specific migration files, run `truffle migrate --network <name> -f 1 --to 2` , 1 and 2 being the file numbers you can see at the front of each file in the migrations folder.
 
 # Going live 
 
-If you plan on launching the PBM on a mainnet or testnet and want to use the PBM with an existing ERC20 on that network, ensure that you comment out the deployment of ERC20 in the the migration file `2_deploy_spot.js`. Then add the contract address of the ERC-20 token in the migration file `3_deploy_pbm.js`.  Both of the files can be found in the `migrations` folder. 
+If you plan on launching the PBM on a mainnet or testnet and want to use the PBM with an existing ERC20 on that network, Add the contract address of the ERC-20 token in the migration file `2_initialise_pbm.js`.File can be found in the `migrations` folder. 
 
 # Verfication of deployed smartcontracts 
 Once you've added the necessary api keys to you .env file, and import/linked it up in the truffle config `api_keys` section, run the following command to verify your smartcontract. 
 
 ```
-truffle run verify <ArtifactName>@<smartContractAddress> --network <EVM network>
+npx hardhat verify --network <EVM network> <smartContractAddress>
 ```
-Example : (Verfication of the PBM token contract on the polygon mainnet)
+Example : (Verfication of the PBM token contract on the polygon mumbai testnet)
 ```
-truffle run verify PBM@0x735e27546C7d2fE3c097F880E258C96eA66597b7 --network matic
+npx hardhat verify --network mumbai 0x601Ef86A710f0f2f85C5b4652A22954Ae550A6FA
 ```
 # Testing
 
 All tests are run with:
-`npm run truffle-test`
+`npx hardhat test`
 
 or run a specific file of tests with:
-`npm run truffle-test -- [file]`
+`npx hardhat test [file]`
 
-to generate test coverage on all tests run:
-`npm test`
+# Contract size report
+
+```shell
+npm run sizereport 
+ ·-----------------------|---------------------------|----------------·
+ |  Solc version: 0.8.9  ·  Optimizer enabled: true  ·  Runs: 200     │
+ ························|···························|·················
+ |  Contract Name        ·  Size (KiB)               ·  Change (KiB)  │
+ ························|···························|·················
+ |  Address              ·                    0.084  ·         0.000  │
+ ························|···························|·················
+ |  ECDSA                ·                    0.084  ·         0.000  │
+ ························|···························|·················
+ |  ERC1155              ·                    4.917  ·         0.000  │
+ ························|···························|·················
+ |  ERC20                ·                    2.091  ·         0.000  │
+ ························|···························|·················
+ |  ERC20Helper          ·                    0.084  ·         0.000  │
+ ························|···························|·················
+ |  IssuerHelper         ·                    2.933  ·         0.000  │
+ ························|···························|·················
+ |  Math                 ·                    0.084  ·         0.000  │
+ ························|···························|·················
+ |  MerchantHelper       ·                    2.129  ·         0.000  │
+ ························|···························|·················
+ |  MinimalForwarder     ·                    2.574  ·         0.000  │
+ ························|···························|·················
+ |  PBM                  ·                   11.872  ·         0.000  │
+ ························|···························|·················
+ |  PBMAddressList       ·                    2.150  ·         0.000  │
+ ························|···························|·················
+ |  PBMTokenManager      ·                    5.034  ·         0.000  │
+ ························|···························|·················
+ |  SafeERC20            ·                    0.084  ·         0.000  │
+ ························|···························|·················
+ |  Spot                 ·                    2.801  ·         0.000  │
+ ························|···························|·················
+ |  Strings              ·                    0.084  ·         0.000  │
+ ·-----------------------|---------------------------|----------------·
+```
