@@ -75,6 +75,7 @@ The TokenConfig stores the different details about the PBM tokens.
         address creator ;
         uint256 balanceSupply ;
         string uri ;
+        string postExpiryURI ;
     }
 
 ```
