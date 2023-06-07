@@ -1,4 +1,4 @@
-const PBM = artifacts.require("PBM") ; 
+const PBM = artifacts.require("PBM") ;
 const Spot = artifacts.require("Spot") ; 
 const PBMAddr = artifacts.require("PBMAddressList")
 
@@ -47,7 +47,7 @@ contract ("Minting test for PBM", (accounts) =>{
         currentDate = new Date()
         currentEpoch = Math.floor(currentDate/1000) ; 
         var targetEpoch = currentEpoch+100000;  // Expiry is set to 1 day 3.6 hours from current time
-        await pbm.createPBMTokenType("StraitsX", 20, targetEpoch, accounts[1], "uri1" ) ; 
+        await pbm.createPBMTokenType("StraitsX", 20, targetEpoch, accounts[1], "uri1", "uri2" ) ;
         var tokenDetails = await pbm.getTokenDetails.call(0) ; 
         assert(tokenDetails['0']=="StraitsX20") ; 
         assert(tokenDetails['1'].toString()=="20") ; 
@@ -116,7 +116,7 @@ contract("Batch Mint of NFTs", (accounts)=>{
 
     it ("Minting before creating the token type gives an error", async ()=>{
         try {
-            response = await pbm.batchMint([0,1], [1,1], accounts[0]) ; 
+            response = await pbm.batchMint([0,1], [1,1], accounts[0]) ;
         }catch (e){
             assert(e["reason"]=="PBM: Invalid Token Id(s)") ; 
             return ; 
@@ -129,7 +129,7 @@ contract("Batch Mint of NFTs", (accounts)=>{
         currentDate = new Date()
         currentEpoch = Math.floor(currentDate/1000) ; 
         var targetEpoch = currentEpoch+100000;  // Expiry is set to 1 day 3.6 hours from current time
-        tokenId = await pbm.createPBMTokenType("StraitsX", 20, targetEpoch, accounts[1], "uri1" ) ; 
+        tokenId = await pbm.createPBMTokenType("StraitsX", 20, targetEpoch, accounts[1], "uri1", "uri2" ) ;
 
         // trying to mint the contract
         try {
@@ -146,7 +146,7 @@ contract("Batch Mint of NFTs", (accounts)=>{
         currentDate = new Date()
         currentEpoch = Math.floor(currentDate/1000) ; 
         var targetEpoch = currentEpoch+100000;  // Expiry is set to 1 day 3.6 hours from current time
-        tokenId = await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[2], "uri2") ; 
+        tokenId = await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[2], "uri2", "uri3") ;
 
         await spot.mint(accounts[1], 30) ; 
         await spot.increaseAllowance(pbm.address, 20, {from: accounts[1]}) ; 
@@ -217,9 +217,9 @@ contract("Transfer of PBM NFTs", (accounts)=>{
         currentDate = new Date()
         currentEpoch = Math.floor(currentDate/1000) ; 
         var targetEpoch = currentEpoch+100000;  // Expiry is set to 1 day 3.6 hours from current time
-        await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[1], "uri1" ) ; 
-        await pbm.createPBMTokenType("StraitsX",20, targetEpoch, accounts[1], "uri1") ; 
-        await pbm.createPBMTokenType("Fazz",10, targetEpoch, accounts[1], "uri1") ; 
+        await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[1], "uri1", "uri2" ) ;
+        await pbm.createPBMTokenType("StraitsX",20, targetEpoch, accounts[1], "uri1", "uri2") ;
+        await pbm.createPBMTokenType("Fazz",10, targetEpoch, accounts[1], "uri1", "uri2") ;
         await pbm.batchMint([0,1,2],[2,2,2], accounts[2], {from: accounts[1]}) ;
     })
     
@@ -321,9 +321,9 @@ contract("Payment to whitelisted address through PBM NFTs", (accounts)=>{
         currentDate = new Date()
         currentEpoch = Math.floor(currentDate/1000) ; 
         var targetEpoch = currentEpoch+100000;  // Expiry is set to 1 day 3.6 hours from current time
-        await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[1], "uri1" ) ; 
-        await pbm.createPBMTokenType("StraitsX",20, targetEpoch, accounts[1], "uri1") ; 
-        await pbm.createPBMTokenType("Fazz",10, targetEpoch, accounts[1], "uri1") ; 
+        await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[1], "uri1", "uri2" ) ;
+        await pbm.createPBMTokenType("StraitsX",20, targetEpoch, accounts[1], "uri1", "uri2") ;
+        await pbm.createPBMTokenType("Fazz",10, targetEpoch, accounts[1], "uri1", "uri2") ;
         await pbm.batchMint([0,1,2],[2,2,2], accounts[2], {from: accounts[1]}) ;
     }); 
 
@@ -400,7 +400,7 @@ contract("Withdraw funds NFT", (accounts)=>{
         currentDate = new Date()
         currentEpoch = Math.floor(currentDate/1000) ; 
         var targetEpoch = currentEpoch+3;  // Expiry is set to 3 second from current time
-        await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[1], "uri1" ) ; 
+        await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[1], "uri1", "uri2" ) ;
 
         await pbm.mint(0,3, accounts[2],{from: accounts[1]}) ; 
     }); 
@@ -429,12 +429,34 @@ contract("Withdraw funds NFT", (accounts)=>{
         assert(false); 
     }); 
 
-    it("Revoke after expiry succeeds", async()=>{       
-        check = await pbm.getTokenDetails(0) ; 
+    it("Revoke after expiry succeeds", async()=>{
         currentDate = new Date()
-        currentEpoch = Math.floor(currentDate/1000) ; 
-        await pbm.revokePBM(0, {from: accounts[1]}) ; 
-        var balance = await spot.balanceOf(pbm.address) ; 
-        assert(balance.toString()=="0") ;
-    }); 
+        currentEpoch = Math.floor(currentDate/1000)
+        targetEpoch = currentEpoch + 3;  // Expiry is set to 3 second from current time
+        // create and mint new pbm tokens
+        await pbm.createPBMTokenType("Xfers", 10, targetEpoch, accounts[0], "uri1", "uri2" ) ;
+
+        await pbm.mint(1,3, accounts[2],{from: accounts[1]}) ;
+        // increase blocktime by 4 seconds
+        await increaseTime(4) ;
+        await pbm.revokePBM(1) ;
+        var afterRevokeBalance = await spot.balanceOf(pbm.address) ;
+        // before balance was 60 and after revoke it should be 30 (token id 0 was not revoked)
+        assert(afterRevokeBalance.toString()==="30") ;
+    });
+
+    async function increaseTime(seconds) {
+        await web3.currentProvider.send({
+            jsonrpc: "2.0",
+            method: "evm_increaseTime",
+            params: [seconds],
+            id: new Date().getTime()
+        }, () => {});
+
+        await web3.currentProvider.send({
+            jsonrpc: "2.0",
+            method: "evm_mine",
+            id: new Date().getTime()
+        }, () => {});
+    }
 }) ; 
