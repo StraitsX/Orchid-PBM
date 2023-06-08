@@ -41,7 +41,8 @@ contract IssuerHelper is IIssuerHelper, ERC2771Context, Ownable {
         uint256 tokenId,
         uint256 amount
     ) external {
-        require(whitelistedWallets[fundingWallet], "Wallet is not whitelisted");
+        // caller needs to be a whitelisted user wallet
+        require(whitelistedWallets[_msgSender()], "User wallet is not whitelisted");
         // transfer full payment amount of the ERC20 token from ERC20 token holder to helper
         IERC20(erc20Token).safeTransferFrom(fundingWallet, address(this), amount);
         // approve PBM to spend this contract's ERC20 token
