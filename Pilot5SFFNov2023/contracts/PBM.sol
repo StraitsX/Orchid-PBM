@@ -236,7 +236,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
             // when call safeTransferFrom on a envelope PBM need to encode the payment amount into the data field
-            // if the data field is not a valid uint256 type the transaction will revert
             uint spotAmount = abi.decode(data, (uint256));
             require(userWalletBalance[from] >= spotAmount, "PBM: Don't have enough spot to pay");
             userWalletBalance[from] -= spotAmount;
