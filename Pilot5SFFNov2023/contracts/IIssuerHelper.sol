@@ -2,8 +2,8 @@
 pragma solidity ^0.8.9;
 /**
  * @dev IIssuerHelper
- * @dev This interface declares the functions exposed by the IssuerHelper contract.
- * @param whitelistedWallets are referring to the addresses of the user wallets to be added to the whitelist.
+ * This interface declares the functions exposed by the IssuerHelper contract.
+ * whitelistedWallets are referring to the addresses of the user wallets to be added to the whitelist.
  */
 interface IIssuerHelper {
     /**
