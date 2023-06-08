@@ -31,6 +31,10 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     //mapping to keep track of how much an user has loaded to PBM
     mapping(address => uint256) public userWalletBalance;
 
+    //mapping to keep track of how much an user is allowed to withdraw from PBM
+    mapping(address => mapping(address => uint256)) private _allowances;
+
+
     function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList) external override onlyOwner {
         require(!initialised, "PBM: Already initialised");
         require(Address.isContract(_spotToken), "Invalid spot token");
@@ -142,15 +146,18 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - caller should have approved the PBM contract to spend the ERC-20 tokens
      */
 
-    function load(address originalCaller, uint256 tokenId, uint256 spotAmount) external whenNotPaused {
-        require(balanceOf(originalCaller, tokenId) >= 1, "PBM: Don't have enough PBM envelope to load spot");
-        ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), spotAmount);
-        userWalletBalance[originalCaller] += spotAmount;
-        // other loading logics can also be added here.
+    function loadTo(address user, uint256 tokenId, uint256 spotAmount) external whenNotPaused {
+        require(balanceOf(user, tokenId) >= 1, "PBM: Don't have enough PBM envelope to load spot");
+        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), spotAmount);
+        userWalletBalance[user] += spotAmount;
+    }
+
+    function allowance(address owner, address spender) public view returns (uint256) {
+        return _allowances[owner][spender];
     }
 
     /**
-     * @dev See {IPBM-unLoad}.
+     * @dev See {IPBM-unLoadFrom}.
      *
      *
      * Requirements:
@@ -159,10 +166,38 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - caller should have loaded to the PBM envelope before
      */
 
-    function unLoad(address originalCaller, uint256 spotAmount) external whenNotPaused {
-        require(userWalletBalance[originalCaller] > 0, "PBM: Don't have any spot to unload");
-        ERC20Helper.safeTransferFrom(spotToken, address(this), msg.sender, spotAmount);
-        userWalletBalance[originalCaller] -= spotAmount;
+    function unLoadFrom(address user, uint256 spotAmount) external whenNotPaused {
+        // check the spotAmount is not more than the userWalletBalance
+        require(userWalletBalance[user] >= spotAmount, "PBM: User don't have enough spot to unload");
+        address spender = _msgSender();
+        // check allowance of the caller to spend the ERC-20 tokens on behalf of the user
+        _spendAllowance(user, spender, spotAmount);
+        // use safeTransfer here to unload the XSGD
+        ERC20Helper.safeTransfer(spotToken, _msgSender(), spotAmount);
+        userWalletBalance[user] -= spotAmount;
+    }
+
+    function setApproval(address spender, uint256 amount) public returns (bool) {
+        address owner = _msgSender();
+        _approve(owner, spender, amount);
+        return true;
+    }
+
+    function _spendAllowance(address owner, address spender, uint256 amount) internal {
+        uint256 currentAllowance = allowance(owner, spender);
+        if (currentAllowance != type(uint256).max) {
+            require(currentAllowance >= amount, "ERC20: insufficient allowance");
+            unchecked {
+                _approve(owner, spender, currentAllowance - amount);
+            }
+        }
+    }
+
+    function _approve(address owner, address spender, uint256 amount) internal virtual {
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
+
+        _allowances[owner][spender] = amount;
     }
 
     /**

@@ -46,7 +46,7 @@ contract IssuerHelper is ERC2771Context, Ownable {
         // approve PBM to spend this contract's ERC20 token
         IERC20(erc20Token).approve(targetPBM, amount);
         // msg.sender -> user EOA
-        IPBM(targetPBM).load(_msgSender(), tokenId, amount);
+        IPBM(targetPBM).loadTo(_msgSender(), tokenId, amount);
         uint256 amountToEncode = amount;
         // encode spot amount into bytes
         bytes memory data = abi.encode(amountToEncode);
