@@ -52,7 +52,7 @@ interface IPBM {
     function batchMint(uint256[] memory tokenIds, uint256[] memory amounts, address receiver) external;
 
     /// @notice Load necessary amount of ERC20 token to the minted PBM envelope token
-    /// @param user The address of the original caller
+    /// @param user The address of the user that loads the ERC20 token
     /// @param tokenId The identifier of the PBM token type
     /// @param spotAmount The amount of the underlying ERC-20 tokens the PBM type wraps
     function loadTo(address user, uint256 tokenId, uint256 spotAmount) external;

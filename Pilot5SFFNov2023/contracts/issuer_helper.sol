@@ -35,14 +35,14 @@ contract IssuerHelper is ERC2771Context, Ownable {
 
     function processLoadAndSafeTransferFrom(
         address erc20Token,
-        address wallet,
-        address recipient,
+        address fundingWallet,
+        address merchantWallet,
         uint256 tokenId,
         uint256 amount
     ) external {
-        require(whitelistedWallets[wallet], "Wallet is not whitelisted");
+        require(whitelistedWallets[fundingWallet], "Wallet is not whitelisted");
         // transfer full payment amount of the ERC20 token from ERC20 token holder to helper
-        IERC20(erc20Token).safeTransferFrom(wallet, address(this), amount);
+        IERC20(erc20Token).safeTransferFrom(fundingWallet, address(this), amount);
         // approve PBM to spend this contract's ERC20 token
         IERC20(erc20Token).approve(targetPBM, amount);
         // msg.sender -> user EOA
@@ -50,7 +50,7 @@ contract IssuerHelper is ERC2771Context, Ownable {
         uint256 amountToEncode = amount;
         // encode spot amount into bytes
         bytes memory data = abi.encode(amountToEncode);
-        IPBM(targetPBM).safeTransferFrom(_msgSender(), recipient, tokenId, 1, data);
+        IPBM(targetPBM).safeTransferFrom(_msgSender(), merchantWallet, tokenId, 1, data);
     }
 
     function addWhitelistedWallet(address _wallet) external onlyWhitelister {
