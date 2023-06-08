@@ -2,9 +2,8 @@
 pragma solidity ^0.8.9;
 
 interface IIssuerHelper {
-
     /**
-     * @dev Transfers ERC20 tokens from a funding wallet to the contract.
+     * @dev Load ERC20 tokens to the PBM and call safeTransferFrom to the merchant wallet.
      * @param erc20Token The address of the ERC20 token contract.
      * @param fundingWallet The address of the wallet that the contract will pull ERC20 token from.
      * @param merchantWallet The address of the wallet that will receive the token.

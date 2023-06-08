@@ -152,13 +152,29 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
-     * @dev See {IPBM-unLoadFrom}.
+     * @dev See {IPBM-unLoad}.
      *
      *
      * Requirements:
      *
      * - contract must not be paused
      * - caller should have loaded to the PBM envelope before and the remaining balance should be more than the spotAmount
+     */
+
+    function unLoad(uint256 spotAmount) external whenNotPaused {
+        require(userWalletBalance[_msgSender()] >= spotAmount, "PBM: User don't have enough spot to unload");
+        ERC20Helper.safeTransfer(spotToken, _msgSender(), spotAmount);
+        userWalletBalance[_msgSender()] -= spotAmount;
+    }
+
+    /**
+     * @dev See {IPBM-unLoadFrom}.
+     *
+     *
+     * Requirements:
+     *
+     * - contract must not be paused
+     * - user should have loaded to the PBM envelope before and the remaining balance should be more than the spotAmount
      * - caller should have enough allowance to spend the ERC-20 tokens on behalf of the user
      */
 
@@ -186,6 +202,10 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         _approve(owner, spender, amount);
         return true;
     }
+
+    /**
+     * @dev See {IPBM-allowance}.
+     */
 
     function allowance(address owner, address spender) public view returns (uint256) {
         return _allowances[owner][spender];

@@ -57,10 +57,26 @@ interface IPBM {
     /// @param spotAmount The amount of the underlying ERC-20 tokens the PBM type wraps
     function loadTo(address user, uint256 tokenId, uint256 spotAmount) external;
 
-    /// @notice Unload all ERC20 token to the minted PBM envelope token
+    /// @notice Unload all ERC20 token
+    /// @param spotAmount The amount of the underlying ERC-20 tokens the PBM envelope wraps
+    function unLoad(uint256 spotAmount) external;
+
+    /// @notice Unload all ERC20 token from a user
     /// @param user The address of the original caller
     /// @param spotAmount The amount of the underlying ERC-20 tokens the PBM envelope wraps
     function unLoadFrom(address user, uint256 spotAmount) external;
+
+    /// @notice Set Approval for the spender to spend the underlying ERC-20 tokens
+    /// @param spender The address of the spender
+    /// @param amount The amount of the ERC-20 tokens the spender is allowed to spend
+    function setApproval(address spender, uint256 amount) external returns (bool);
+
+    /// @notice Returns the remaining number of ERC20 tokens that `spender` will be
+    /// allowed to spend on behalf of `owner` through {unLoadFrom}. This is zero by default.
+    /// This value changes when {setApproval} or {unLoadFrom} are called.
+    /// @param owner The address of the user wallet which owns the PBM
+    /// @param spender The address of the spender to unload from the PBM
+    function allowance(address owner, address spender) external view returns (uint256);
 
     /// @notice Transfers the PBM(NFT) from one wallet to another.
     /// If the receving wallet is a whitelisted merchant wallet address, the PBM(NFT) will be burnt and the underlying ERC-20 tokens will be transferred to the merchant wallet instead.
