@@ -34,7 +34,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     //mapping to keep track of how much an user is allowed to withdraw from PBM
     mapping(address => mapping(address => uint256)) private _allowances;
 
-
     function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList) external override onlyOwner {
         require(!initialised, "PBM: Already initialised");
         require(Address.isContract(_spotToken), "Invalid spot token");
@@ -130,7 +129,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
-     * @dev See {IPBM-load}.
+     * @dev See {IPBM-loadTo}.
      *
      * IMPT: Before loading, the caller should approve the contract address to spend ERC-20 tokens on behalf of the caller.
      *       This can be done by calling the `approve` or `increaseMinterAllowance` functions of the ERC-20 contract and specifying `_spender` to be the PBM contract address.
@@ -152,10 +151,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         userWalletBalance[user] += spotAmount;
     }
 
-    function allowance(address owner, address spender) public view returns (uint256) {
-        return _allowances[owner][spender];
-    }
-
     /**
      * @dev See {IPBM-unLoadFrom}.
      *
@@ -163,7 +158,8 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * Requirements:
      *
      * - contract must not be paused
-     * - caller should have loaded to the PBM envelope before
+     * - caller should have loaded to the PBM envelope before and the remaining balance should be more than the spotAmount
+     * - caller should have enough allowance to spend the ERC-20 tokens on behalf of the user
      */
 
     function unLoadFrom(address user, uint256 spotAmount) external whenNotPaused {
@@ -177,10 +173,22 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         userWalletBalance[user] -= spotAmount;
     }
 
+    /**
+     * @dev See {IPBM-setApproval}.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+
     function setApproval(address spender, uint256 amount) public returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
+    }
+
+    function allowance(address owner, address spender) public view returns (uint256) {
+        return _allowances[owner][spender];
     }
 
     function _spendAllowance(address owner, address spender, uint256 amount) internal {
@@ -224,9 +232,11 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             "ERC1155: caller is not token owner nor approved"
         );
         require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
+        require(amount == 1, "PBM: 'amount' is not 1");
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
             // when call safeTransferFrom on a envelope PBM need to encode the payment amount into the data field
+            // if the data field is not a valid uint256 type the transaction will revert
             uint spotAmount = abi.decode(data, (uint256));
             require(userWalletBalance[from] >= spotAmount, "PBM: Don't have enough spot to pay");
             userWalletBalance[from] -= spotAmount;
