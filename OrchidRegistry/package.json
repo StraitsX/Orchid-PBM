@@ -1,0 +1,24 @@
+{
+  "name": "Orchid",
+  "version": "1.0.0",
+  "description": "## Description We provide a list of sample PBM implementation for reference.",
+  "main": "index.js",
+  "scripts": {
+    "build": "hardhat compile",
+    "test:light": "hardhat test",
+    "test": "hardhat coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
+    "hardhat": "^2.14.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.3",
+    "dotenv": "^16.1.4",
+    "readline-sync": "^1.4.10"
+  }
+}
