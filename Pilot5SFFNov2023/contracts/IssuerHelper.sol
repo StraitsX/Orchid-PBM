@@ -7,8 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
 import "./IPBM.sol";
+import "./IIssuerHelper.sol";
 
-contract IssuerHelper is ERC2771Context, Ownable {
+contract IssuerHelper is IIssuerHelper, ERC2771Context, Ownable {
     using SafeERC20 for IERC20;
 
     // list of whitelisted wallet addresses that
