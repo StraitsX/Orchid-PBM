@@ -195,7 +195,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "originalCaller",
+        "name": "user",
         "type": "address"
       },
       {
@@ -209,7 +209,7 @@
         "type": "uint256"
       }
     ],
-    "name": "load",
+    "name": "loadTo",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -320,7 +320,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "originalCaller",
+        "name": "user",
         "type": "address"
       },
       {
@@ -329,7 +329,7 @@
         "type": "uint256"
       }
     ],
-    "name": "unLoad",
+    "name": "unLoadFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

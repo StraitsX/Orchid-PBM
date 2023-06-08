@@ -245,6 +245,30 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      }
+    ],
+    "name": "allowance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "account",
         "type": "address"
       },
@@ -448,7 +472,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "originalCaller",
+        "name": "user",
         "type": "address"
       },
       {
@@ -462,7 +486,7 @@
         "type": "uint256"
       }
     ],
-    "name": "load",
+    "name": "loadTo",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -639,6 +663,30 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setApproval",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "operator",
         "type": "address"
       },
@@ -702,7 +750,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "originalCaller",
+        "name": "user",
         "type": "address"
       },
       {
@@ -711,7 +759,7 @@
         "type": "uint256"
       }
     ],
-    "name": "unLoad",
+    "name": "unLoadFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

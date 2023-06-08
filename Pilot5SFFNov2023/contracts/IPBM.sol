@@ -52,15 +52,15 @@ interface IPBM {
     function batchMint(uint256[] memory tokenIds, uint256[] memory amounts, address receiver) external;
 
     /// @notice Load necessary amount of ERC20 token to the minted PBM envelope token
-    /// @param originalCaller The address of the original caller
+    /// @param user The address of the original caller
     /// @param tokenId The identifier of the PBM token type
     /// @param spotAmount The amount of the underlying ERC-20 tokens the PBM type wraps
-    function load(address originalCaller, uint256 tokenId, uint256 spotAmount) external;
+    function loadTo(address user, uint256 tokenId, uint256 spotAmount) external;
 
     /// @notice Unload all ERC20 token to the minted PBM envelope token
-    /// @param originalCaller The address of the original caller
+    /// @param user The address of the original caller
     /// @param spotAmount The amount of the underlying ERC-20 tokens the PBM envelope wraps
-    function unLoad(address originalCaller, uint256 spotAmount) external;
+    function unLoadFrom(address user, uint256 spotAmount) external;
 
     /// @notice Transfers the PBM(NFT) from one wallet to another.
     /// If the receving wallet is a whitelisted merchant wallet address, the PBM(NFT) will be burnt and the underlying ERC-20 tokens will be transferred to the merchant wallet instead.
