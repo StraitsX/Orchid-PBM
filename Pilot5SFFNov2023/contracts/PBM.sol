@@ -240,9 +240,11 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             require(userWalletBalance[from] >= spotAmount, "PBM: Don't have enough spot to pay");
             userWalletBalance[from] -= spotAmount;
             ERC20Helper.safeTransfer(spotToken, to, spotAmount);
+            _burn(from, id, amount);
             emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, spotAmount);
+        } else {
+            _safeTransferFrom(from, to, id, amount, data);
         }
-        _safeTransferFrom(from, to, id, amount, data);
     }
 
     /**
@@ -278,9 +280,11 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             require(userWalletBalance[from] >= spotAmount, "PBM: Don't have enough spot to pay");
             userWalletBalance[from] -= spotAmount;
             ERC20Helper.safeTransfer(spotToken, to, spotAmount);
+            _burnBatch(from, ids, amounts);
             emit MerchantPayment(from, to, ids, amounts, spotToken, spotAmount);
+        } else {
+            _safeBatchTransferFrom(from, to, ids, amounts, data);
         }
-        _safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 
     /**
