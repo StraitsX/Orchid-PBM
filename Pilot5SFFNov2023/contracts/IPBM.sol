@@ -52,6 +52,11 @@ interface IPBM {
     function batchMint(uint256[] memory tokenIds, uint256[] memory amounts, address receiver) external;
 
     /// @notice Load necessary amount of ERC20 token to the minted PBM envelope token
+    /// @param tokenId The identifier of the PBM token type
+    /// @param spotAmount The amount of the underlying ERC-20 tokens the PBM type wraps
+    function load(uint256 tokenId, uint256 spotAmount) external;
+
+    /// @notice Load necessary amount of ERC20 token to the minted PBM envelope token
     /// @param user The address of the user that loads the ERC20 token
     /// @param tokenId The identifier of the PBM token type
     /// @param spotAmount The amount of the underlying ERC-20 tokens the PBM type wraps
@@ -121,14 +126,14 @@ interface IPBM {
 
     /// @notice Emitted when underlying ERC-20 tokens are transferred to a whitelisted merchant ( payment )
     /// @param from The account from which the PBM ( NFT )(s) is moving from
-    /// @param to The account which is receiving the PBM ( NFT )(s)
+    /// @param to The account which is receiving the PBM ( NFT )(s), indexed so that it can be filtered
     /// @param tokenIds The identifiers of the different PBM token type
     /// @param amounts The number of ( quantity ) the different PBM types that are to be created
     /// @param ERC20Token The address of the underlying ERC-20 token
     /// @param ERC20TokenValue The number of underlying ERC-20 tokens transferred
     event MerchantPayment(
         address from,
-        address to,
+        address indexed to,
         uint256[] tokenIds,
         uint256[] amounts,
         address ERC20Token,

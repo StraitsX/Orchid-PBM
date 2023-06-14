@@ -129,6 +129,29 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
+     * @dev See {IPBM-load}.
+     *
+     * IMPT: Before loading, the caller should approve the contract address to spend ERC-20 tokens on behalf of the caller.
+     *       This can be done by calling the `approve` or `increaseMinterAllowance` functions of the ERC-20 contract and specifying `_spender` to be the PBM contract address.
+             Ref : https://eips.ethereum.org/EIPS/eip-20
+     *
+     * Requirements:
+     *
+     * - contract must not be paused
+     * - tokens must not be expired
+     * - `tokenId` should all be valid ids that have already been created
+     * - caller should have the necessary amount of PBM envelope tokens required to load spot
+     * - caller should have the necessary amount of the ERC-20 tokens required to load
+     * - caller should have approved the PBM contract to spend the ERC-20 tokens
+     */
+
+    function load(uint256 tokenId, uint256 spotAmount) external whenNotPaused {
+        require(balanceOf(_msgSender(), tokenId) > 0, "PBM: Don't have enough PBM envelope to load spot");
+        ERC20Helper.safeTransfer(spotToken, address(this), spotAmount);
+        userWalletBalance[_msgSender()] += spotAmount;
+    }
+
+    /**
      * @dev See {IPBM-loadTo}.
      *
      * IMPT: Before loading, the caller should approve the contract address to spend ERC-20 tokens on behalf of the caller.
@@ -146,7 +169,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      */
 
     function loadTo(address user, uint256 tokenId, uint256 spotAmount) external whenNotPaused {
-        require(balanceOf(user, tokenId) >= 1, "PBM: Don't have enough PBM envelope to load spot");
+        require(balanceOf(user, tokenId) > 0, "PBM: Don't have enough PBM envelope to load spot");
         ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), spotAmount);
         userWalletBalance[user] += spotAmount;
     }
