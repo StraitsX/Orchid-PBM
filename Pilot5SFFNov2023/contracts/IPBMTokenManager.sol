@@ -37,16 +37,30 @@ interface IPBMTokenManager {
     /// @notice Retreive the details for a PBM
     /// @param tokenId The id for the PBM in query
     /// @return name The name of the PBM type
-    /// @return spotAmount Amount of underlying ERC20 held by the each of the PBM token
+    /// @return discountValue Discount value for the PBM type
+    /// @return minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
+    /// @return discountCap Maximum discount value that can be applied
     /// @return expiry  Expiry time (in epoch) for the PBM type
     /// @return creator Creator for the PBM type
     function getTokenDetails(
         uint256 tokenId
-    ) external view returns (string memory name, uint256 spotAmount, uint256 expiry, address creator);
+    )
+        external
+        view
+        returns (
+            string memory name,
+            uint256 discountValue,
+            uint256 minAmount,
+            uint256 discountCap,
+            uint256 expiry,
+            address creator
+        );
 
     /// @notice Creates a PBM token type, with all its necessary details
     /// @param companyName The name of the company/agency issuing this PBM type
-    /// @param spotAmount The number of ERC-20 tokens that is used as the underlying currency for PBM
+    /// @param discountValue Discount value for the PBM type
+    /// @param minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
+    /// @param discountCap Maximum discount value that can be applied
     /// @param tokenExpiry The expiry date (in epoch) of th PBM type
     /// @param creator The address of the account that creates the PBM type
     /// @param tokenURI the URI containting the metadata (opensea standard for ERC1155) for the  PBM type
@@ -54,7 +68,9 @@ interface IPBMTokenManager {
     /// @param contractExpiry the expiry time (in epoch) for the overall PBM contract
     function createTokenType(
         string memory companyName,
-        uint256 spotAmount,
+        uint256 discountValue,
+        uint256 minAmount,
+        uint256 discountCap,
         uint256 tokenExpiry,
         address creator,
         string memory tokenURI,

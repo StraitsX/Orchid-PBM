@@ -16,7 +16,9 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     // structure representing all the details of a PBM type
     struct TokenConfig {
         string name;
-        uint256 amount;
+        uint256 amount; // cashback amount could be either a percent or a fixed amount
+        uint256 minAmount; // use to check whether the mint amount is met
+        uint256 discountCap;
         uint256 expiry;
         address creator;
         uint256 balanceSupply;
@@ -41,7 +43,9 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      */
     function createTokenType(
         string memory companyName,
-        uint256 spotAmount,
+        uint256 discountValue,
+        uint256 minAmount,
+        uint256 discountCap,
         uint256 tokenExpiry,
         address creator,
         string memory tokenURI,
@@ -50,18 +54,20 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     ) external override onlyOwner noDelegateCall {
         require(tokenExpiry <= contractExpiry, "Invalid token expiry-1");
         require(tokenExpiry > block.timestamp, "Invalid token expiry-2");
-        require(spotAmount != 0, "Spot amount is 0");
+        require(discountValue != 0, "Spot amount is 0");
 
-        string memory tokenName = string(abi.encodePacked(companyName, spotAmount.toString()));
+        string memory tokenName = string(abi.encodePacked(companyName, discountValue.toString()));
         tokenTypes[tokenTypeCount].name = tokenName;
-        tokenTypes[tokenTypeCount].amount = spotAmount;
+        tokenTypes[tokenTypeCount].amount = discountValue;
+        tokenTypes[tokenTypeCount].minAmount = minAmount;
+        tokenTypes[tokenTypeCount].discountCap = discountCap;
         tokenTypes[tokenTypeCount].expiry = tokenExpiry;
         tokenTypes[tokenTypeCount].creator = creator;
         tokenTypes[tokenTypeCount].balanceSupply = 0;
         tokenTypes[tokenTypeCount].uri = tokenURI;
         tokenTypes[tokenTypeCount].postExpiryURI = postExpiryURI;
 
-        emit NewPBMTypeCreated(tokenTypeCount, tokenName, spotAmount, tokenExpiry, creator);
+        emit NewPBMTypeCreated(tokenTypeCount, tokenName, discountValue, tokenExpiry, creator);
         tokenTypeCount += 1;
     }
 
@@ -154,11 +160,13 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      */
     function getTokenDetails(
         uint256 tokenId
-    ) external view override returns (string memory, uint256, uint256, address) {
+    ) external view override returns (string memory, uint256, uint256, uint256, uint256, address) {
         require(tokenTypes[tokenId].amount != 0, "PBM: Invalid Token Id(s)");
         return (
             tokenTypes[tokenId].name,
             tokenTypes[tokenId].amount,
+            tokenTypes[tokenId].minAmount,
+            tokenTypes[tokenId].discountCap,
             tokenTypes[tokenId].expiry,
             tokenTypes[tokenId].creator
         );

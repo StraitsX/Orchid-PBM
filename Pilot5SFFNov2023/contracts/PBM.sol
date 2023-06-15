@@ -10,6 +10,8 @@ import "./ERC20Helper.sol";
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "./IPBMAddressList.sol";
+import "./IMerchantHelper.sol";
+import "./DiscountHelper.sol";
 
 contract PBM is ERC1155, Ownable, Pausable, IPBM {
     // undelrying ERC-20 tokens
@@ -18,6 +20,8 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     address public pbmTokenManager = address(0);
     // address of the PBM-Addresslist
     address public pbmAddressList = address(0);
+    // address of the MerchantHelper
+    address public merchantHelper = address(0);
 
     // tracks contract initialisation
     bool internal initialised = false;
@@ -34,13 +38,20 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     //mapping to keep track of how much an user is allowed to withdraw from PBM
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList) external override onlyOwner {
+    function initialise(
+        address _spotToken,
+        uint256 _expiry,
+        address _pbmAddressList,
+        address _merchantHelper
+    ) external override onlyOwner {
         require(!initialised, "PBM: Already initialised");
         require(Address.isContract(_spotToken), "Invalid spot token");
         require(Address.isContract(_pbmAddressList), "Invalid spot token");
+        require(Address.isContract(_merchantHelper), "Invalid merchant helper");
         spotToken = _spotToken;
         contractExpiry = _expiry;
         pbmAddressList = _pbmAddressList;
+        merchantHelper = _merchantHelper;
 
         initialised = true;
     }
@@ -57,7 +68,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      */
     function createPBMTokenType(
         string memory companyName,
-        uint256 spotAmount,
+        uint256 discountValue,
+        uint256 minAmount,
+        uint256 discountCap,
         uint256 tokenExpiry,
         address creator,
         string memory tokenURI,
@@ -65,7 +78,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     ) external override onlyOwner {
         PBMTokenManager(pbmTokenManager).createTokenType(
             companyName,
-            spotAmount,
+            discountValue,
+            minAmount,
+            discountCap,
             tokenExpiry,
             creator,
             tokenURI,
@@ -278,21 +293,45 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         require(amount == 1, "PBM: 'amount' is not 1");
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
-            // when call safeTransferFrom on a envelope PBM need to encode the payment amount into the data field
-            uint spotAmount = abi.decode(data, (uint256));
-            require(userWalletBalance[from] >= spotAmount, "PBM: Don't have enough spot to pay");
-            userWalletBalance[from] -= spotAmount;
-            ERC20Helper.safeTransfer(spotToken, to, spotAmount);
-            _burn(from, id, amount);
-            emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, spotAmount);
+            handleMerchantPayment(from, to, id, amount, data);
         } else {
             _safeTransferFrom(from, to, id, amount, data);
         }
     }
 
+    function handleMerchantPayment(address from, address to, uint256 id, uint256 amount, bytes memory data) internal {
+        uint256 spotAmount = abi.decode(data, (uint256));
+        require(userWalletBalance[from] >= spotAmount, "PBM: Don't have enough spot to pay");
+
+        // need to convert these uint to 6 decimals to match with XSGD
+        (, uint256 discountValue, uint256 minAmount, uint256 discountCap, , ) = getTokenDetails(id);
+
+        uint256 cashbackAmount = DiscountHelper.getPercentageDiscount(
+            spotAmount,
+            minAmount,
+            discountValue,
+            discountCap
+        );
+
+        executePayment(from, to, id, amount, spotAmount);
+        executeCashback(to, from, cashbackAmount);
+    }
+
+    function executePayment(address from, address to, uint256 id, uint256 amount, uint256 spotAmount) internal {
+        userWalletBalance[from] -= spotAmount;
+        ERC20Helper.safeTransfer(spotToken, to, spotAmount);
+        _burn(from, id, amount);
+        emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, spotAmount);
+    }
+
+    function executeCashback(address from, address to, uint256 cashbackAmount) internal {
+        IMerchantHelper(merchantHelper).cashBack(from, cashbackAmount, spotToken, to);
+        emit MerchantCashback(from, to, spotToken, cashbackAmount);
+    }
+
     /**
      * @dev See {IPBM-safeBatchTransferFrom}.
-     *
+     * Note: batch transfer does not take cashback into consideration.
      *
      * Requirements:
      *
@@ -356,7 +395,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      */
     function getTokenDetails(
         uint256 tokenId
-    ) external view override returns (string memory, uint256, uint256, address) {
+    ) public view override returns (string memory, uint256, uint256, uint256, uint256, address) {
         return PBMTokenManager(pbmTokenManager).getTokenDetails(tokenId);
     }
 

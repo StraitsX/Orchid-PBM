@@ -4,8 +4,9 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./IMerchantHelper.sol";
 
-contract MerchantHelper is Ownable {
+contract MerchantHelper is Ownable, IMerchantHelper {
     using SafeERC20 for IERC20;
 
     // list of whitelisted merchant wallet addresses that
@@ -47,7 +48,6 @@ contract MerchantHelper is Ownable {
 
         IERC20 token = IERC20(_erc20TokenAddress);
 
-        // either send back the XSGD or mint the prepaid PBM to send back to the user wallet
         token.safeTransferFrom(_merchantAddress, _user, _amount);
     }
 }

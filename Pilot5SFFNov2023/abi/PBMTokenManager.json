@@ -88,7 +88,17 @@
       },
       {
         "internalType": "uint256",
-        "name": "spotAmount",
+        "name": "discountValue",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "discountCap",
         "type": "uint256"
       },
       {
@@ -211,6 +221,16 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",

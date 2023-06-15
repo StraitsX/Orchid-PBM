@@ -8,11 +8,14 @@ interface IPBM {
     /// @param _spotToken address of the underlying ERC20 token
     /// @param _expiry contract wide expiry ( in epoch )
     /// @param _pbmAddressList address of the PBMAddressList smartcontract
-    function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList) external;
+    /// @param _merchantHelper address of the MerchantHelper smartcontract
+    function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList, address _merchantHelper) external;
 
     /// @notice Creates a new PBM token type with the data provided
     /// @param companyName Name of the company issuing the PBM
-    /// @param spotAmount Amount of the underlying ERC-20 tokens the PBM type wraps around
+    /// @param discountValue Discount value for the PBM type
+    /// @param minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
+    /// @param discountCap Maximum discount value that can be applied
     /// @param tokenExpiry The expiry date (in epoch) for this particular PBM token type
     /// @param tokenURI the URI (returns json) of PBM type that will follows the Opensea NFT metadata standard
     /// @param postExpiryURI the URI (returns json) of expired PBM type that will follows the Opensea NFT metadata standard
@@ -32,7 +35,9 @@ interface IPBM {
      */
     function createPBMTokenType(
         string memory companyName,
-        uint256 spotAmount,
+        uint256 discountValue,
+        uint256 minAmount,
+        uint256 discountCap,
         uint256 tokenExpiry,
         address creator,
         string memory tokenURI,
@@ -113,11 +118,15 @@ interface IPBM {
 
     /// @notice Get the details of the PBM Token type
     /// @param tokenId The identifier of the PBM token type
-    /// @return name The name assigned to the token type
-    /// @return amount Amount of the underlying ERC-20 tokens the PBM type wraps around
-    /// @return expiry The expiry date (in epoch) for this particular PBM token type.
-    /// @return creator The creator of the PBM token type
-    function getTokenDetails(uint256 tokenId) external view returns (string memory, uint256, uint256, address);
+    /// @return name The name of the PBM type
+    /// @return discountValue Discount value for the PBM type
+    /// @return minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
+    /// @return discountCap Maximum discount value that can be applied
+    /// @return expiry  Expiry time (in epoch) for the PBM type
+    /// @return creator Creator for the PBM type
+    function getTokenDetails(
+        uint256 tokenId
+    ) external view returns (string memory, uint256, uint256, uint256, uint256, address);
 
     /// @notice Get the URI of the tokenid
     /// @param tokenId The identifier of the PBM token type
@@ -139,6 +148,13 @@ interface IPBM {
         address ERC20Token,
         uint256 ERC20TokenValue
     );
+
+    /// @notice Emitted when cashback portion of the ERC-20 tokens are transferred to an user
+    /// @param from The account from which the cashback(ERC-20 token) is moving from, indexed so that it can be filtered
+    /// @param to The account which is receiving the cashback(ERC-20 token)
+    /// @param ERC20Token The address of the ERC-20 token
+    /// @param ERC20TokenValue The number of ERC-20 tokens transferred
+    event MerchantCashback(address indexed from, address to, address ERC20Token, uint256 ERC20TokenValue);
 
     /// @notice Emitted when a PBM type creator withdraws the underlying ERC-20 tokens from all the remaining expired PBMs
     /// @param beneficiary the address ( PBM type creator ) which receives the ERC20 Token

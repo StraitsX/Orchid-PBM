@@ -33,6 +33,37 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "ERC20Token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ERC20TokenValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "MerchantCashback",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "from",
@@ -358,7 +389,17 @@
       },
       {
         "internalType": "uint256",
-        "name": "spotAmount",
+        "name": "discountValue",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "discountCap",
         "type": "uint256"
       },
       {
@@ -413,6 +454,16 @@
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -436,6 +487,11 @@
       {
         "internalType": "address",
         "name": "_pbmAddressList",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_merchantHelper",
         "type": "address"
       }
     ],
@@ -507,6 +563,19 @@
     "name": "loadTo",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "merchantHelper",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
