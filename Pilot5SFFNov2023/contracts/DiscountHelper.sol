@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 library DiscountHelper {
+    // seperate test cases for the library
     // A constant to represent the XSGD decimals
     uint256 private constant DECIMALS = 10 ** 6;
 

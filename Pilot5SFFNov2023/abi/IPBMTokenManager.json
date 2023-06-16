@@ -16,6 +16,12 @@
       },
       {
         "indexed": false,
+        "internalType": "string",
+        "name": "discountType",
+        "type": "string"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
@@ -60,6 +66,11 @@
       {
         "internalType": "string",
         "name": "companyName",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "discountType",
         "type": "string"
       },
       {
@@ -196,6 +207,11 @@
       {
         "internalType": "string",
         "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "discountType",
         "type": "string"
       },
       {

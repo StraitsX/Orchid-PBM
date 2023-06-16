@@ -64,10 +64,12 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - caller must be owner
      * - contract must not be expired
      * - `tokenExpiry` must be less than contract expiry
-     * - `amount` should not be 0
+     * - `discountValue` should not be 0
+     * - `discountType` should be either fixed or percent
      */
     function createPBMTokenType(
         string memory companyName,
+        string memory discountType,
         uint256 discountValue,
         uint256 minAmount,
         uint256 discountCap,
@@ -78,6 +80,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     ) external override onlyOwner {
         PBMTokenManager(pbmTokenManager).createTokenType(
             companyName,
+            discountType,
             discountValue,
             minAmount,
             discountCap,
@@ -304,14 +307,25 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         require(userWalletBalance[from] >= spotAmount, "PBM: Don't have enough spot to pay");
 
         // need to convert these uint to 6 decimals to match with XSGD
-        (, uint256 discountValue, uint256 minAmount, uint256 discountCap, , ) = getTokenDetails(id);
+        (
+            ,
+            string memory discountType,
+            uint256 discountValue,
+            uint256 minAmount,
+            uint256 discountCap,
+            ,
 
-        uint256 cashbackAmount = DiscountHelper.getPercentageDiscount(
-            spotAmount,
-            minAmount,
-            discountValue,
-            discountCap
-        );
+        ) = getTokenDetails(id);
+
+        uint256 cashbackAmount = 0;
+
+        if (keccak256(abi.encodePacked(discountType)) == keccak256(abi.encodePacked("percentage"))) {
+            cashbackAmount = DiscountHelper.getPercentageDiscount(spotAmount, minAmount, discountValue, discountCap);
+        }
+
+        if (keccak256(abi.encodePacked(discountType)) == keccak256(abi.encodePacked("fixed"))) {
+            cashbackAmount = DiscountHelper.getFixedDiscount(spotAmount, minAmount, discountValue);
+        }
 
         executePayment(from, to, id, amount, spotAmount);
         executeCashback(to, from, cashbackAmount);
@@ -395,7 +409,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      */
     function getTokenDetails(
         uint256 tokenId
-    ) public view override returns (string memory, uint256, uint256, uint256, uint256, address) {
+    ) public view override returns (string memory, string memory, uint256, uint256, uint256, uint256, address) {
         return PBMTokenManager(pbmTokenManager).getTokenDetails(tokenId);
     }
 

@@ -13,6 +13,7 @@ interface IPBM {
 
     /// @notice Creates a new PBM token type with the data provided
     /// @param companyName Name of the company issuing the PBM
+    /// @return discountType The type of discount that the PBM token type offers can be either fixed or percent
     /// @param discountValue Discount value for the PBM type
     /// @param minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
     /// @param discountCap Maximum discount value that can be applied
@@ -35,6 +36,7 @@ interface IPBM {
      */
     function createPBMTokenType(
         string memory companyName,
+        string memory discountType,
         uint256 discountValue,
         uint256 minAmount,
         uint256 discountCap,
@@ -119,6 +121,7 @@ interface IPBM {
     /// @notice Get the details of the PBM Token type
     /// @param tokenId The identifier of the PBM token type
     /// @return name The name of the PBM type
+    /// @return discountType The type of discount that the PBM token type offers can be either fixed or percent
     /// @return discountValue Discount value for the PBM type
     /// @return minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
     /// @return discountCap Maximum discount value that can be applied
@@ -126,7 +129,7 @@ interface IPBM {
     /// @return creator Creator for the PBM type
     function getTokenDetails(
         uint256 tokenId
-    ) external view returns (string memory, uint256, uint256, uint256, uint256, address);
+    ) external view returns (string memory, string memory, uint256, uint256, uint256, uint256, address);
 
     /// @notice Get the URI of the tokenid
     /// @param tokenId The identifier of the PBM token type

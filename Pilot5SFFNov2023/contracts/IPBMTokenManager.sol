@@ -37,6 +37,7 @@ interface IPBMTokenManager {
     /// @notice Retreive the details for a PBM
     /// @param tokenId The id for the PBM in query
     /// @return name The name of the PBM type
+    /// @return discountType The type of discount that the PBM token type offers can be either fixed or percent
     /// @return discountValue Discount value for the PBM type
     /// @return minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
     /// @return discountCap Maximum discount value that can be applied
@@ -49,6 +50,7 @@ interface IPBMTokenManager {
         view
         returns (
             string memory name,
+            string memory discountType,
             uint256 discountValue,
             uint256 minAmount,
             uint256 discountCap,
@@ -58,6 +60,7 @@ interface IPBMTokenManager {
 
     /// @notice Creates a PBM token type, with all its necessary details
     /// @param companyName The name of the company/agency issuing this PBM type
+    /// @param discountType The type of discount that the PBM token type offers can be either fixed or percent
     /// @param discountValue Discount value for the PBM type
     /// @param minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
     /// @param discountCap Maximum discount value that can be applied
@@ -68,6 +71,7 @@ interface IPBMTokenManager {
     /// @param contractExpiry the expiry time (in epoch) for the overall PBM contract
     function createTokenType(
         string memory companyName,
+        string memory discountType,
         uint256 discountValue,
         uint256 minAmount,
         uint256 discountCap,
@@ -96,8 +100,16 @@ interface IPBMTokenManager {
     /// @notice Event emitted when a new PBM token type is created
     /// @param tokenId The account from which the tokens were sent, i.e. the balance decreased
     /// @param tokenName The account to which the tokens were sent, i.e. the balance increased
+    /// @param discountType The type of discount that the PBM token type offers can be either fixed or percent
     /// @param amount The amount of tokens that were transferred
     /// @param expiry The time (in epoch) when the PBM type will expire
     /// @param creator The creator of the this PBM type
-    event NewPBMTypeCreated(uint256 tokenId, string tokenName, uint256 amount, uint256 expiry, address creator);
+    event NewPBMTypeCreated(
+        uint256 tokenId,
+        string tokenName,
+        string discountType,
+        uint256 amount,
+        uint256 expiry,
+        address creator
+    );
 }

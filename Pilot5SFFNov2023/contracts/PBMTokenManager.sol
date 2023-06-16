@@ -16,7 +16,8 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     // structure representing all the details of a PBM type
     struct TokenConfig {
         string name;
-        uint256 amount; // cashback amount could be either a percent or a fixed amount
+        string discountType; // percent or fixed
+        uint256 discountValue; // cashback amount could be either a percent or a fixed amount
         uint256 minAmount; // use to check whether the mint amount is met
         uint256 discountCap;
         uint256 expiry;
@@ -39,10 +40,12 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      * - caller must be owner ( PBM contract )
      * - contract must not be expired
      * - token expiry must be less than contract expiry
-     * - `amount` should not be 0
+     * - `discountValue` should not be 0
+     * - `discountType` should be either fixed or percent
      */
     function createTokenType(
         string memory companyName,
+        string memory discountType,
         uint256 discountValue,
         uint256 minAmount,
         uint256 discountCap,
@@ -54,20 +57,29 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     ) external override onlyOwner noDelegateCall {
         require(tokenExpiry <= contractExpiry, "Invalid token expiry-1");
         require(tokenExpiry > block.timestamp, "Invalid token expiry-2");
-        require(discountValue != 0, "Spot amount is 0");
+        require(discountValue != 0, "Discount value is 0");
+        require(
+            keccak256(abi.encodePacked(discountType)) == keccak256(abi.encodePacked("fixed")) ||
+                keccak256(abi.encodePacked(discountType)) == keccak256(abi.encodePacked("percent")),
+            "Invalid discount type"
+        );
 
         string memory tokenName = string(abi.encodePacked(companyName, discountValue.toString()));
-        tokenTypes[tokenTypeCount].name = tokenName;
-        tokenTypes[tokenTypeCount].amount = discountValue;
-        tokenTypes[tokenTypeCount].minAmount = minAmount;
-        tokenTypes[tokenTypeCount].discountCap = discountCap;
-        tokenTypes[tokenTypeCount].expiry = tokenExpiry;
-        tokenTypes[tokenTypeCount].creator = creator;
-        tokenTypes[tokenTypeCount].balanceSupply = 0;
-        tokenTypes[tokenTypeCount].uri = tokenURI;
-        tokenTypes[tokenTypeCount].postExpiryURI = postExpiryURI;
 
-        emit NewPBMTypeCreated(tokenTypeCount, tokenName, discountValue, tokenExpiry, creator);
+        tokenTypes[tokenTypeCount] = TokenConfig({
+            name: tokenName,
+            discountType: discountType,
+            discountValue: discountValue,
+            minAmount: minAmount,
+            discountCap: discountCap,
+            expiry: tokenExpiry,
+            creator: creator,
+            balanceSupply: 0,
+            uri: tokenURI,
+            postExpiryURI: postExpiryURI
+        });
+
+        emit NewPBMTypeCreated(tokenTypeCount, tokenName, discountType, discountValue, tokenExpiry, creator);
         tokenTypeCount += 1;
     }
 
@@ -101,7 +113,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     function increaseBalanceSupply(uint256[] memory tokenIds, uint256[] memory amounts) external override onlyOwner {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(
-                tokenTypes[tokenIds[i]].amount != 0 && block.timestamp < tokenTypes[tokenIds[i]].expiry,
+                tokenTypes[tokenIds[i]].discountValue != 0 && block.timestamp < tokenTypes[tokenIds[i]].expiry,
                 "PBM: Invalid Token Id(s)"
             );
             tokenTypes[tokenIds[i]].balanceSupply += amounts[i];
@@ -120,7 +132,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     function decreaseBalanceSupply(uint256[] memory tokenIds, uint256[] memory amounts) external override onlyOwner {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(
-                tokenTypes[tokenIds[i]].amount != 0 && block.timestamp < tokenTypes[tokenIds[i]].expiry,
+                tokenTypes[tokenIds[i]].discountValue != 0 && block.timestamp < tokenTypes[tokenIds[i]].expiry,
                 "PBM: Invalid Token Id(s)"
             );
             tokenTypes[tokenIds[i]].balanceSupply -= amounts[i];
@@ -144,7 +156,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      */
     function areTokensValid(uint256[] memory tokenIds) external view override returns (bool) {
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            if (block.timestamp > tokenTypes[i].expiry || tokenTypes[i].amount == 0) {
+            if (block.timestamp > tokenTypes[i].expiry || tokenTypes[i].discountValue == 0) {
                 return false;
             }
         }
@@ -160,11 +172,12 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      */
     function getTokenDetails(
         uint256 tokenId
-    ) external view override returns (string memory, uint256, uint256, uint256, uint256, address) {
-        require(tokenTypes[tokenId].amount != 0, "PBM: Invalid Token Id(s)");
+    ) external view override returns (string memory, string memory, uint256, uint256, uint256, uint256, address) {
+        require(tokenTypes[tokenId].discountValue != 0, "PBM: Invalid Token Id(s)");
         return (
             tokenTypes[tokenId].name,
-            tokenTypes[tokenId].amount,
+            tokenTypes[tokenId].discountType,
+            tokenTypes[tokenId].discountValue,
             tokenTypes[tokenId].minAmount,
             tokenTypes[tokenId].discountCap,
             tokenTypes[tokenId].expiry,
@@ -180,8 +193,8 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      * - `tokenId` should be a valid id that has already been created
      */
     function getPBMRevokeValue(uint256 tokenId) external view override returns (uint256) {
-        require(tokenTypes[tokenId].amount != 0, "PBM: Invalid Token Id(s)");
-        return tokenTypes[tokenId].amount * tokenTypes[tokenId].balanceSupply;
+        require(tokenTypes[tokenId].discountValue != 0, "PBM: Invalid Token Id(s)");
+        return tokenTypes[tokenId].discountValue * tokenTypes[tokenId].balanceSupply;
     }
 
     /**
@@ -193,10 +206,10 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      */
     function getTokenValue(uint256 tokenId) external view override returns (uint256) {
         require(
-            tokenTypes[tokenId].amount != 0 && block.timestamp < tokenTypes[tokenId].expiry,
+            tokenTypes[tokenId].discountValue != 0 && block.timestamp < tokenTypes[tokenId].expiry,
             "PBM: Invalid Token Id(s)"
         );
-        return tokenTypes[tokenId].amount;
+        return tokenTypes[tokenId].discountValue;
     }
 
     /**
@@ -208,7 +221,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      */
     function getTokenCount(uint256 tokenId) external view override returns (uint256) {
         require(
-            tokenTypes[tokenId].amount != 0 && block.timestamp < tokenTypes[tokenId].expiry,
+            tokenTypes[tokenId].discountValue != 0 && block.timestamp < tokenTypes[tokenId].expiry,
             "PBM: Invalid Token Id(s)"
         );
         return tokenTypes[tokenId].balanceSupply;
@@ -223,7 +236,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      */
     function getTokenCreator(uint256 tokenId) external view override returns (address) {
         require(
-            tokenTypes[tokenId].amount != 0 && block.timestamp < tokenTypes[tokenId].expiry,
+            tokenTypes[tokenId].discountValue != 0 && block.timestamp < tokenTypes[tokenId].expiry,
             "PBM: Invalid Token Id(s)"
         );
         return tokenTypes[tokenId].creator;

@@ -159,6 +159,11 @@
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "discountType",
+        "type": "string"
+      },
+      {
         "internalType": "uint256",
         "name": "discountValue",
         "type": "uint256"
@@ -209,6 +214,11 @@
     ],
     "name": "getTokenDetails",
     "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
       {
         "internalType": "string",
         "name": "",
