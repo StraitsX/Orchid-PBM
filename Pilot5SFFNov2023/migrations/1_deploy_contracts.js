@@ -6,6 +6,11 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     log: true,
   });
+  await deploy('MerchantHelper', {
+    from: deployer,
+    args: [],
+    log: true,
+  })
   await deploy('PBM', {
     from: deployer,
     args: [],
