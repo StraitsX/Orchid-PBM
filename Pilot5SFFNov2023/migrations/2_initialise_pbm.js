@@ -16,6 +16,11 @@ module.exports = async ({ getNamedAccounts, deployments, ethers }) => {
   // Polygon XSGD address = "0xDC3326e71D45186F113a2F448984CA0e8D201995"
   // Mumbai XSGD address = "0x16e28369bc318636abbf6cb1035da77ffbf4a3bc"
   const address = '0x16e28369bc318636abbf6cb1035da77ffbf4a3bc';
-  await pbm.initialise(address, expiryDate, addressListDeployment.address, merchantHelperDeployment.address);
+  await pbm.initialise(
+    address,
+    expiryDate,
+    addressListDeployment.address,
+    merchantHelperDeployment.address,
+  );
   console.log('PBM initialised');
 };

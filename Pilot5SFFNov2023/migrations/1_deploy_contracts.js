@@ -10,7 +10,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     args: [],
     log: true,
-  })
+  });
   await deploy('PBM', {
     from: deployer,
     args: [],
