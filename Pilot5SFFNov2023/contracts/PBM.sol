@@ -225,7 +225,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         address spender = _msgSender();
         // check allowance of the caller to spend the ERC-20 tokens on behalf of the user
         _spendAllowance(user, spender, spotAmount);
-        // use safeTransfer here to unload the XSGD
+        // use safeTransfer here to unload the XSGD to _msgSender() which user give allowance to
         ERC20Helper.safeTransfer(spotToken, _msgSender(), spotAmount);
         userWalletBalance[user] -= spotAmount;
     }
