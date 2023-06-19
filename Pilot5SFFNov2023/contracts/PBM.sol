@@ -294,6 +294,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         );
         require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
         require(amount == 1, "PBM: 'amount' is not 1");
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = id;
+        require(IPBMTokenManager(pbmTokenManager).areTokensValid(ids), "PBM: 'tokenId' is not valid");
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
             handleMerchantPayment(from, to, id, amount, data);
@@ -319,7 +322,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
         uint256 cashbackAmount = 0;
 
-        if (keccak256(abi.encodePacked(discountType)) == keccak256(abi.encodePacked("percentage"))) {
+        if (keccak256(abi.encodePacked(discountType)) == keccak256(abi.encodePacked("percent"))) {
             cashbackAmount = DiscountHelper.getPercentageDiscount(spotAmount, minAmount, discountValue, discountCap);
         }
 
@@ -327,20 +330,21 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             cashbackAmount = DiscountHelper.getFixedDiscount(spotAmount, minAmount, discountValue);
         }
 
+        // from is user address to is merchant address
         executePayment(from, to, id, amount, spotAmount);
         executeCashback(to, from, cashbackAmount);
     }
 
-    function executePayment(address from, address to, uint256 id, uint256 amount, uint256 spotAmount) internal {
-        userWalletBalance[from] -= spotAmount;
-        ERC20Helper.safeTransfer(spotToken, to, spotAmount);
-        _burn(from, id, amount);
-        emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, spotAmount);
+    function executePayment(address user, address merchant, uint256 id, uint256 amount, uint256 spotAmount) internal {
+        userWalletBalance[user] -= spotAmount;
+        ERC20Helper.safeTransfer(spotToken, merchant, spotAmount);
+        _burn(user, id, amount);
+        emit MerchantPayment(user, merchant, serialise(id), serialise(amount), spotToken, spotAmount);
     }
 
-    function executeCashback(address from, address to, uint256 cashbackAmount) internal {
-        IMerchantHelper(merchantHelper).cashBack(from, cashbackAmount, spotToken, to);
-        emit MerchantCashback(from, to, spotToken, cashbackAmount);
+    function executeCashback(address merchant, address user, uint256 cashbackAmount) internal {
+        IMerchantHelper(merchantHelper).cashBack(user, cashbackAmount, spotToken, merchant);
+        emit MerchantCashback(merchant, user, spotToken, cashbackAmount);
     }
 
     /**
@@ -369,6 +373,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         );
         require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
         require(ids.length == amounts.length, "Unequal ids and amounts supplied");
+        require(IPBMTokenManager(pbmTokenManager).areTokensValid(ids), "PBM: 'tokenId' is not valid");
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
             // when call safeTransferFrom on a envelope PBM need to encode the payment amount into the data field
