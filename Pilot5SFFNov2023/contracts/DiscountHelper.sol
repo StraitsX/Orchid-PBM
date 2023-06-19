@@ -11,7 +11,7 @@ library DiscountHelper {
         uint minAmount,
         uint256 discountPercent,
         uint256 discountCap
-    ) public pure returns (uint256) {
+    ) internal pure returns (uint256) {
         require(amount >= minAmount * DECIMALS, "DiscountCalculator: amount cannot be less than minAmount");
         require(discountPercent <= 100, "DiscountCalculator: discount percent cannot be more than 100%");
 
@@ -23,7 +23,7 @@ library DiscountHelper {
         return discount;
     }
 
-    function getFixedDiscount(uint256 amount, uint minAmount, uint256 discountAmount) public pure returns (uint256) {
+    function getFixedDiscount(uint256 amount, uint minAmount, uint256 discountAmount) internal pure returns (uint256) {
         require(amount >= minAmount * DECIMALS, "DiscountCalculator: amount cannot be less than minAmount");
         require(discountAmount * DECIMALS <= amount, "DiscountCalculator: discount amount cannot be more than amount");
 
