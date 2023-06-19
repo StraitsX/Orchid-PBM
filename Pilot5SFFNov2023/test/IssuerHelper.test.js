@@ -18,6 +18,9 @@ describe('IssuerHelper', function () {
     // Deploy the PBM contract
     this.pbm = await deploy('PBM');
 
+    // Deploy the MerchantHelper contract
+    this.merchantHelper = await deploy('MerchantHelper');
+
     // Deploy the MinimalForwarder contract
     this.minimalForwarder = await deploy('MinimalForwarder');
 
@@ -39,7 +42,7 @@ describe('IssuerHelper', function () {
     // Give the wallet some tokens
     await this.erc20Token.mint(
       wallet.address,
-      ethers.utils.parseUnits('1000', 18),
+      ethers.utils.parseUnits('1000', 6),
     );
 
     // create PBM envelope token type
@@ -52,11 +55,15 @@ describe('IssuerHelper', function () {
         this.erc20Token.address,
         targetEpoch + 100000000,
         this.addressList.address,
+        this.merchantHelper.address,
       );
     await this.pbm
       .connect(deployer)
       .createPBMTokenType(
         'testPBMenvelope',
+        'fixed',
+        5,
+        20,
         5,
         targetEpoch,
         deployer.address,
@@ -147,7 +154,7 @@ describe('IssuerHelper', function () {
       expect(initialOtherBalance).to.equal(finalOtherBalance);
 
       // based on the forwarder contract implementation
-      // here the excute function call would finish
+      // here the execute function call would finish
       // but the underlying addWhitelistedWallet function call of this meta txn would be reverted
       // and the state of the issuer helper contract would remain unchanged
       // the returndata returned by the execute function would contain the revert reason
@@ -161,8 +168,14 @@ describe('IssuerHelper', function () {
     });
 
     it('should call the processLoadAndSafeTransfer thru a metatxn', async function () {
-      const { pbm, addressList, erc20Token, issuerHelper, minimalForwarder } =
-        this;
+      const {
+        pbm,
+        addressList,
+        erc20Token,
+        issuerHelper,
+        minimalForwarder,
+        merchantHelper,
+      } = this;
 
       // mint envelope to wallet
       await pbm.mint(0, 1, wallet.address);
@@ -173,12 +186,25 @@ describe('IssuerHelper', function () {
       // Grant allowance to the issuerHelper contract by the wallet
       await erc20Token
         .connect(wallet)
-        .approve(issuerHelper.address, ethers.utils.parseUnits('100', 18));
+        .approve(issuerHelper.address, ethers.utils.parseUnits('100', 6));
 
       // add other wallet as a merchat
       await addressList
         .connect(deployer)
         .addMerchantAddresses([other.address], 'other');
+
+      // whiltelist pbm on the merchant helper
+      await merchantHelper.connect(deployer).addAllowedPBM(pbm.address);
+
+      // whitlelist merchant on merchant helper
+      await merchantHelper
+        .connect(deployer)
+        .addWhitelistedMerchant(other.address);
+
+      // set approval for merchant helper to transfer erc20 token on behalf of merchant
+      await erc20Token
+        .connect(other)
+        .approve(merchantHelper.address, ethers.utils.parseUnits('100', 6));
 
       // Check the initial balances
       const initialOtherBalance = await erc20Token.balanceOf(other.address);
@@ -198,7 +224,7 @@ describe('IssuerHelper', function () {
               wallet.address,
               other.address,
               0,
-              ethers.utils.parseUnits('50', 18),
+              ethers.utils.parseUnits('50', 6),
             ],
           ),
         },
@@ -224,23 +250,31 @@ describe('IssuerHelper', function () {
       // Check the final balances
       const finalOtherBalance = await erc20Token.balanceOf(other.address);
       const finalWalletBalance = await erc20Token.balanceOf(wallet.address);
-      expect(finalOtherBalance.sub(initialOtherBalance)).to.equal(
-        ethers.utils.parseUnits('50', 18),
-      );
-      expect(initialWalletBalance.sub(finalWalletBalance)).to.equal(
-        ethers.utils.parseUnits('50', 18),
-      );
-      expect((await pbm.balanceOf(other.address, 0)) == 1).to.equal(true);
+
+      // merchant initial balance is 0
+      // gets paid in full amount of 50 and cashback 5 to the user
+      // final balance should be 45
+      expect(initialOtherBalance).to.equal(0);
+      expect(finalOtherBalance).to.equal(ethers.utils.parseUnits('45', 6));
+
+      // user initial balance is 1000
+      // load 50 to the PBM to make payment and gets 5 cashback
+      // final balance should be 955
+      expect(initialWalletBalance).to.equal(ethers.utils.parseUnits('1000', 6));
+      expect(finalWalletBalance).to.equal(ethers.utils.parseUnits('955', 6));
+
+      expect(await pbm.balanceOf(other.address, 0)).to.equal(0);
     });
   });
 
   describe('processLoadAndSafeTransfer', function () {
     it('should transfer tokens from wallet to IssuerHelper and call loadAndSafeTransfer on PBM', async function () {
-      const { pbm, addressList, erc20Token, issuerHelper } = this;
+      const { pbm, addressList, erc20Token, issuerHelper, merchantHelper } =
+        this;
       // Grant allowance to the issuerHelper contract by the wallet
       await erc20Token
         .connect(wallet)
-        .approve(issuerHelper.address, ethers.utils.parseUnits('100', 18));
+        .approve(issuerHelper.address, ethers.utils.parseUnits('100', 6));
       // mint envelope to wallet
       await pbm.mint(0, 1, wallet.address);
 
@@ -251,6 +285,19 @@ describe('IssuerHelper', function () {
       await addressList
         .connect(deployer)
         .addMerchantAddresses([other.address], 'other');
+
+      // whiltelist pbm on the merchant helper
+      await merchantHelper.connect(deployer).addAllowedPBM(pbm.address);
+
+      // whitlelist merchant on merchant helper
+      await merchantHelper
+        .connect(deployer)
+        .addWhitelistedMerchant(other.address);
+
+      // set approval for merchant helper to transfer erc20 token on behalf of merchant
+      await erc20Token
+        .connect(other)
+        .approve(merchantHelper.address, ethers.utils.parseUnits('100', 6));
 
       // Check the initial balances
       const initialOtherBalance = await erc20Token.balanceOf(other.address);
@@ -268,7 +315,7 @@ describe('IssuerHelper', function () {
           wallet.address,
           other.address,
           0,
-          ethers.utils.parseUnits('50', 18),
+          ethers.utils.parseUnits('50', 6),
         );
       receipt = await txn.wait();
 
@@ -290,13 +337,20 @@ describe('IssuerHelper', function () {
       // Check the final balances
       const finalOtherBalance = await erc20Token.balanceOf(other.address);
       const finalWalletBalance = await erc20Token.balanceOf(wallet.address);
-      expect(finalOtherBalance.sub(initialOtherBalance)).to.equal(
-        ethers.utils.parseUnits('50', 18),
-      );
-      expect(initialWalletBalance.sub(finalWalletBalance)).to.equal(
-        ethers.utils.parseUnits('50', 18),
-      );
-      expect((await pbm.balanceOf(other.address, 0)) == 1).to.equal(true);
+
+      // merchant initial balance is 0
+      // gets paid in full amount of 50 and cashback 5 to the user
+      // final balance should be 45
+      expect(initialOtherBalance).to.equal(0);
+      expect(finalOtherBalance).to.equal(ethers.utils.parseUnits('45', 6));
+
+      // user initial balance is 1000
+      // load 50 to the PBM to make payment and gets 5 cashback
+      // final balance should be 955
+      expect(initialWalletBalance).to.equal(ethers.utils.parseUnits('1000', 6));
+      expect(finalWalletBalance).to.equal(ethers.utils.parseUnits('955', 6));
+
+      expect(await pbm.balanceOf(other.address, 0)).to.equal(0);
     });
 
     it('should fail if caller is not an allowed whitelister', async function () {
@@ -317,9 +371,9 @@ describe('IssuerHelper', function () {
             wallet.address,
             other.address,
             0,
-            ethers.utils.parseUnits('50', 18),
+            ethers.utils.parseUnits('50', 6),
           ),
-      ).to.be.revertedWith('Wallet is not whitelisted');
+      ).to.be.revertedWith('User wallet is not whitelisted');
     });
   });
 });
