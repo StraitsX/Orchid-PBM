@@ -27,7 +27,7 @@ describe('MerchantHelper', function () {
     // Give the merchant some tokens
     await erc20Token.mint(
       merchant.address,
-      ethers.utils.parseUnits('1000', 18),
+      ethers.utils.parseUnits('1000', 6),
     );
   });
 
@@ -36,7 +36,7 @@ describe('MerchantHelper', function () {
       // Grant allowance to the merchantHelper contract by the merchant
       await erc20Token
         .connect(merchant)
-        .approve(merchantHelper.address, ethers.utils.parseUnits('100', 18));
+        .approve(merchantHelper.address, ethers.utils.parseUnits('100', 6));
 
       // Check the initial balances
       const initialUserBalance = await erc20Token.balanceOf(user.address);
@@ -49,7 +49,7 @@ describe('MerchantHelper', function () {
         .connect(PBM)
         .cashBack(
           user.address,
-          ethers.utils.parseUnits('50', 18),
+          ethers.utils.parseUnits('50', 6),
           erc20Token.address,
           merchant.address,
         );
@@ -59,10 +59,10 @@ describe('MerchantHelper', function () {
       const finalMerchantBalance = await erc20Token.balanceOf(merchant.address);
 
       expect(finalUserBalance.sub(initialUserBalance)).to.equal(
-        ethers.utils.parseUnits('50', 18),
+        ethers.utils.parseUnits('50', 6),
       );
       expect(initialMerchantBalance.sub(finalMerchantBalance)).to.equal(
-        ethers.utils.parseUnits('50', 18),
+        ethers.utils.parseUnits('50', 6),
       );
     });
 
@@ -72,7 +72,7 @@ describe('MerchantHelper', function () {
           .connect(other)
           .cashBack(
             user.address,
-            ethers.utils.parseUnits('50', 18),
+            ethers.utils.parseUnits('50', 6),
             erc20Token.address,
             merchant.address,
           ),
@@ -87,7 +87,7 @@ describe('MerchantHelper', function () {
           .connect(PBM)
           .cashBack(
             user.address,
-            ethers.utils.parseUnits('50', 18),
+            ethers.utils.parseUnits('50', 6),
             erc20Token.address,
             merchant.address,
           ),
