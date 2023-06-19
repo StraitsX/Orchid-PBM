@@ -165,7 +165,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
     function load(uint256 tokenId, uint256 spotAmount) external whenNotPaused {
         require(balanceOf(_msgSender(), tokenId) > 0, "PBM: Don't have enough PBM envelope to load spot");
-        ERC20Helper.safeTransfer(spotToken, address(this), spotAmount);
+        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), spotAmount);
         userWalletBalance[_msgSender()] += spotAmount;
     }
 
