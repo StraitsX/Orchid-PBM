@@ -1037,4 +1037,75 @@ describe('PBM', async () => {
       expect(await pbm.balanceOf(accounts[1].address, 0)).to.equal(0);
     });
   });
+
+  describe('PBM setApprovalForALLForPBMOwners', () => {
+    let spot = null;
+    let pbm = null;
+    let issuerHelper = null;
+
+    before(async () => {
+      let [_spot, _pbm] = await init();
+      spot = _spot;
+      pbm = _pbm;
+
+      let minimalForwarder = await deploy('MinimalForwarder');
+      issuerHelper = await deploy(
+        'IssuerHelper',
+        pbm.address,
+        minimalForwarder.address,
+      );
+    });
+
+    it('setWhitelistApprover should revert if not called by owner', async () => {
+      await expect(
+        pbm
+          .connect(accounts[1])
+          .setWhitelistApprover(accounts[1].address, true),
+      ).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('setApprovalForAllForPBMOwners should revert if not called by owner or whitelisted approvers', async () => {
+      await expect(
+        pbm
+          .connect(accounts[1])
+          .setApprovalForAllForPBMOwners(
+            [accounts[2].address],
+            issuerHelper.address,
+            true,
+          ),
+      ).to.be.revertedWith(
+        'PBM: Only contract owner or whitelisted operator allowed to set approval',
+      );
+    });
+
+    it('setApprovalForAllForPBMOwners should succeed if called by owner', async () => {
+      await pbm
+        .connect(accounts[0])
+        .setApprovalForAllForPBMOwners(
+          [accounts[2].address],
+          issuerHelper.address,
+          true,
+        );
+      expect(
+        await pbm.isApprovedForAll(accounts[2].address, issuerHelper.address),
+      ).to.equal(true);
+    });
+
+    it('setApprovalForAllForPBMOwners should succeed if called by whitelisted approvers', async () => {
+      // whitelist accouts[1] as approver
+      await pbm
+        .connect(accounts[0])
+        .setWhitelistApprover(accounts[1].address, true);
+      await pbm
+        .connect(accounts[1])
+        .setApprovalForAllForPBMOwners(
+          [accounts[2].address],
+          issuerHelper.address,
+          true,
+        );
+      expect(
+        await pbm.isApprovedForAll(accounts[2].address, issuerHelper.address),
+      ).to.equal(true);
+    });
+  });
 });

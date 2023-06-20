@@ -38,6 +38,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     //mapping to keep track of how much an user is allowed to withdraw from PBM
     mapping(address => mapping(address => uint256)) private _allowances;
 
+    //mapping to store the whitelist of approvers
+    mapping(address => bool) private _approverWhitelist;
+
     function initialise(
         address _spotToken,
         uint256 _expiry,
@@ -389,6 +392,38 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         } else {
             _safeBatchTransferFrom(from, to, ids, amounts, data);
         }
+    }
+
+    /**
+     * @dev setApprovalForAllForPBMOwners for a list of PBM owners
+     *
+     * Requirements:
+     *
+     * - caller should either be the contract owner or whitelisted approver
+     */
+    function setApprovalForAllForPBMOwners(
+        address[] memory pbmOwners,
+        address operator,
+        bool approved
+    ) public whenNotPaused {
+        require(
+            _msgSender() == owner() || _approverWhitelist[_msgSender()],
+            "PBM: Only contract owner or whitelisted operator allowed to set approval"
+        );
+        for (uint256 i = 0; i < pbmOwners.length; i++) {
+            _setApprovalForAll(pbmOwners[i], operator, approved);
+        }
+    }
+
+    /**
+     * @dev setApprovalForAll for a list of PBM owners
+     *
+     * Requirements:
+     *
+     * - caller should be the contract owner
+     */
+    function setWhitelistApprover(address approver, bool whitelisted) public onlyOwner {
+        _approverWhitelist[approver] = whitelisted;
     }
 
     /**
