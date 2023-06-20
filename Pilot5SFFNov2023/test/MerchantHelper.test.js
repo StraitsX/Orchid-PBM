@@ -25,10 +25,7 @@ describe('MerchantHelper', function () {
     await merchantHelper.addWhitelistedMerchant(merchant.address);
 
     // Give the merchant some tokens
-    await erc20Token.mint(
-      merchant.address,
-      ethers.utils.parseUnits('1000', 6),
-    );
+    await erc20Token.mint(merchant.address, ethers.utils.parseUnits('1000', 6));
   });
 
   describe('cashBack', function () {
