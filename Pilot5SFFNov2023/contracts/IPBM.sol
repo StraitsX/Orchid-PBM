@@ -8,7 +8,7 @@ interface IPBM {
     /// @param _spotToken address of the underlying ERC20 token
     /// @param _expiry contract wide expiry ( in epoch )
     /// @param _pbmAddressList address of the PBMAddressList smartcontract
-    /// @param _merchantHelper address of the MerchantHelper smartcontract
+    /// @param _merchantHelper address of the MerchantHelper smartcontract that implements IMerchantHelper interface
     function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList, address _merchantHelper) external;
 
     /// @notice Creates a new PBM token type with the data provided

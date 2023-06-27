@@ -7,7 +7,7 @@
     "sizereport": "hardhat size-contracts",
     "lint": "prettier --list-different contracts test migrations",
     "pretty": "prettier --write contracts test migrations",
-    "test": "REPORT_GAS=true hardhat test --v test/PBM.spec.js",
+    "test": "REPORT_GAS=true hardhat test --v test/PBM.test.js",
     "export-abi": "hardhat export-abi",
     "clear-abi": "hardhat clear-abi",
     "deploy:mumbai": "hardhat deploy --no-impersonation --network mumbai",

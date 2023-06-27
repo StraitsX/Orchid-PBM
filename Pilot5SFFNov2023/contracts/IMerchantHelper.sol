@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.9;
 
+/**
+ * @notice This contract pulls ERC20 token from a list of merchant wallets on behalf of PBM smart contract.
+ * @dev ERC20 approved must be granted to this contract in advance.
+ */
 interface IMerchantHelper {
     /**
-     * @notice This function allows the contract owner to add an address to the list of allowed PBMs
+     * @notice This function allows the contract owner to add a PBM address to the list of allowed PBMs to pull ERC20 tokens.
      * @param _allowedPBM The address to be added to the list of allowed PBMs
      */
     function addAllowedPBM(address _allowedPBM) external;
 
     /**
-     * @notice This function allows the contract owner to remove an address from the list of allowed PBMs
+     * @notice This function allows the contract owner to remove a PBM address from the list of allowed PBMs 
      * @param _allowedPBM The address to be removed from the list of allowed PBMs
      */
     function removeAllowedPBM(address _allowedPBM) external;

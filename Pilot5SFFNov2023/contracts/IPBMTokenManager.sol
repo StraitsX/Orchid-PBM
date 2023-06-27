@@ -37,7 +37,7 @@ interface IPBMTokenManager {
     /// @notice Retreive the details for a PBM
     /// @param tokenId The id for the PBM in query
     /// @return name The name of the PBM type
-    /// @return discountType The type of discount that the PBM token type offers can be either fixed or percent
+    /// @return discountType The type of discount that the PBM token type offers can be either 'fixed' or 'percent'
     /// @return discountValue Discount value for the PBM type
     /// @return minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
     /// @return discountCap Maximum discount value that can be applied
@@ -60,7 +60,7 @@ interface IPBMTokenManager {
 
     /// @notice Creates a PBM token type, with all its necessary details
     /// @param companyName The name of the company/agency issuing this PBM type
-    /// @param discountType The type of discount that the PBM token type offers can be either fixed or percent
+    /// @param discountType The type of discount that the PBM token type offers can be either 'fixed' or 'percent'
     /// @param discountValue Discount value for the PBM type
     /// @param minAmount Minimum amount of ERC-20 tokens needs to be spent to apply discount
     /// @param discountCap Maximum discount value that can be applied

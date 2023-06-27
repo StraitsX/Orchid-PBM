@@ -203,7 +203,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      */
 
     function unLoad(uint256 spotAmount) external whenNotPaused {
-        require(userWalletBalance[_msgSender()] >= spotAmount, "PBM: User don't have enough spot to unload");
+        require(userWalletBalance[_msgSender()] >= spotAmount, "PBM: User don't have enough spot erc-20 token to unload");
         ERC20Helper.safeTransfer(spotToken, _msgSender(), spotAmount);
         userWalletBalance[_msgSender()] -= spotAmount;
     }
@@ -221,9 +221,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
     function unLoadFrom(address user, uint256 spotAmount) external whenNotPaused {
         // check the spotAmount is not more than the userWalletBalance
-        require(userWalletBalance[user] >= spotAmount, "PBM: User don't have enough spot to unload");
+        require(userWalletBalance[user] >= spotAmount, "PBM: User don't have enough spot erc-20 token to unload");
         address spender = _msgSender();
-        // check allowance of the caller to spend the ERC-20 tokens on behalf of the user
+        // check allowance of the caller to call this PBM to spend the ERC-20 tokens on behalf of the user
         _spendAllowance(user, spender, spotAmount);
         // use safeTransfer here to unload the XSGD to _msgSender() which user give allowance to
         ERC20Helper.safeTransfer(spotToken, _msgSender(), spotAmount);

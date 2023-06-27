@@ -9,10 +9,12 @@ import "./IMerchantHelper.sol";
 contract MerchantHelper is Ownable, IMerchantHelper {
     using SafeERC20 for IERC20;
 
-    // list of whitelisted merchant wallet addresses that
+    // @dev list of whitelisted merchant wallet addresses that
     // has granted ERC20 token approval to this smart contract.
     mapping(address => bool) public whitelistedMerchants;
 
+    // @dev list of whitelisted PBM addresses that is allowed to invoke a function call
+    // on this smart contract
     mapping(address => bool) public allowedPBMs;
 
     constructor() {}
