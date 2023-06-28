@@ -13,7 +13,7 @@ interface IMerchantHelper {
     function addAllowedPBM(address _allowedPBM) external;
 
     /**
-     * @notice This function allows the contract owner to remove a PBM address from the list of allowed PBMs 
+     * @notice This function allows the contract owner to remove a PBM address from the list of allowed PBMs
      * @param _allowedPBM The address to be removed from the list of allowed PBMs
      */
     function removeAllowedPBM(address _allowedPBM) external;
