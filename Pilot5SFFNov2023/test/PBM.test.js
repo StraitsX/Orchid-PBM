@@ -289,6 +289,23 @@ describe('PBM', async () => {
       );
     });
 
+    // Utility function for mint and spot allowances
+    async function mintAndSetSpotApproval(userAccount, allowedAmount) {
+      await spot.mint(userAccount.address, allowedAmount);
+      await spot.connect(userAccount).approve(pbm.address, allowedAmount);
+
+      expect(await spot.balanceOf(userAccount.address)).to.equal(allowedAmount);
+      expect(await spot.balanceOf(pbm.address)).to.equal(0);
+    }
+
+    // Utility function to load erc20 token to pbm
+    async function loadSpotToPBM(userAccount, amount) {
+      await pbm.connect(userAccount).load(0, amount);
+      expect(await pbm.userWalletBalance(userAccount.address)).to.equal(amount);
+      expect(await spot.balanceOf(userAccount.address)).to.equal(amount);
+      expect(await spot.balanceOf(pbm.address)).to.equal(amount);
+    }
+
     it('Load ERC20 token without holding any envelope PBM throws an error', async () => {
       await expect(
         pbm.connect(accounts[1]).load(0, 100000000),
@@ -314,21 +331,13 @@ describe('PBM', async () => {
 
     it('Load ERC20 token to PBM envelope successfully', async () => {
       // mint the PBM envelope to accounts[1]
-      await pbm.mint(0, 1, accounts[1].address);
+      await mintAndSetSpotApproval(accounts[1], 200000000);
+
       // mint and approve PBM to pull erc20 token from accounts[1]
-      await spot.mint(accounts[1].address, 200000000);
-      await spot.connect(accounts[1]).approve(pbm.address, 200000000);
+      await pbm.mint(0, 1, accounts[1].address);
 
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(200000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(0);
-
-      // load ERC20 token to PBM envelope
-      await pbm.connect(accounts[1]).load(0, 100000000);
-      expect(await pbm.userWalletBalance(accounts[1].address)).to.equal(
-        100000000,
-      );
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(100000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(100000000);
+      // load 100000000 ERC20 token to PBM envelope
+      await loadSpotToPBM(accounts[1], 100000000);
     });
 
     it('Unload without load first revert with error', async () => {
@@ -343,19 +352,10 @@ describe('PBM', async () => {
       // mint the PBM envelope to accounts[1]
       await pbm.mint(0, 1, accounts[1].address);
       // mint and approve PBM to pull erc20 token from accounts[1]
-      await spot.mint(accounts[1].address, 200000000);
-      await spot.connect(accounts[1]).approve(pbm.address, 200000000);
+      await mintAndSetSpotApproval(accounts[1], 200000000);
 
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(200000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(0);
-
-      // load ERC20 token to PBM envelope
-      await pbm.connect(accounts[1]).load(0, 100000000);
-      expect(await pbm.userWalletBalance(accounts[1].address)).to.equal(
-        100000000,
-      );
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(100000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(100000000);
+      // load 100000000 ERC20 token to PBM envelope
+      await loadSpotToPBM(accounts[1], 100000000);
 
       // unload ERC20 token from PBM envelope
       await expect(
@@ -369,19 +369,10 @@ describe('PBM', async () => {
       // mint the PBM envelope to accounts[1]
       await pbm.mint(0, 1, accounts[1].address);
       // mint and approve PBM to pull erc20 token from accounts[1]
-      await spot.mint(accounts[1].address, 200000000);
-      await spot.connect(accounts[1]).approve(pbm.address, 200000000);
+      await mintAndSetSpotApproval(accounts[1], 200000000);
 
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(200000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(0);
-
-      // load ERC20 token to PBM envelope
-      await pbm.connect(accounts[1]).load(0, 100000000);
-      expect(await pbm.userWalletBalance(accounts[1].address)).to.equal(
-        100000000,
-      );
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(100000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(100000000);
+      // load 100000000 ERC20 token to PBM envelope
+      await loadSpotToPBM(accounts[1], 100000000);
 
       // unload ERC20 token from PBM envelope
       await pbm.connect(accounts[1]).unLoad(100000000);
@@ -402,19 +393,10 @@ describe('PBM', async () => {
       // mint the PBM envelope to accounts[1]
       await pbm.mint(0, 1, accounts[1].address);
       // mint and approve PBM to pull erc20 token from accounts[1]
-      await spot.mint(accounts[1].address, 200000000);
-      await spot.connect(accounts[1]).approve(pbm.address, 200000000);
+      await mintAndSetSpotApproval(accounts[1], 200000000);
 
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(200000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(0);
-
-      // load ERC20 token to PBM envelope
-      await pbm.connect(accounts[1]).load(0, 100000000);
-      expect(await pbm.userWalletBalance(accounts[1].address)).to.equal(
-        100000000,
-      );
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(100000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(100000000);
+      // load 100000000 ERC20 token to PBM envelope
+      await loadSpotToPBM(accounts[1], 100000000);
 
       // unload ERC20 token from PBM envelope
       await expect(
@@ -426,19 +408,10 @@ describe('PBM', async () => {
       // mint the PBM envelope to accounts[1]
       await pbm.mint(0, 1, accounts[1].address);
       // mint and approve PBM to pull erc20 token from accounts[1]
-      await spot.mint(accounts[1].address, 200000000);
-      await spot.connect(accounts[1]).approve(pbm.address, 200000000);
+      await mintAndSetSpotApproval(accounts[1], 200000000);
 
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(200000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(0);
-
-      // load ERC20 token to PBM envelope
-      await pbm.connect(accounts[1]).load(0, 100000000);
-      expect(await pbm.userWalletBalance(accounts[1].address)).to.equal(
-        100000000,
-      );
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(100000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(100000000);
+      // load 100000000 ERC20 token to PBM envelope for accounts[1
+      await loadSpotToPBM(accounts[1], 100000000);
 
       // accounts[1] set approval for accounts[2] to unload ERC20 token from PBM envelope
       await pbm
@@ -466,19 +439,10 @@ describe('PBM', async () => {
       // mint the PBM envelope to accounts[1]
       await pbm.mint(0, 1, accounts[1].address);
       // mint and approve PBM to pull erc20 token from accounts[1]
-      await spot.mint(accounts[1].address, 200000000);
-      await spot.connect(accounts[1]).approve(pbm.address, 200000000);
-
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(200000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(0);
+      await mintAndSetSpotApproval(accounts[1], 200000000);
 
       // load ERC20 token to PBM envelope
-      await pbm.connect(accounts[1]).load(0, 100000000);
-      expect(await pbm.userWalletBalance(accounts[1].address)).to.equal(
-        100000000,
-      );
-      expect(await spot.balanceOf(accounts[1].address)).to.equal(100000000);
-      expect(await spot.balanceOf(pbm.address)).to.equal(100000000);
+      await loadSpotToPBM(accounts[1], 100000000);
 
       // accounts[1] set approval for accounts[2] to unload ERC20 token from PBM envelope
       await pbm
@@ -542,7 +506,6 @@ describe('PBM', async () => {
 
     // Utility function for creating and minting PBM tokens
     async function createAndMintPBM(
-      pbm,
       type,
       discount,
       minSpend,
@@ -567,13 +530,7 @@ describe('PBM', async () => {
     }
 
     // Utility function for setting up permissions and allowances
-    async function setupPermissions(
-      spot,
-      pbm,
-      merchantHelper,
-      merchantAccount,
-      allowedAmount,
-    ) {
+    async function setupPermissions(merchantAccount, allowedAmount) {
       await spot
         .connect(merchantAccount)
         .approve(merchantHelper.address, allowedAmount);
@@ -583,13 +540,7 @@ describe('PBM', async () => {
     }
 
     // Utility function for approving and loading PBM
-    async function approveAndLoadPBM(
-      spot,
-      pbm,
-      userAccount,
-      tokenId,
-      loadAmount,
-    ) {
+    async function approveAndLoadPBM(userAccount, tokenId, loadAmount) {
       await spot.connect(userAccount).approve(pbm.address, loadAmount);
       await pbm
         .connect(userAccount)
@@ -623,7 +574,7 @@ describe('PBM', async () => {
       await spot.mint(accounts[1].address, 200000000);
 
       // accounts[1] grant approval to pbm to spend its spot token and load the payment spot to PBM envelope
-      await approveAndLoadPBM(spot, pbm, accounts[1], 0, 100000000);
+      await approveAndLoadPBM(accounts[1], 0, 100000000);
       // transfer the PBM envelope to merchant accounts[2]
       await expect(
         pbm
@@ -647,7 +598,7 @@ describe('PBM', async () => {
       await merchantHelper.addAllowedPBM(pbm.address);
 
       // accounts[1] grant approval to pbm to spend its spot token and load the payment spot to PBM envelope
-      await approveAndLoadPBM(spot, pbm, accounts[1], 0, 100000000);
+      await approveAndLoadPBM(accounts[1], 0, 100000000);
 
       // transfer the PBM envelope to merchant accounts[2]
       await expect(
@@ -675,7 +626,7 @@ describe('PBM', async () => {
       await merchantHelper.addWhitelistedMerchant(accounts[2].address);
 
       // accounts[1] grant approval to pbm to spend its spot token and load the payment spot to PBM envelope
-      await approveAndLoadPBM(spot, pbm, accounts[1], 0, 100000000);
+      await approveAndLoadPBM(accounts[1], 0, 100000000);
 
       // transfer the PBM envelope to merchant accounts[2]
       await expect(
@@ -699,10 +650,10 @@ describe('PBM', async () => {
       // approve merchant helper to spend spot token on behalf of Merchant accounts[2]
       // whitelist PBM on merchant helper
       // whitelist accounts[2] as a merchant on merhcant helper
-      await setupPermissions(spot, pbm, merchantHelper, accounts[2], 200000000);
+      await setupPermissions(accounts[2], 200000000);
 
       // accounts[1] grant approval to pbm to spend its spot token and load the payment spot to PBM envelope
-      await approveAndLoadPBM(spot, pbm, accounts[1], 0, 100000000);
+      await approveAndLoadPBM(accounts[1], 0, 100000000);
 
       let exceedAmount = 200000000; // with same 6 decimals as spot
       let data = ethers.utils.defaultAbiCoder.encode(
@@ -733,10 +684,10 @@ describe('PBM', async () => {
       // approve merchant helper to spend spot token on behalf of Merchant accounts[2]
       // whitelist PBM on merchant helper
       // whitelist accounts[2] as a merchant on merhcant helper
-      await setupPermissions(spot, pbm, merchantHelper, accounts[2], 100000000);
+      await setupPermissions(accounts[2], 100000000);
 
       // accounts[1] grant approval to pbm to spend its spot token and load the payment spot to PBM envelope
-      await approveAndLoadPBM(spot, pbm, accounts[1], 0, 100000000);
+      await approveAndLoadPBM(accounts[1], 0, 100000000);
 
       // set filters for MerchantPayment and MerchantCashback events
       let paymentFilter = pbm.filters.MerchantPayment();
@@ -771,7 +722,6 @@ describe('PBM', async () => {
       // create a percent discount PBM token type: with 5% discount 20 spot token min spend 10 spot token max discount cap
       // mint the percent discount PBM and spot to accounts[1]
       await createAndMintPBM(
-        pbm,
         'percent',
         5,
         20,
@@ -786,9 +736,9 @@ describe('PBM', async () => {
       // approve merchant helper to spend spot token on behalf of Merchant accounts[2]
       // whitelist PBM on merchant helper
       // whitelist accounts[2] as a merchant on merhcant helper
-      await setupPermissions(spot, pbm, merchantHelper, accounts[2], 100000000);
+      await setupPermissions(accounts[2], 100000000);
 
-      await approveAndLoadPBM(spot, pbm, accounts[1], 1, 100000000);
+      await approveAndLoadPBM(accounts[1], 1, 100000000);
 
       let lessThanMinAmount = 10000000; // with same 6 decimals as spot
       let data = ethers.utils.defaultAbiCoder.encode(
@@ -817,7 +767,6 @@ describe('PBM', async () => {
       // create a percent discount PBM token type: with 5% discount 20 spot token min spend 10 spot token max discount cap
       // mint the percent discount PBM and spot to accounts[1]
       await createAndMintPBM(
-        pbm,
         'percent',
         5,
         20,
@@ -831,10 +780,10 @@ describe('PBM', async () => {
       await spot.mint(accounts[1].address, 300000000);
 
       // approve merchant helper to spend spot token on behalf of Merchant accounts[2]
-      await setupPermissions(spot, pbm, merchantHelper, accounts[2], 300000000);
+      await setupPermissions(accounts[2], 300000000);
 
       // accounts[1] grant approval to pbm to spend its spot token and load the payment spot to PBM envelope
-      await approveAndLoadPBM(spot, pbm, accounts[1], 1, 300000000);
+      await approveAndLoadPBM(accounts[1], 1, 300000000);
 
       let overCapAmount = 300000000; // with same 6 decimals as spot
       let data = ethers.utils.defaultAbiCoder.encode(
@@ -863,7 +812,6 @@ describe('PBM', async () => {
       // create a percent discount PBM token type: with 5% discount 20 spot token min spend 10 spot token max discount cap
       // mint the percent discount PBM and spot to accounts[1]
       await createAndMintPBM(
-        pbm,
         'percent',
         5,
         20,
@@ -879,10 +827,10 @@ describe('PBM', async () => {
       // approve merchant helper to spend spot token on behalf of Merchant accounts[2]
       // whitelist PBM on merchant helper
       // whitelist accounts[2] as a merchant on merhcant helper
-      await setupPermissions(spot, pbm, merchantHelper, accounts[2], 100000000);
+      await setupPermissions(accounts[2], 100000000);
 
       // accounts[1] grant approval to pbm to spend its spot token and load the payment spot to PBM envelope
-      await approveAndLoadPBM(spot, pbm, accounts[1], 1, 100000000);
+      await approveAndLoadPBM(accounts[1], 1, 100000000);
 
       // set filters for MerchantPayment and MerchantCashback events
       let paymentFilter = pbm.filters.MerchantPayment();
