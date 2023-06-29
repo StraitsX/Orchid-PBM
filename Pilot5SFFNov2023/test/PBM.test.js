@@ -68,7 +68,7 @@ describe('PBM', async () => {
       );
     });
 
-    it('Create token type with invalid discount type throws an error', async () => {
+    it('Throws an error while creating token type with invalid discount type', async () => {
       let currentDate = new Date();
       let currentEpoch = Math.floor(currentDate / 1000);
       let targetEpoch = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
