@@ -20,7 +20,7 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
 
     function uri(uint256 id) public view override returns (string memory) {
         
-        return "{  'description': 'cute dog', 'name': 'SUSHI THE SHIBA', 'attributes': [{'trait_type': 'Base', 'value': 'Canine'}], 'image': 'https://gateway.pinata.cloud/ipfs/QmWN3uWhzDmhPnY32QNWL95znQt74S333UodkBdz2wa9hG' }";
+        return "https://raw.githubusercontent.com/StraitsX/Orchid-PBM/HeroNFT/heroNFT2023SEP/metadata/0.json";
         
     }
 
