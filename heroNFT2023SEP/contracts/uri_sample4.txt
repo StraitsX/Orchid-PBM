@@ -1,0 +1,47 @@
+{
+  "description": "A shy dog in Singapore.", 
+  "image": "https://gateway.pinata.cloud/ipfs/QmQE9CoFUVhNad3CAdfiUk2T5gjtmpHofqioGnBroiVPt8", 
+  "name": "Sushi",
+  "attributes": [
+    {
+      "trait_type": "Base", 
+      "value": "Canine"
+    }, 
+    {
+      "trait_type": "Eyes", 
+      "value": "Medium"
+    }, 
+    {
+      "trait_type": "Level", 
+      "value": 99
+    }, 
+    {
+      "trait_type": "Stamina", 
+      "value": 15
+    }, 
+    {
+      "trait_type": "Personality", 
+      "value": "Shy"
+    }, 
+    {
+      "display_type": "boost_number", 
+      "trait_type": "Anger date", 
+      "value": 99
+    }, 
+    {
+      "display_type": "boost_percentage", 
+      "trait_type": "Hug Me", 
+      "value": 60
+    }, 
+    {
+      "display_type": "number", 
+      "trait_type": "Generation", 
+      "value": 99
+    },
+     {
+      "display_type": "date", 
+      "trait_type": "birthday", 
+      "value": 1546360800
+    }
+  ]
+}
