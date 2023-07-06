@@ -102,6 +102,18 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     }
 
     /**
+     * @dev See {IPBMTokenManager-isTokenRevoked}.
+     *
+     * Note: token is revoked if it is expired, balance supply is 0 and discount value is not 0 (token id is created before)
+     */
+    function isTokenRevoked(uint256 tokenId) external view override returns (bool) {
+        return
+            block.timestamp >= tokenTypes[tokenId].expiry &&
+            tokenTypes[tokenId].discountValue != 0 &&
+            tokenTypes[tokenId].balanceSupply == 0;
+    }
+
+    /**
      * @dev See {IPBMTokenManager-increaseBalanceSupply}.
      *
      * Requirements:
@@ -183,18 +195,6 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
             tokenTypes[tokenId].expiry,
             tokenTypes[tokenId].creator
         );
-    }
-
-    /**
-     * @dev See {IPBMTokenManager-getPBMRevokeValue}.
-     *
-     * Requirements:
-     *
-     * - `tokenId` should be a valid id that has already been created
-     */
-    function getPBMRevokeValue(uint256 tokenId) external view override returns (uint256) {
-        require(tokenTypes[tokenId].discountValue != 0, "PBM: Invalid Token Id(s)");
-        return tokenTypes[tokenId].discountValue * tokenTypes[tokenId].balanceSupply;
     }
 
     /**

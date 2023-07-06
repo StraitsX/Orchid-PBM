@@ -1,5 +1,7 @@
 const { assert, expect } = require('chai');
 const { ethers } = require('hardhat');
+const { time } = require('@nomicfoundation/hardhat-network-helpers');
+
 async function deploy(name, ...params) {
   const Contract = await ethers.getContractFactory(name);
   return await Contract.deploy(...params).then((f) => f.deployed());
@@ -859,6 +861,180 @@ describe('PBM', async () => {
       // check user spot balance after cashback
       // start with 200000000 transfer out 100000000 got 5000000 cashback = 105000000
       expect(await spot.balanceOf(accounts[1].address)).to.equal(105000000);
+    });
+  });
+
+  describe('PBM revoke and burnFrom tests', () => {
+    let spot = null;
+    let pbm = null;
+    let addressList = null;
+    let currentDate = null;
+    let currentEpoch = null;
+    let targetEpoch = null;
+
+    beforeEach(async () => {
+      let [_spot, _pbm, _addressList] = await init();
+      spot = _spot;
+      pbm = _pbm;
+      addressList = _addressList;
+
+      // create PBM envelope token type
+      currentDate = new Date();
+      currentEpoch = Math.floor(currentDate / 1000);
+      targetEpoch = currentEpoch + 100000;
+    });
+
+    // Utility function for creating and minting PBM tokens
+    async function createAndMintPBM(
+      epoch,
+      creatorAddress,
+      mintAddress,
+      mintAmount,
+      tokenId,
+    ) {
+      await pbm.createPBMTokenType(
+        'STXDiscount5',
+        'fixed',
+        5,
+        20,
+        5,
+        epoch,
+        creatorAddress,
+        'beforeExpiryURI',
+        'postExpiryURI',
+      );
+      await pbm.mint(tokenId, mintAmount, mintAddress);
+    }
+
+    it('Revoke PBM token with non creator revert with error', async () => {
+      // create mint PBM token id 0 to accounts[1]
+      await createAndMintPBM(
+        targetEpoch,
+        accounts[0].address,
+        accounts[1].address,
+        1,
+        0,
+      );
+      // revoke PBM token from accounts[1]
+      await expect(pbm.connect(accounts[1]).revokePBM(1)).to.be.revertedWith(
+        'PBM not revokable',
+      );
+    });
+
+    it('Revoke valid PBM token revert with error', async () => {
+      // create mint PBM token id 0 to accounts[1]
+      await createAndMintPBM(
+        targetEpoch,
+        accounts[0].address,
+        accounts[1].address,
+        1,
+        0,
+      );
+      // revoke PBM token from accounts[1]
+      await expect(pbm.connect(accounts[0]).revokePBM(1)).to.be.revertedWith(
+        'PBM not revokable',
+      );
+    });
+
+    it('Revoke expired PBM token by a non creator revert with error', async () => {
+      // create mint PBM token id 0 to accounts[1]
+      await createAndMintPBM(
+        targetEpoch,
+        accounts[0].address,
+        accounts[1].address,
+        1,
+        0,
+      );
+      // revoke PBM token from accounts[1]
+      await time.increaseTo(targetEpoch + 1);
+      // try to revoke PBM token from accounts[1] (not the creator)
+      await expect(pbm.connect(accounts[1]).revokePBM(0)).to.be.revertedWith(
+        'PBM not revokable',
+      );
+    });
+
+    it('Revoke expired PBM token successfully', async () => {
+      let pbmTokenManagerAddress = await pbm.pbmTokenManager();
+      let PBMTokenManagerContract = await ethers.getContractFactory(
+        'PBMTokenManager',
+      );
+      let pbmTokenManager = await PBMTokenManagerContract.attach(
+        pbmTokenManagerAddress,
+      );
+      // create mint PBM token id 0 to accounts[1] with expiry 100000 seconds from now (token id would be 1)
+      let currentTime = await time.latest();
+      let expiry = currentTime + 100000;
+      await createAndMintPBM(
+        expiry,
+        accounts[0].address,
+        accounts[1].address,
+        1,
+        0,
+      );
+
+      // revoke PBM token from accounts[1]
+      await time.increaseTo(expiry + 1);
+      await pbm.connect(accounts[0]).revokePBM(0);
+      expect(await pbmTokenManager.isTokenRevoked(0)).to.be.true;
+    });
+
+    it('Burn non revoked PBM token from user account revert with error', async () => {
+      let currentTime = await time.latest();
+      let expiry = currentTime + 100000;
+      // create and mint pbm token id 0 to accounts[1]
+      await createAndMintPBM(
+        expiry,
+        accounts[0].address,
+        accounts[1].address,
+        1,
+        0,
+      );
+      expect(await pbm.balanceOf(accounts[1].address, 0)).to.equal(1);
+      // accounts[1] try to call burnFrom to burn token id 0
+      await expect(
+        pbm.connect(accounts[0]).burnFrom(accounts[1].address, 0),
+      ).to.be.revertedWith('PBM: Token is not revoked');
+    });
+
+    it('Non owner burn PBM token from user account revert with error', async () => {
+      let currentTime = await time.latest();
+      let expiry = currentTime + 100000;
+      // create and mint pbm token id 0 to accounts[1]
+      await createAndMintPBM(
+        expiry,
+        accounts[0].address,
+        accounts[1].address,
+        1,
+        0,
+      );
+      expect(await pbm.balanceOf(accounts[1].address, 0)).to.equal(1);
+      await time.increaseTo(expiry + 1);
+      // revoke token id 0
+      await pbm.connect(accounts[0]).revokePBM(0);
+      // accounts[1] try to call burnFrom to burn token id 0
+      await expect(
+        pbm.connect(accounts[1]).burnFrom(accounts[1].address, 0),
+      ).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('Burn PBM token from user account successfully', async () => {
+      let currentTime = await time.latest();
+      let expiry = currentTime + 100000;
+      // create and mint pbm token id 0 to accounts[1]
+      await createAndMintPBM(
+        expiry,
+        accounts[0].address,
+        accounts[1].address,
+        1,
+        0,
+      );
+      expect(await pbm.balanceOf(accounts[1].address, 0)).to.equal(1);
+      await time.increaseTo(expiry + 1);
+      // revoke token id 0
+      await pbm.connect(accounts[0]).revokePBM(0);
+      // owner burn token id 0 from accounts[1]
+      await pbm.connect(accounts[0]).burnFrom(accounts[1].address, 0);
+      expect(await pbm.balanceOf(accounts[1].address, 0)).to.equal(0);
     });
   });
 });

@@ -401,14 +401,24 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - token must be expired
      */
     function revokePBM(uint256 tokenId) external override whenNotPaused {
-        uint256 valueOfTokens = PBMTokenManager(pbmTokenManager).getPBMRevokeValue(tokenId);
-
         PBMTokenManager(pbmTokenManager).revokePBM(tokenId, msg.sender);
+    }
 
-        // transfering underlying ERC20 tokens
-        ERC20Helper.safeTransfer(spotToken, msg.sender, valueOfTokens);
+    /**
+     * @dev See {IPBM-burnFrom}.
+     *
+     * Requirements:
+     *
+     * - `tokenId` should be revoked.
+     * - caller must be the PBM contract owner
+     * - user should have the PBM tokens that are being burned
+     */
 
-        emit PBMrevokeWithdraw(msg.sender, tokenId, spotToken, valueOfTokens);
+    function burnFrom(address user, uint256 tokenId) external override onlyOwner {
+        require(IPBMTokenManager(pbmTokenManager).isTokenRevoked(tokenId), "PBM: Token is not revoked");
+        uint256 balance = balanceOf(user, tokenId);
+        require(balance > 0, "PBM: Do not have any token to burn");
+        _burn(user, tokenId, balance);
     }
 
     /**

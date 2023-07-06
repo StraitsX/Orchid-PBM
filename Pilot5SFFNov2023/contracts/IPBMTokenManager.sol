@@ -14,11 +14,6 @@ interface IPBMTokenManager {
     /// @return Returns true if all the tokenId are valid else false
     function areTokensValid(uint256[] memory tokenIds) external view returns (bool);
 
-    /// @notice gets the total value of underlying ERC20 tokens the PBM type holds
-    /// @param tokenId The id for the PBM in query
-    /// @return Returns the total ERC20 amount
-    function getPBMRevokeValue(uint256 tokenId) external view returns (uint256);
-
     /// @notice gets the amount of underlying ERC20 tokens each of the the PBM type holds
     /// @param tokenId The id for the PBM in query
     /// @return Returns the underlying ERC20 amount
@@ -96,6 +91,10 @@ interface IPBMTokenManager {
     /// @param tokenId The PBM tokenId which has been revoked
     /// @param sender updated token URI to convey revoking, if part of design
     function revokePBM(uint256 tokenId, address sender) external;
+
+    /// @notice Check whether a PBM tokenId has been revoked
+    /// @param tokenId The PBM tokenId
+    function isTokenRevoked(uint256 tokenId) external returns (bool);
 
     /// @notice Event emitted when a new PBM token type is created
     /// @param tokenId The account from which the tokens were sent, i.e. the balance decreased

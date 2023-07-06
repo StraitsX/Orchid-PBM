@@ -118,6 +118,12 @@ interface IPBM {
     /// @param tokenId The identifier of the PBM token type
     function revokePBM(uint256 tokenId) external;
 
+    /// @notice Allows the owner of the PBM contract to burn all the PBM tokens from user wallet
+    /// @notice
+    /// @param tokenId The identifier of the PBM token type
+    /// @param user The address of the user wallet which owns the PBM
+    function burnFrom(address user, uint256 tokenId) external;
+
     /// @notice Get the details of the PBM Token type
     /// @param tokenId The identifier of the PBM token type
     /// @return name The name of the PBM type
@@ -158,11 +164,4 @@ interface IPBM {
     /// @param ERC20Token The address of the ERC-20 token
     /// @param ERC20TokenValue The number of ERC-20 tokens transferred
     event MerchantCashback(address indexed from, address to, address ERC20Token, uint256 ERC20TokenValue);
-
-    /// @notice Emitted when a PBM type creator withdraws the underlying ERC-20 tokens from all the remaining expired PBMs
-    /// @param beneficiary the address ( PBM type creator ) which receives the ERC20 Token
-    /// @param PBMTokenId The identifiers of the different PBM token type
-    /// @param ERC20Token The address of the underlying ERC-20 token
-    /// @param ERC20TokenValue The number of underlying ERC-20 tokens transferred
-    event PBMrevokeWithdraw(address beneficiary, uint256 PBMTokenId, address ERC20Token, uint256 ERC20TokenValue);
 }
