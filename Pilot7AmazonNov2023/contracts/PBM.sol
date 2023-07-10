@@ -5,13 +5,17 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "./ERC20Helper.sol";
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "./IPBMAddressList.sol";
 
-contract PBM is ERC1155, Ownable, Pausable, IPBM {
+contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
+    using ECDSA for bytes32;
+
     // undelrying ERC-20 tokens
     address public spotToken = address(0);
     // address of the token manager
@@ -24,7 +28,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     // time of expiry ( epoch )
     uint256 public contractExpiry;
 
-    constructor() ERC1155("") {
+    constructor() ERC1155("") EIP712("PBM", "0.0.1") {
         pbmTokenManager = address(new PBMTokenManager());
     }
 
@@ -37,6 +41,69 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         pbmAddressList = _pbmAddressList;
 
         initialised = true;
+    }
+
+    struct TokenWalletBalance {
+        uint256 availableBalance; // when p2p topup happens, both avail and current balance removed.
+        uint256 currentBalance;
+    }
+
+    // each user_add -> token_id pair is the user's account number, that holds to the max faceValue.
+    mapping(address => mapping(uint256 => TokenWalletBalance)) private userAccountBalance;
+
+    enum OrderStatus {
+        PENDING,
+        REDEEMED,
+        CANCELLED
+    }
+
+    struct Order {
+        string order_id;
+        uint256 order_value; // how much this order cost.
+        OrderStatus status;
+    }
+
+    // user address to orders list mapping
+    mapping(address => Order[]) private userOrders;
+
+    // TBD check whether using memory is correct
+    function getUserBalance(address user, uint256 token_id) public view returns (TokenWalletBalance memory twb) {
+        TokenWalletBalance memory walBal = userAccountBalance[user][token_id];
+        return walBal;
+    }
+
+    function cancelOrder() external {
+        // increase the currentBalance.
+        // eseentially in pay and cancel pay, we only touch the current balance.
+        // avail balance is only edited in the event of p2p transfer, or successful redeem.
+    }
+
+    struct OrderRedeemRequest {
+        address from; // redeem from who, ie: the sender should be the same as the from address.
+        address to; // merchant's wallet address.
+        string order_id;
+    }
+
+    bytes32 private constant _TYPEHASH = keccak256("OrderRedeemRequest(address from,address to,string order_id)");
+
+    // update order status
+    // credit merchant wallet
+    function redeem(OrderRedeemRequest calldata req, bytes calldata signature) external {
+        // verify the signature by calling verify
+        // upon redemption, we will update availBalance (reduce it)
+    }
+
+    function verify(OrderRedeemRequest calldata req, bytes calldata signature) public view returns (bool) {
+        address signer = _hashTypedDataV4(keccak256(abi.encode(_TYPEHASH, req.from, req.to, req.order_id))).recover(
+            signature
+        );
+        return signer == req.from;
+    }
+
+    function pay(string memory order_id, uint256 amount, address merchant_wallet_address) external {
+        // move the user's currentBalance into the order list
+        // create Orders with the order_id, and how much this order_id cost.
+        // update userAccountBalance[user][token_id]; currentBalance
     }
 
     /**
