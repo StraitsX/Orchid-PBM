@@ -49,7 +49,16 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
     }
 
     // each user_add -> token_id pair is the user's account number, that holds to the max faceValue.
+    // TBD: do we need the token id? since there will only be one token id
     mapping(address => mapping(uint256 => TokenWalletBalance)) private userAccountBalance;
+
+    function getUserBalance(
+        address user,
+        uint256 token_id
+    ) public view whenNotPaused returns (TokenWalletBalance memory twb) {
+        TokenWalletBalance memory walBal = userAccountBalance[user][token_id];
+        return walBal;
+    }
 
     enum OrderStatus {
         PENDING,
@@ -58,29 +67,52 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
     }
 
     struct Order {
-        string order_id;
         uint256 order_value; // how much this order cost.
+        address merchant_address; // need this to check upon redemption
         OrderStatus status;
     }
 
-    // user address to orders list mapping
-    mapping(address => Order[]) private userOrders;
+    // user address => order_id => Order
+    // change it to a direct mapping to avoid loops
+    // is there any case we need to loop through the orders? or get all orders for a user?
+    // can add a array of order_ids for a user, and then loop through the array to get the orders.
+    // mapping(address => string[]) private userOrderIds;
+    mapping(address => mapping(string => Order)) private userOrders;
 
-    // TBD check whether using memory is correct
-    function getUserBalance(address user, uint256 token_id) public view returns (TokenWalletBalance memory twb) {
-        TokenWalletBalance memory walBal = userAccountBalance[user][token_id];
-        return walBal;
+    function createOrder(string memory order_id, uint256 amount, address merchant_address) external whenNotPaused {
+        // move the user's currentBalance into the order list
+        // create Orders with the order_id, and how much this order_id cost.
+        // update userAccountBalance[user][token_id]; currentBalance
+        TokenWalletBalance storage balance = userAccountBalance[_msgSender()][0]; // Assuming the only token id is 0
+        require(balance.currentBalance >= amount, "Insufficient balance");
+
+        balance.currentBalance -= amount;
+
+        Order memory newOrder = Order({
+            order_value: amount,
+            merchant_address: merchant_address,
+            status: OrderStatus.PENDING
+        });
+
+        userOrders[_msgSender()][order_id] = newOrder;
     }
 
-    function cancelOrder() external {
+    function cancelOrder(string memory order_id) external whenNotPaused {
         // increase the currentBalance.
         // eseentially in pay and cancel pay, we only touch the current balance.
         // avail balance is only edited in the event of p2p transfer, or successful redeem.
+        Order storage order = userOrders[_msgSender()][order_id];
+        require(order.status == OrderStatus.PENDING, "Cannot cancel order");
+
+        TokenWalletBalance storage balance = userAccountBalance[_msgSender()][0];
+        balance.currentBalance += order.order_value;
+
+        order.status = OrderStatus.CANCELLED;
     }
 
     struct OrderRedeemRequest {
         address from; // redeem from who, ie: the sender should be the same as the from address.
-        address to; // merchant's wallet address.
+        address to; // merchant's wallet address. TBD: do we need this???
         string order_id;
     }
 
@@ -88,22 +120,35 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
 
     // update order status
     // credit merchant wallet
-    function redeem(OrderRedeemRequest calldata req, bytes calldata signature) external {
+    function redeem(OrderRedeemRequest calldata req, bytes calldata signature) external whenNotPaused {
         // verify the signature by calling verify
         // upon redemption, we will update availBalance (reduce it)
+        require(IPBMAddressList(pbmAddressList).isMerchant(_msgSender()), "Caller not a merchant");
+
+        //if only the correct merchant can ever obtain the valid signature from the user, then we can remove this check
+        Order storage order = userOrders[req.from][req.order_id];
+        require(order.merchant_address == _msgSender(), "Order not intended for this merchant");
+        require(order.status == OrderStatus.PENDING, "Cannot redeem order");
+        require(verify(req, signature), "Invalid signature");
+
+        TokenWalletBalance storage balance = userAccountBalance[req.from][0];
+        balance.availableBalance -= order.order_value;
+
+        order.status = OrderStatus.REDEEMED;
+        // credit merchant
+        ERC20Helper.safeTransfer(spotToken, req.to, order.order_value);
     }
+
+    // rationale for verify:
+    // Without verify, merchant knowing the order details(from, to, order_id) could redeem an OrderRedeemRequest without needing to control the private key of the from address.
+    // With the verify function, you can be sure that the person who signed the OrderRedeemRequest controls the private key of the from address.
+    // The signature is generated by user (from wallet owner) signing the OrderRedeemRequest and can only obtained by merchant upon user redeeming
 
     function verify(OrderRedeemRequest calldata req, bytes calldata signature) public view returns (bool) {
         address signer = _hashTypedDataV4(keccak256(abi.encode(_TYPEHASH, req.from, req.to, req.order_id))).recover(
             signature
         );
         return signer == req.from;
-    }
-
-    function pay(string memory order_id, uint256 amount, address merchant_wallet_address) external {
-        // move the user's currentBalance into the order list
-        // create Orders with the order_id, and how much this order_id cost.
-        // update userAccountBalance[user][token_id]; currentBalance
     }
 
     /**

@@ -335,7 +335,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "order_id",
+        "type": "string"
+      }
+    ],
     "name": "cancelOrder",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -352,6 +358,29 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "order_id",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "merchant_address",
+        "type": "address"
+      }
+    ],
+    "name": "createOrder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -606,29 +635,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "order_id",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "merchant_wallet_address",
-        "type": "address"
-      }
-    ],
-    "name": "pay",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
