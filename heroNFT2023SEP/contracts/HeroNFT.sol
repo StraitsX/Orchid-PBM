@@ -6,34 +6,42 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     constructor() ERC1155("") {}
 
-    function setURI(string memory newuri) public onlyOwner {
-        _setURI(newuri);
+    // better open a dedicated repo on github to store the metadata
+    string baseURI =
+        "https://raw.githubusercontent.com/StraitsX/Orchid-PBM/STRAITSX-4706/commemorative_nft/heroNFT2023SEP/metadata/";
+    mapping(address => bool) public whitelisted;
+
+    function setURI(string memory baseUri) public onlyOwner {
+        baseURI = baseUri;
     }
 
     function pause() public onlyOwner {
         _pause();
     }
 
-    function uri(uint256 id) public view override returns (string memory) {
-        
-        return "https://raw.githubusercontent.com/StraitsX/Orchid-PBM/HeroNFT/heroNFT2023SEP/metadata/0.json";
-        
+    function uri(uint256 token_id) public view override returns (string memory) {
+        return string(abi.encodePacked(baseURI, Strings.toString(token_id), ".json"));
     }
-
 
     function unpause() public onlyOwner {
         _unpause();
     }
 
-    function mint(address account, uint256 id, uint256 amount, bytes memory data) public onlyOwner {
+    function mint(address account, uint256 id, uint256 amount, bytes memory data) public onlyWhitelisted {
         _mint(account, id, amount, data);
     }
 
-    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public onlyOwner {
+    function mintBatch(
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public onlyWhitelisted {
         _mintBatch(to, ids, amounts, data);
     }
 
@@ -46,5 +54,18 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         bytes memory data
     ) internal override(ERC1155, ERC1155Supply) whenNotPaused {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    modifier onlyWhitelisted() {
+        require(whitelisted[msg.sender] || msg.sender == owner(), "Caller is not an whitelisted address nor the owner");
+        _;
+    }
+
+    function addWhitelisted(address _whitelistAddress) external onlyOwner {
+        whitelisted[_whitelistAddress] = true;
+    }
+
+    function removeWhitelisted(address _whitelistAddress) external onlyOwner {
+        whitelisted[_whitelistAddress] = false;
     }
 }

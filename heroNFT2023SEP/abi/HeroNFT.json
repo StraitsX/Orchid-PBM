@@ -171,6 +171,19 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_whitelistAddress",
+        "type": "address"
+      }
+    ],
+    "name": "addWhitelisted",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "account",
         "type": "address"
       },
@@ -394,6 +407,19 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_whitelistAddress",
+        "type": "address"
+      }
+    ],
+    "name": "removeWhitelisted",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
@@ -488,7 +514,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "newuri",
+        "name": "baseUri",
         "type": "string"
       }
     ],
@@ -559,7 +585,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "token_id",
         "type": "uint256"
       }
     ],
@@ -569,6 +595,25 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "whitelisted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
