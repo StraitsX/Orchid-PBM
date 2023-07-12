@@ -38,7 +38,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     //mapping to keep track of how much an user is allowed to withdraw from PBM
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    //mapping to store the whitelist of approvers
+    //mapping to store whitelisted batch approvers
     mapping(address => bool) private _batchSetApprovalWhitelist;
 
     function initialise(
