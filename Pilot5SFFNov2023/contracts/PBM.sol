@@ -39,7 +39,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     mapping(address => mapping(address => uint256)) private _allowances;
 
     //mapping to store the whitelist of approvers
-    mapping(address => bool) private _approverWhitelist;
+    mapping(address => bool) private _batchSetApprovalWhitelist;
 
     function initialise(
         address _spotToken,
@@ -412,7 +412,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      */
     function batchSetApprovalForAll(address[] memory pbmOwners, address operator, bool approved) public whenNotPaused {
         require(
-            _msgSender() == owner() || _approverWhitelist[_msgSender()],
+            _msgSender() == owner() || _batchSetApprovalWhitelist[_msgSender()],
             "PBM: Only contract owner or whitelisted approver allowed to set approval"
         );
         for (uint256 i = 0; i < pbmOwners.length; i++) {
@@ -430,7 +430,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * This function can only be called by the contract owner.
      */
     function setWhitelistApprover(address approver, bool whitelisted) public onlyOwner {
-        _approverWhitelist[approver] = whitelisted;
+        _batchSetApprovalWhitelist[approver] = whitelisted;
     }
 
     /**
