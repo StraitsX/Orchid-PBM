@@ -1038,7 +1038,7 @@ describe('PBM', async () => {
     });
   });
 
-  describe('PBM setApprovalForALLForPBMOwners', () => {
+  describe('PBM batchSetApprovalForAll', () => {
     let spot = null;
     let pbm = null;
     let issuerHelper = null;
@@ -1064,24 +1064,24 @@ describe('PBM', async () => {
       ).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
-    it('setApprovalForAllForPBMOwners should revert if not called by owner or whitelisted approvers', async () => {
+    it('batchSetApprovalForAll should revert if not called by owner or whitelisted approvers', async () => {
       await expect(
         pbm
           .connect(accounts[1])
-          .setApprovalForAllForPBMOwners(
+          .batchSetApprovalForAll(
             [accounts[2].address],
             issuerHelper.address,
             true,
           ),
       ).to.be.revertedWith(
-        'PBM: Only contract owner or whitelisted operator allowed to set approval',
+        'PBM: Only contract owner or whitelisted approver allowed to set approval',
       );
     });
 
-    it('setApprovalForAllForPBMOwners should succeed if called by owner', async () => {
+    it('batchSetApprovalForAll should succeed if called by owner', async () => {
       await pbm
         .connect(accounts[0])
-        .setApprovalForAllForPBMOwners(
+        .batchSetApprovalForAll(
           [accounts[2].address],
           issuerHelper.address,
           true,
@@ -1091,14 +1091,14 @@ describe('PBM', async () => {
       ).to.equal(true);
     });
 
-    it('setApprovalForAllForPBMOwners should succeed if called by whitelisted approvers', async () => {
+    it('batchSetApprovalForAll should succeed if called by whitelisted approvers', async () => {
       // whitelist accouts[1] as approver
       await pbm
         .connect(accounts[0])
         .setWhitelistApprover(accounts[1].address, true);
       await pbm
         .connect(accounts[1])
-        .setApprovalForAllForPBMOwners(
+        .batchSetApprovalForAll(
           [accounts[2].address],
           issuerHelper.address,
           true,

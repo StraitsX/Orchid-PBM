@@ -395,20 +395,20 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
-     * @dev setApprovalForAllForPBMOwners for a list of PBM owners
+     * @dev batchSetApprovalForAll for a list of PBM owners
      *
      * Requirements:
      *
      * - caller should either be the contract owner or whitelisted approver
      */
-    function setApprovalForAllForPBMOwners(
+    function batchSetApprovalForAll(
         address[] memory pbmOwners,
         address operator,
         bool approved
     ) public whenNotPaused {
         require(
             _msgSender() == owner() || _approverWhitelist[_msgSender()],
-            "PBM: Only contract owner or whitelisted operator allowed to set approval"
+            "PBM: Only contract owner or whitelisted approver allowed to set approval"
         );
         for (uint256 i = 0; i < pbmOwners.length; i++) {
             _setApprovalForAll(pbmOwners[i], operator, approved);
