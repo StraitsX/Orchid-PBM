@@ -32,6 +32,8 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     }
 
     function mint(address account, uint256 id, uint256 amount, bytes memory data) public onlyWhitelisted {
+        require(amount == 1, "HeroNFT: Amount must be 1");
+        require(balanceOf(account, id) == 0, "HeroNFT: Account already owns this token_id");
         _mint(account, id, amount, data);
     }
 
