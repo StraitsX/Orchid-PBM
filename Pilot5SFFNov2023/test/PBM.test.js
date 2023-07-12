@@ -1069,7 +1069,7 @@ describe('PBM', async () => {
         pbm
           .connect(accounts[1])
           .batchSetApprovalForAll(
-            [accounts[2].address],
+            [accounts[2].address, accounts[3].address, accounts[4].address],
             issuerHelper.address,
             true,
           ),
@@ -1082,12 +1082,18 @@ describe('PBM', async () => {
       await pbm
         .connect(accounts[0])
         .batchSetApprovalForAll(
-          [accounts[2].address],
+          [accounts[2].address, accounts[3].address, accounts[4].address],
           issuerHelper.address,
           true,
         );
       expect(
         await pbm.isApprovedForAll(accounts[2].address, issuerHelper.address),
+      ).to.equal(true);
+      expect(
+        await pbm.isApprovedForAll(accounts[3].address, issuerHelper.address),
+      ).to.equal(true);
+      expect(
+        await pbm.isApprovedForAll(accounts[4].address, issuerHelper.address),
       ).to.equal(true);
     });
 
@@ -1099,12 +1105,18 @@ describe('PBM', async () => {
       await pbm
         .connect(accounts[1])
         .batchSetApprovalForAll(
-          [accounts[2].address],
+          [accounts[2].address, accounts[3].address, accounts[4].address],
           issuerHelper.address,
           true,
         );
       expect(
         await pbm.isApprovedForAll(accounts[2].address, issuerHelper.address),
+      ).to.equal(true);
+      expect(
+        await pbm.isApprovedForAll(accounts[3].address, issuerHelper.address),
+      ).to.equal(true);
+      expect(
+        await pbm.isApprovedForAll(accounts[4].address, issuerHelper.address),
       ).to.equal(true);
     });
   });
