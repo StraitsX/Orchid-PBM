@@ -13,6 +13,8 @@ import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "./IPBMAddressList.sol";
 
+// TODO: create IEscrowPayment.sol and EscrowPayment.sol
+
 contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
     using ECDSA for bytes32;
 
@@ -49,7 +51,6 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
     }
 
     // each user_add -> token_id pair is the user's account number, that holds to the max faceValue.
-    // TBD: do we need the token id? since there will only be one token id
     mapping(address => mapping(uint256 => TokenWalletBalance)) private userAccountBalance;
 
     function getUserBalance(
@@ -76,7 +77,7 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
     // change it to a direct mapping to avoid loops
     // is there any case we need to loop through the orders? or get all orders for a user?
     // can add a array of order_ids for a user, and then loop through the array to get the orders.
-    // mapping(address => string[]) private userOrderIds;
+    mapping(address => string[]) private userOrderIds;
     mapping(address => mapping(string => Order)) private userOrders;
 
     function createOrder(string memory order_id, uint256 amount, address merchant_address) external whenNotPaused {
@@ -125,9 +126,12 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
         // upon redemption, we will update availBalance (reduce it)
         require(IPBMAddressList(pbmAddressList).isMerchant(_msgSender()), "Caller not a merchant");
 
-        //if only the correct merchant can ever obtain the valid signature from the user, then we can remove this check
         Order storage order = userOrders[req.from][req.order_id];
-        require(order.merchant_address == _msgSender(), "Order not intended for this merchant");
+        //if only the correct merchant can ever obtain the valid signature from the user, then we can remove this check
+
+        // the online merchant address most likely won't be the same so just remove this check
+        // whoever has access the the QR code(sig) can redeem the order
+        // require(order.merchant_address == _msgSender(), "Order not intended for this merchant");
         require(order.status == OrderStatus.PENDING, "Cannot redeem order");
         require(verify(req, signature), "Invalid signature");
 
