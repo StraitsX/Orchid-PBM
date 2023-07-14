@@ -9,7 +9,6 @@ const {
   addMerchantAsHero,
 } = require('./testHelper.js');
 
-// Main Test script
 describe('PBM', () => {
   let accounts;
   let owner, merchant1, merchant2, merchant3, nonMerchant;

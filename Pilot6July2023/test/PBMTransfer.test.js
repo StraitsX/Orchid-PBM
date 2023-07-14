@@ -1,19 +1,12 @@
 const { assert, expect } = require('chai');
-const { ethers } = require('hardhat');
-
-// Helper functions
-async function deploy(name, ...params) {
-  const Contract = await ethers.getContractFactory(name);
-  return await Contract.deploy(...params).then((f) => f.deployed());
-}
-
-const getSigners = async () => {
-  return await ethers.getSigners();
-};
-
-const parseUnits = (value, decimals) => {
-  return ethers.utils.parseUnits(value, decimals);
-};
+const {
+  deploy,
+  getSigners,
+  createTokenType,
+  parseUnits,
+  mintPBM,
+  whilteListMerchant,
+} = require('./testHelper.js');
 
 // Main Test script
 describe('PBM', () => {
@@ -41,13 +34,13 @@ describe('PBM', () => {
       );
 
       await spot.mint(owner.address, parseUnits('10000', 6));
-      await create1XSGDPBM();
-      await whilteListMerchant([
+      await createTokenType(pbm, '1XSGD', '1', owner);
+      await whilteListMerchant(addressList, [
         merchant1.address,
         merchant2.address,
         merchant3.address,
       ]);
-      await mintPBM(owner.address, 1);
+      await mintPBM(pbm, spot, 0, 1, owner.address, '1');
     });
 
     it('transfer to non merchant successfully', async () => {
@@ -97,43 +90,5 @@ describe('PBM', () => {
       const ownerAfterBalance = await pbm.balanceOf(owner.address, 0);
       expect(ownerAfterBalance).to.be.equal(0);
     });
-
-    async function create1XSGDPBM() {
-      let currentDate = new Date();
-      let currentEpoch = Math.floor(currentDate / 1000);
-      let targetEpoch = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
-
-      await pbm.createPBMTokenType(
-        'Test-1XSGD',
-        ethers.utils.parseUnits('1', 6),
-        targetEpoch,
-        owner.address,
-        'beforeExpiryURI',
-        'postExpiryURI',
-      );
-
-      let tokenDetails = await pbm.getTokenDetails(0);
-
-      assert.equal(tokenDetails['0'], 'Test-1XSGD1000000');
-      assert.equal(tokenDetails['1'].toString(), '1000000');
-      assert.equal(tokenDetails['2'], targetEpoch);
-      assert.equal(tokenDetails['3'], accounts[0].address.toString());
-    }
-
-    async function mintPBM(to, amount) {
-      await spot.increaseAllowance(
-        pbm.address,
-        ethers.utils.parseUnits('1', 6),
-      );
-      await pbm.mint(0, amount, to);
-    }
-
-    async function whilteListMerchant(addresses) {
-      await addressList.addMerchantAddresses(addresses, '');
-      for (let i = 0; i < addresses.length; i++) {
-        let isMerchant = await addressList.isMerchant(addresses[i]);
-        assert.equal(isMerchant, true);
-      }
-    }
   });
 });
