@@ -398,6 +398,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "heroNFT",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -412,6 +425,11 @@
       {
         "internalType": "address",
         "name": "_pbmAddressList",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_heroNFT",
         "type": "address"
       }
     ],
