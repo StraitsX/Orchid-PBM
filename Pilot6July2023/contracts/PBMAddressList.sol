@@ -10,6 +10,8 @@ contract PBMAddressList is Ownable, IPBMAddressList {
     mapping(address => bool) internal merchantList;
     // list of merchants who are unable to receive the PBM tokens
     mapping(address => bool) internal blacklistedAddresses;
+    // mapping of hero merchant address to hero nft id
+    mapping(address => uint256) public heroNFTId;
 
     /**
      * @dev See {IPBMAddressList-blacklistAddresses}.
@@ -81,5 +83,41 @@ contract PBMAddressList is Ownable, IPBMAddressList {
      */
     function isMerchant(address _address) external view override returns (bool) {
         return merchantList[_address];
+    }
+
+    /**
+     * @dev See {IPBMAddressList-addHeroMerchant}.
+     *
+     * Requirements:
+     *
+     * - caller must be owner
+     */
+    function addHeroMerchant(address[] memory addresses, uint256[] memory token_ids) external override onlyOwner {
+        require (addresses.length == token_ids.length, "PBMAddressList: addresses and token_ids length mismatch");
+        for (uint256 i = 0; i < addresses.length; i++) {
+            heroNFTId[addresses[i]] = token_ids[i];
+        }
+    }
+
+    /**
+     * @dev See {IPBMAddressList-removeHeroMerchant}.
+     *
+     * Requirements:
+     *
+     * - caller must be owner
+     */
+    function removeHeroMerchant(address[] memory addresses) external override onlyOwner {
+        for (uint256 i = 0; i < addresses.length; i++) {
+            heroNFTId[addresses[i]] = 0;
+        }
+    }
+
+
+    /**
+     * @dev See {IPBMAddressList-getHeroNFTId}.
+     *
+     */
+    function getHeroNFTId(address _address) external view override returns (uint256) {
+        return heroNFTId[_address];
     }
 }

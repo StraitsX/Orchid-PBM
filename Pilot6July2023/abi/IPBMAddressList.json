@@ -57,6 +57,24 @@
         "type": "address[]"
       },
       {
+        "internalType": "uint256[]",
+        "name": "token_ids",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "addHeroMerchant",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "addresses",
+        "type": "address[]"
+      },
+      {
         "internalType": "string",
         "name": "metadata",
         "type": "string"
@@ -82,6 +100,25 @@
     ],
     "name": "blacklistAddresses",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "getHeroNFTId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -120,6 +157,19 @@
         "type": "bool"
       }
     ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "addresses",
+        "type": "address[]"
+      }
+    ],
+    "name": "removeHeroMerchant",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
