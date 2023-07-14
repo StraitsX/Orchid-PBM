@@ -8,7 +8,8 @@ interface IPBM {
     /// @param _spotToken address of the underlying ERC20 token
     /// @param _expiry contract wide expiry ( in epoch )
     /// @param _pbmAddressList address of the PBMAddressList smartcontract
-    function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList) external;
+    /// @param _heroNFT address of the HeroNFT smartcontract
+    function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList, address _heroNFT) external;
 
     /// @notice Creates a new PBM token type with the data provided
     /// @param companyName Name of the company issuing the PBM

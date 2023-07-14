@@ -10,6 +10,7 @@ import "./ERC20Helper.sol";
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "./IPBMAddressList.sol";
+import "./IHeroNFT.sol";
 
 contract PBM is ERC1155, Ownable, Pausable, IPBM {
     // undelrying ERC-20 tokens
@@ -18,6 +19,8 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     address public pbmTokenManager = address(0);
     // address of the PBM-Addresslist
     address public pbmAddressList = address(0);
+    // address of the HeroNFT contract
+    address public heroNFT = address(0);
 
     // tracks contract initialisation
     bool internal initialised = false;
@@ -28,13 +31,20 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         pbmTokenManager = address(new PBMTokenManager());
     }
 
-    function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList) external override onlyOwner {
+    function initialise(
+        address _spotToken,
+        uint256 _expiry,
+        address _pbmAddressList,
+        address _heroNFT
+    ) external override onlyOwner {
         require(!initialised, "PBM: Already initialised");
         require(Address.isContract(_spotToken), "Invalid spot token");
-        require(Address.isContract(_pbmAddressList), "Invalid spot token");
+        require(Address.isContract(_pbmAddressList), "Invalid pbm address list");
+        require(Address.isContract(_heroNFT), "Invalid hero nft");
         spotToken = _spotToken;
         contractExpiry = _expiry;
         pbmAddressList = _pbmAddressList;
+        heroNFT = _heroNFT;
 
         initialised = true;
     }
@@ -157,11 +167,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         uint256 amount,
         bytes memory data
     ) public override(ERC1155, IPBM) whenNotPaused {
-        require(
-            from == _msgSender() || isApprovedForAll(from, _msgSender()),
-            "ERC1155: caller is not token owner nor approved"
-        );
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
+        _validateTransfer(from, to);
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
             uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
@@ -171,6 +177,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
             ERC20Helper.safeTransfer(spotToken, to, valueOfTokens);
             emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, valueOfTokens);
+            _mintHeroNFTIfNeeded(to);
         } else {
             _safeTransferFrom(from, to, id, amount, data);
         }
@@ -196,11 +203,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         uint256[] memory amounts,
         bytes memory data
     ) public override(ERC1155, IPBM) whenNotPaused {
-        require(
-            from == _msgSender() || isApprovedForAll(from, _msgSender()),
-            "ERC1155: caller is not token owner nor approved"
-        );
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
+        _validateTransfer(from, to);
         require(ids.length == amounts.length, "Unequal ids and amounts supplied");
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
@@ -214,8 +217,26 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             ERC20Helper.safeTransfer(spotToken, to, valueOfTokens);
 
             emit MerchantPayment(from, to, ids, amounts, spotToken, valueOfTokens);
+            _mintHeroNFTIfNeeded(to);
         } else {
             _safeBatchTransferFrom(from, to, ids, amounts, data);
+        }
+    }
+
+    function _validateTransfer(address from, address to) internal {
+        require(
+            from == _msgSender() || isApprovedForAll(from, _msgSender()),
+            "ERC1155: caller is not token owner nor approved"
+        );
+        require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
+    }
+
+    function _mintHeroNFTIfNeeded(address to) internal {
+        uint256 heroNFTId = IPBMAddressList(pbmAddressList).getHeroNFTId(to);
+        // if getHeroNFTId returns 0 means the merchant is not a hero merchant
+        if (heroNFTId != 0 && IHeroNFT(heroNFT).balanceOf(_msgSender(), heroNFTId) == 0) {
+            // mint the hero NFT to the user if user does not have it
+            IHeroNFT(heroNFT).mint(_msgSender(), heroNFTId, 1, "");
         }
     }
 

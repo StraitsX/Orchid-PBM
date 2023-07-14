@@ -11,7 +11,7 @@ contract PBMAddressList is Ownable, IPBMAddressList {
     // list of merchants who are unable to receive the PBM tokens
     mapping(address => bool) internal blacklistedAddresses;
     // mapping of hero merchant address to hero nft id
-    mapping(address => uint256) public heroNFTId;
+    mapping(address => uint256) internal heroNFTId;
 
     /**
      * @dev See {IPBMAddressList-blacklistAddresses}.
