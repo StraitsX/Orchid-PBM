@@ -12,7 +12,7 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     constructor() ERC1155("") {}
 
     // better open a dedicated repo on github to store the metadata
-    string baseURI = "https://raw.githubusercontent.com/StraitsX/NFT/main/heroNFT2023SEP/heroNFT2023SEP/";
+    string baseURI = "https://raw.githubusercontent.com/StraitsX/NFT/main/heroNFT2023SEP/";
     mapping(address => bool) public whitelisted;
 
     function setURI(string memory baseUri) public onlyOwner {
