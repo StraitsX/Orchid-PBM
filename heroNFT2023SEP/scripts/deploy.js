@@ -16,7 +16,8 @@ async function main() {
 
   console.log(`Deployed HeroNFT to ${heroNFT.address}`);
 
-  const tokenId = 0; // Define the token ID
+  // for this heroNFT will start token id from 1. 0 is reserved
+  const tokenId = 1; // Define the token ID
   const amount = 1; // Define the amount
   const data = '0x'; // Define additional data here if needed
 
