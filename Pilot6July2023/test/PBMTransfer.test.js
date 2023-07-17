@@ -128,7 +128,9 @@ describe('PBM', () => {
       expect(PBMBeforeDsgdBalance).to.be.equal(1000000);
 
       // check swap contract DSGD before balance
-      const SwapBeforeDsgdBalance = await dsgdToken.balanceOf(swapContract.address);
+      const SwapBeforeDsgdBalance = await dsgdToken.balanceOf(
+        swapContract.address,
+      );
       expect(SwapBeforeDsgdBalance).to.be.equal(0);
 
       // Check merchant XSGD before balances
@@ -150,11 +152,15 @@ describe('PBM', () => {
       expect(ownerAfterBalance).to.be.equal(0);
 
       // check swap contract DSGD after balance
-      const SwapAfterDsgdBalance = await dsgdToken.balanceOf(swapContract.address);
+      const SwapAfterDsgdBalance = await dsgdToken.balanceOf(
+        swapContract.address,
+      );
       expect(SwapAfterDsgdBalance).to.be.equal(1000000);
 
       // check swap contract XSGD after balance
-      const SwapAfterXsgdBalance = await xsgdToken.balanceOf(swapContract.address);
+      const SwapAfterXsgdBalance = await xsgdToken.balanceOf(
+        swapContract.address,
+      );
       expect(SwapAfterXsgdBalance).to.be.equal(0);
     });
   });

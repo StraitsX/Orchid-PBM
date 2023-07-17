@@ -8,7 +8,7 @@ const {
   whilteListMerchant,
   addMerchantAsHero,
 } = require('./testHelper.js');
-const {initPBM} = require("./testHelper");
+const { initPBM } = require('./testHelper');
 
 describe('PBM', () => {
   let accounts;
@@ -30,12 +30,12 @@ describe('PBM', () => {
       addressList = await deploy('PBMAddressList');
       heroNFT = await deploy('HeroNFT');
       await initPBM(
-          pbm,
-          xsgdToken.address,
-          dsgdToken.address,
-          swapContract.address,
-          addressList.address,
-          heroNFT.address,
+        pbm,
+        xsgdToken.address,
+        dsgdToken.address,
+        swapContract.address,
+        addressList.address,
+        heroNFT.address,
       );
 
       // whiteList pbm as heroNFT minter

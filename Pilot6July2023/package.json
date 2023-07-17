@@ -4,8 +4,8 @@
   "description": "Smart Contracts for the Pilot6 PBM",
   "scripts": {
     "sizereport": "hardhat size-contracts",
-    "lint": "prettier --list-different contracts test migrations",
-    "pretty": "prettier --write contracts test migrations",
+    "lint": "prettier --list-different contracts test deploy scripts",
+    "pretty": "prettier --write contracts test deploy scripts",
     "export-abi": "hardhat export-abi",
     "clear-abi": "hardhat clear-abi",
     "deploy:mumbai": "hardhat deploy --no-impersonation --network mumbai",

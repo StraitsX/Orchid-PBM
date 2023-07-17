@@ -40,7 +40,7 @@ module.exports = {
     defaultNetwork: 'hardhat',
     networks: {
         hardhat: {
-            deploy: ['migrations/'],
+            deploy: ['deploy/'],
         },
         mumbai: {
             accounts: [
@@ -52,7 +52,7 @@ module.exports = {
             timeoutBlocks: 200,
             skipDryRun: true,
             saveDeployments: true,
-            deploy: ['migrations/'],
+            deploy: ['deploy/'],
             tags: ["testnet"],
         },
         polygon: {
@@ -67,7 +67,7 @@ module.exports = {
             gasPrice: 35000000000,
             skipDryRun: true,
             saveDeployments: true,
-            deploy: [ 'migrations/' ],
+            deploy: [ 'deploy/' ],
             tags: ["mainnet"],
         },
     },
