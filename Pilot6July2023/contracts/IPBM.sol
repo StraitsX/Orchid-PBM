@@ -5,11 +5,20 @@ pragma solidity ^0.8.0;
 /// @notice The PBM (purpose bound money) allows us to add logical requirements on the use of ERC-20 tokens. The PBM acts as wrapper around the ERC-20 tokens and implements the necessary logic.
 interface IPBM {
     /// @notice sets the address of the underlying ERC20 token, Contract Expiry, and the address of pbm address list
-    /// @param _spotToken address of the underlying ERC20 token
+    /// @param _xsgdToken address of the XSGD
+    /// @param _dsgdToken address of the DSGD
+    /// @param _swapContract address of the Swap contract
     /// @param _expiry contract wide expiry ( in epoch )
     /// @param _pbmAddressList address of the PBMAddressList smartcontract
     /// @param _heroNFT address of the HeroNFT smartcontract
-    function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList, address _heroNFT) external;
+    function initialise(
+        address _xsgdToken,
+        address _dsgdToken,
+        address _swapContract,
+        uint256 _expiry,
+        address _pbmAddressList,
+        address _heroNFT
+    ) external;
 
     /// @notice Creates a new PBM token type with the data provided
     /// @param companyName Name of the company issuing the PBM
@@ -89,6 +98,11 @@ interface IPBM {
     /// @return expiry The expiry date (in epoch) for this particular PBM token type.
     /// @return creator The creator of the PBM token type
     function getTokenDetails(uint256 tokenId) external view returns (string memory, uint256, uint256, address);
+
+    /// @notice Get the spot address of the PBM Token type
+    /// @param tokenId The identifier of the PBM token type
+    /// @return spotAddress The address of the spot token
+    function getSpotAddress(uint256 tokenId) external view returns (address);
 
     /// @notice Get the URI of the tokenid
     /// @param tokenId The identifier of the PBM token type

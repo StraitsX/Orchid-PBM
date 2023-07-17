@@ -24,6 +24,11 @@ interface IPBMTokenManager {
     /// @return Returns the underlying ERC20 amount
     function getTokenValue(uint256 tokenId) external view returns (uint256);
 
+    /// @notice gets the spot type of underlying ERC20 tokens each of the the PBM type holds
+    /// @param tokenId The id for the PBM in query
+    /// @return Returns the spot type, could only be either "XSGD" or "DSGD"
+    function getSpotType(uint256 tokenId) external view returns (string memory);
+
     /// @notice gets the count of the PBM type in supply
     /// @param tokenId The id for the PBM in query
     /// @return Returns the count of the PBM
@@ -86,5 +91,12 @@ interface IPBMTokenManager {
     /// @param spotType The type of underlying ERC-20 token, can only be "DSGD" or "XSGD"
     /// @param expiry The time (in epoch) when the PBM type will expire
     /// @param creator The creator of the this PBM type
-    event NewPBMTypeCreated(uint256 tokenId, string tokenName, uint256 amount, string spotType, uint256 expiry, address creator);
+    event NewPBMTypeCreated(
+        uint256 tokenId,
+        string tokenName,
+        uint256 amount,
+        string spotType,
+        uint256 expiry,
+        address creator
+    );
 }

@@ -12,6 +12,25 @@ const getSigners = async () => {
 const parseUnits = (value, decimals) => {
   return ethers.utils.parseUnits(value, decimals);
 };
+
+async function initPBM(
+  pbm,
+  xsgdTokenAdd,
+  dsgdTokenAdd,
+  swapContractAdd,
+  addressListAdd,
+  heroNFTAdd,
+) {
+  await pbm.initialise(
+    xsgdTokenAdd,
+    dsgdTokenAdd,
+    swapContractAdd,
+    Math.round(new Date().getTime() / 1000 + 86400 * 30),
+    addressListAdd,
+    heroNFTAdd,
+  );
+}
+
 async function createTokenType(pbm, name, spotValue, spotType, owner) {
   let currentDate = new Date();
   let currentEpoch = Math.floor(currentDate / 1000);
@@ -45,6 +64,7 @@ module.exports = {
   deploy,
   getSigners,
   createTokenType,
+  initPBM,
   mintPBM,
   whilteListMerchant,
   addMerchantAsHero,

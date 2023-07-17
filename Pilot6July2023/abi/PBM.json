@@ -369,6 +369,38 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "dsgdToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getSpotAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -419,7 +451,17 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_spotToken",
+        "name": "_xsgdToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_dsgdToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_swapContract",
         "type": "address"
       },
       {
@@ -686,6 +728,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "swapContract",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -719,6 +774,19 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "xsgdToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",

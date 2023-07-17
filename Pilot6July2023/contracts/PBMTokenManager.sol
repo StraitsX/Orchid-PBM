@@ -54,11 +54,10 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
         require(tokenExpiry > block.timestamp, "Invalid token expiry-2");
         require(spotAmount != 0, "Spot amount is 0");
         require(
-            keccak256(bytes(spotType)) == keccak256(bytes('DSGD')) ||
-            keccak256(bytes(spotType)) == keccak256(bytes('XSGD')),
+            keccak256(bytes(spotType)) == keccak256(bytes("DSGD")) ||
+                keccak256(bytes(spotType)) == keccak256(bytes("XSGD")),
             "SpotType must be DSGD or XSGD"
         );
-
 
         string memory tokenName = string(abi.encodePacked(companyName, spotAmount.toString()));
         tokenTypes[tokenTypeCount].name = tokenName;
@@ -198,6 +197,14 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
             "PBM: Invalid Token Id(s)"
         );
         return tokenTypes[tokenId].amount;
+    }
+
+    function getSpotType(uint256 tokenId) external view override returns (string memory) {
+        require(
+            tokenTypes[tokenId].amount != 0 && block.timestamp < tokenTypes[tokenId].expiry,
+            "PBM: Invalid Token Id(s)"
+        );
+        return tokenTypes[tokenId].spotType;
     }
 
     /**

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -11,16 +12,21 @@ import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "./IPBMAddressList.sol";
 import "./IHeroNFT.sol";
+import "./ISwap.sol";
 
 contract PBM is ERC1155, Ownable, Pausable, IPBM {
     // undelrying ERC-20 tokens
     address public spotToken = address(0);
+    address public xsgdToken = address(0);
+    address public dsgdToken = address(0);
     // address of the token manager
     address public pbmTokenManager = address(0);
     // address of the PBM-Addresslist
     address public pbmAddressList = address(0);
     // address of the HeroNFT contract
     address public heroNFT = address(0);
+    // address of the swap contract
+    address public swapContract = address(0);
 
     // tracks contract initialisation
     bool internal initialised = false;
@@ -32,16 +38,22 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     }
 
     function initialise(
-        address _spotToken,
+        address _xsgdToken,
+        address _dsgdToken,
+        address _swapContract,
         uint256 _expiry,
         address _pbmAddressList,
         address _heroNFT
     ) external override onlyOwner {
         require(!initialised, "PBM: Already initialised");
-        require(Address.isContract(_spotToken), "Invalid spot token");
+        require(Address.isContract(_xsgdToken), "Invalid XSGD token");
+        require(Address.isContract(_dsgdToken), "Invalid DSGD token");
+        require(Address.isContract(_swapContract), "Invalid swap contract");
         require(Address.isContract(_pbmAddressList), "Invalid pbm address list");
         require(Address.isContract(_heroNFT), "Invalid hero nft");
-        spotToken = _spotToken;
+        xsgdToken = _xsgdToken;
+        dsgdToken = _dsgdToken;
+        swapContract = _swapContract;
         contractExpiry = _expiry;
         pbmAddressList = _pbmAddressList;
         heroNFT = _heroNFT;
@@ -104,6 +116,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
 
         //Transfer the spot token from the user to the contract to wrap it
+        spotToken = getSpotAddress(tokenId);
         ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
 
         // mint the token if the contract - wrapping the xsgd
@@ -138,16 +151,22 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         require(!IPBMAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
         require(tokenIds.length == amounts.length, "Unequal ids and amounts supplied");
 
-        // calculate the value of the new tokens
-        uint256 valueOfNewTokens = 0;
-
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            valueOfNewTokens += (amounts[i] * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenIds[i])));
+            uint256 tokenId = tokenIds[i];
+            uint256 amount = amounts[i];
+
+            uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
+
+            // Get spotToken address based on tokenId
+            spotToken = getSpotAddress(tokenId);
+
+            // Transfer spot tokens from user to contract to wrap it
+            ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
+
+            // Increase balance supply
+            PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
         }
 
-        // Transfer spot tokenf from user to contract to wrap it
-        ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
-        PBMTokenManager(pbmTokenManager).increaseBalanceSupply(tokenIds, amounts);
         _mintBatch(receiver, tokenIds, amounts, "");
     }
 
@@ -178,8 +197,11 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             // burn and transfer underlying ERC-20
             _burn(from, id, amount);
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
-            ERC20Helper.safeTransfer(spotToken, to, valueOfTokens);
-            emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, valueOfTokens);
+            // swap dsgd to xsgd if token id wraps dsgd
+            _swapIfNeeded(id, valueOfTokens);
+
+            ERC20Helper.safeTransfer(xsgdToken, to, valueOfTokens);
+            emit MerchantPayment(from, to, serialise(id), serialise(amount), xsgdToken, valueOfTokens);
             _mintHeroNFTIfNeeded(to);
         } else {
             _safeTransferFrom(from, to, id, amount, data);
@@ -210,16 +232,20 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         require(ids.length == amounts.length, "Unequal ids and amounts supplied");
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
-            uint256 valueOfTokens = 0;
+            uint256 sumOfTokens = 0;
             for (uint256 i = 0; i < ids.length; i++) {
-                valueOfTokens += (amounts[i] * (PBMTokenManager(pbmTokenManager).getTokenValue(ids[i])));
+                uint256 tokenId = ids[i];
+                uint256 amount = amounts[i];
+                uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
+                _swapIfNeeded(tokenId, valueOfTokens);
+                sumOfTokens += valueOfTokens;
             }
 
             _burnBatch(from, ids, amounts);
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(ids, amounts);
-            ERC20Helper.safeTransfer(spotToken, to, valueOfTokens);
+            ERC20Helper.safeTransfer(xsgdToken, to, sumOfTokens);
 
-            emit MerchantPayment(from, to, ids, amounts, spotToken, valueOfTokens);
+            emit MerchantPayment(from, to, ids, amounts, xsgdToken, sumOfTokens);
             _mintHeroNFTIfNeeded(to);
         } else {
             _safeBatchTransferFrom(from, to, ids, amounts, data);
@@ -243,6 +269,17 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         }
     }
 
+    function _swapIfNeeded(uint256 tokenId, uint256 amount) internal {
+        if (
+            keccak256(abi.encodePacked((PBMTokenManager(pbmTokenManager).getSpotType(tokenId)))) ==
+            keccak256(abi.encodePacked("DSGD"))
+        ) {
+            //approve swap contract to spend DSGD on behalf of PBM
+            ERC20(dsgdToken).increaseAllowance(swapContract, amount);
+            ISwap(swapContract).swapDSGDtoXSGD(amount);
+        }
+    }
+
     /**
      * @dev See {IPBM-revokePBM}.
      *
@@ -257,6 +294,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
         PBMTokenManager(pbmTokenManager).revokePBM(tokenId, msg.sender);
 
+        spotToken = getSpotAddress(tokenId);
         // transfering underlying ERC20 tokens
         ERC20Helper.safeTransfer(spotToken, msg.sender, valueOfTokens);
 
@@ -271,6 +309,15 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         uint256 tokenId
     ) external view override returns (string memory, uint256, uint256, address) {
         return PBMTokenManager(pbmTokenManager).getTokenDetails(tokenId);
+    }
+
+    /**
+     * @dev See {IPBM-getSpotAddress}.
+     *
+     */
+    function getSpotAddress(uint256 tokenId) public view override returns (address) {
+        string memory spotType = PBMTokenManager(pbmTokenManager).getSpotType(tokenId);
+        return keccak256(abi.encodePacked(spotType)) == keccak256(abi.encodePacked("XSGD")) ? xsgdToken : dsgdToken;
     }
 
     /**

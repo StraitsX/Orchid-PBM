@@ -1,9 +1,11 @@
 const { assert, expect } = require('chai');
 const { ethers } = require('hardhat');
-async function deploy(name, ...params) {
-  const Contract = await ethers.getContractFactory(name);
-  return await Contract.deploy(...params).then((f) => f.deployed());
-}
+const {
+  deploy,
+  initPBM,
+  createTokenType,
+  parseUnits,
+} = require('./testHelper.js');
 
 describe('PBM', async () => {
   const accounts = [];
@@ -15,28 +17,47 @@ describe('PBM', async () => {
   });
 
   async function init() {
-    let spot = await deploy('Spot');
+    let xsgdToken = await deploy('Spot', 'XSGD', 'XSGD');
+    let dsgdToken = await deploy('Spot', 'DSGD', 'DSGD');
+    let swapContract = await deploy(
+      'Swap',
+      dsgdToken.address,
+      xsgdToken.address,
+    );
     let pbm = await deploy('PBM');
     let addressList = await deploy('PBMAddressList');
     let heroNFT = await deploy('HeroNFT');
-    await pbm.initialise(
-      spot.address,
-      Math.round(new Date().getTime() / 1000 + 86400 * 30),
+    await initPBM(
+      pbm,
+      xsgdToken.address,
+      dsgdToken.address,
+      swapContract.address,
       addressList.address,
       heroNFT.address,
     );
-    return [spot, pbm, addressList, heroNFT];
+    return [xsgdToken, dsgdToken, swapContract, pbm, addressList, heroNFT];
   }
 
   describe('PBM and Spot Set up test', async () => {
-    let spot;
+    let xsgdToken;
+    let dsgdToken;
+    let swapContract;
     let pbm;
     let addressList;
     let heroNFT;
 
     before(async () => {
-      let [_spot, _pbm, _addressList, _heroNFT] = await init();
-      spot = _spot;
+      let [
+        _xsgdToken,
+        _dsgdToken,
+        _swapContract,
+        _pbm,
+        _addressList,
+        _heroNFT,
+      ] = await init();
+      xsgdToken = _xsgdToken;
+      dsgdToken = _dsgdToken;
+      swapContract = _swapContract;
       pbm = _pbm;
       addressList = _addressList;
       heroNFT = _heroNFT;
@@ -44,40 +65,60 @@ describe('PBM', async () => {
 
     it('Should deploy smart contract', async () => {
       assert(pbm.address !== '');
-      assert(spot.address !== '');
+      assert(xsgdToken.address !== '');
+      assert(dsgdToken.address !== '');
+      assert(swapContract.address !== '');
       assert(addressList.address !== '');
       assert(heroNFT.address !== '');
     });
 
-    it('PBM Should initialized with Spot token address', async () => {
-      var pbm_spot = await pbm.spotToken();
-      assert.equal(spot.address, pbm_spot);
+    it('PBM Should initialized with Spot token addresses', async () => {
+      let xsgd_spot = await pbm.xsgdToken();
+      let dsgd_spot = await pbm.dsgdToken();
+      assert.equal(xsgdToken.address, xsgd_spot);
+      assert.equal(dsgdToken.address, dsgd_spot);
     });
 
     it('PBM Should initialized with PBMAddressList address', async () => {
-      var pbm_address_list = await pbm.pbmAddressList();
+      let pbm_address_list = await pbm.pbmAddressList();
       assert.equal(addressList.address, pbm_address_list);
     });
 
     it('PBM Should initialized with HeroNFT address', async () => {
-      var pbm_hero_nft = await pbm.heroNFT();
+      let pbm_hero_nft = await pbm.heroNFT();
       assert.equal(heroNFT.address, pbm_hero_nft);
+    });
+    it('PBM Should initialized with Swap address', async () => {
+      let swap_contract = await pbm.swapContract();
+      assert.equal(swapContract.address, swap_contract);
     });
   });
 
   describe('PBM minting test', async () => {
-    let spot = null;
+    let xsgdToken = null;
+    let dsgdToken = null;
+    let swapContract = null;
     let pbm = null;
     let addressList = null;
     let heroNFT = null;
 
     before(async () => {
-      let [_spot, _pbm, _addressList, _heroNFT] = await init();
-      spot = _spot;
+      let [
+        _xsgdToken,
+        _dsgdToken,
+        _swapContract,
+        _pbm,
+        _addressList,
+        _heroNFT,
+      ] = await init();
+      xsgdToken = _xsgdToken;
+      dsgdToken = _dsgdToken;
+      swapContract = _swapContract;
       pbm = _pbm;
       addressList = _addressList;
       heroNFT = _heroNFT;
-      await spot.mint(accounts[0].address, ethers.utils.parseUnits('10000', 6));
+      await xsgdToken.mint(accounts[0].address, parseUnits('10000', 6));
+      await dsgdToken.mint(accounts[0].address, parseUnits('10000', 6));
     });
 
     it('Minting before non existing token type throws an error', async () => {
@@ -86,10 +127,13 @@ describe('PBM', async () => {
       );
     });
 
+    it('Create token type with invalid spot type should revert with error', async () => {
+      await expect(
+        createTokenType(pbm, 'Test-1XSGD', '1', 'BSGD', accounts[0]),
+      ).to.be.revertedWith('SpotType must be DSGD or XSGD');
+    });
+
     it('Create token type successfully', async () => {
-      let currentDate = new Date();
-      let currentEpoch = Math.floor(currentDate / 1000);
-      let targetEpoch = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
       const pbmTokenManagerAddress = await pbm.pbmTokenManager();
       const PBMTokenManagerContract = await ethers.getContractFactory(
         'PBMTokenManager',
@@ -100,22 +144,14 @@ describe('PBM', async () => {
 
       // listen to pbmTokenManager contract for the NewPBMTypeCreated event
       let filter = pbmTokenManager.filters.NewPBMTypeCreated();
-      await pbm.createPBMTokenType(
-        'Test-1XSGD',
-        ethers.utils.parseUnits('1', 6),
-        'XSGD',
-        targetEpoch,
-        accounts[0].address,
-        'beforeExpiryURI',
-        'postExpiryURI',
-      );
+
+      createTokenType(pbm, 'Test-1XSGD', '1', 'XSGD', accounts[0]);
       let events = await pbmTokenManager.queryFilter(filter);
       expect(events.length).to.equal(1);
 
       let tokenDetails = await pbm.getTokenDetails(0);
       assert.equal(tokenDetails['0'], 'Test-1XSGD1000000');
       assert.equal(tokenDetails['1'].toString(), '1000000');
-      assert.equal(tokenDetails['2'], targetEpoch);
       assert.equal(tokenDetails['3'], accounts[0].address.toString());
     });
 
@@ -125,14 +161,24 @@ describe('PBM', async () => {
       );
     });
 
-    it('Minting a PBM token successfully', async () => {
-      await spot.increaseAllowance(
-        pbm.address,
-        ethers.utils.parseUnits('1', 6),
-      );
+    it('Minting a XSGD PBM token successfully', async () => {
+      await xsgdToken.increaseAllowance(pbm.address, parseUnits('1', 6));
       await pbm.mint(0, 1, accounts[0].address);
       let balance = await pbm.balanceOf(accounts[0].address, 0);
+      let XSGDBalance = await xsgdToken.balanceOf(pbm.address);
       assert.equal(balance.toString(), '1');
+      assert.equal(XSGDBalance.toString(), '1000000');
+    });
+
+    it('Minting a DSGD PBM token successfully', async () => {
+      // create DSGD tokenType
+      createTokenType(pbm, 'Test-1DSGD', '1', 'DSGD', accounts[0]);
+      await dsgdToken.increaseAllowance(pbm.address, parseUnits('1', 6));
+      await pbm.mint(1, 1, accounts[0].address);
+      let balance = await pbm.balanceOf(accounts[0].address, 1);
+      let DSGDBalance = await dsgdToken.balanceOf(pbm.address);
+      assert.equal(balance.toString(), '1');
+      assert.equal(DSGDBalance.toString(), '1000000');
     });
   });
 });
