@@ -3,12 +3,12 @@ const {
   deploy,
   getSigners,
   createTokenType,
+  initPBM,
   parseUnits,
   mintPBM,
   whilteListMerchant,
   addMerchantAsHero,
 } = require('./testHelper.js');
-const { initPBM } = require('./testHelper');
 
 describe('PBM', () => {
   let accounts;
