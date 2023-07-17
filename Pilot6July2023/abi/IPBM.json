@@ -109,6 +109,11 @@
         "type": "uint256"
       },
       {
+        "internalType": "string",
+        "name": "spotType",
+        "type": "string"
+      },
+      {
         "internalType": "uint256",
         "name": "tokenExpiry",
         "type": "uint256"

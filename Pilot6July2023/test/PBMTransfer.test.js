@@ -34,7 +34,7 @@ describe('PBM', () => {
       );
 
       await spot.mint(owner.address, parseUnits('10000', 6));
-      await createTokenType(pbm, '1XSGD', '1', owner);
+      await createTokenType(pbm, '1XSGD', '1', 'XSGD', owner);
       await whilteListMerchant(addressList, [
         merchant1.address,
         merchant2.address,

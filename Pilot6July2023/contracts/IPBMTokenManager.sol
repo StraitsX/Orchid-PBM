@@ -47,6 +47,7 @@ interface IPBMTokenManager {
     /// @notice Creates a PBM token type, with all its necessary details
     /// @param companyName The name of the company/agency issuing this PBM type
     /// @param spotAmount The number of ERC-20 tokens that is used as the underlying currency for PBM
+    /// @param spotType The type of underlying ERC-20 token, can only be "DSGD" or "XSGD"
     /// @param tokenExpiry The expiry date (in epoch) of th PBM type
     /// @param creator The address of the account that creates the PBM type
     /// @param tokenURI the URI containting the metadata (opensea standard for ERC1155) for the  PBM type
@@ -55,6 +56,7 @@ interface IPBMTokenManager {
     function createTokenType(
         string memory companyName,
         uint256 spotAmount,
+        string memory spotType,
         uint256 tokenExpiry,
         address creator,
         string memory tokenURI,
@@ -81,7 +83,8 @@ interface IPBMTokenManager {
     /// @param tokenId The account from which the tokens were sent, i.e. the balance decreased
     /// @param tokenName The account to which the tokens were sent, i.e. the balance increased
     /// @param amount The amount of tokens that were transferred
+    /// @param spotType The type of underlying ERC-20 token, can only be "DSGD" or "XSGD"
     /// @param expiry The time (in epoch) when the PBM type will expire
     /// @param creator The creator of the this PBM type
-    event NewPBMTypeCreated(uint256 tokenId, string tokenName, uint256 amount, uint256 expiry, address creator);
+    event NewPBMTypeCreated(uint256 tokenId, string tokenName, uint256 amount, string spotType, uint256 expiry, address creator);
 }

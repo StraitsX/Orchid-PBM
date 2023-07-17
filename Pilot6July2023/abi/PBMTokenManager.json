@@ -27,6 +27,12 @@
       },
       {
         "indexed": false,
+        "internalType": "string",
+        "name": "spotType",
+        "type": "string"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "expiry",
         "type": "uint256"
@@ -90,6 +96,11 @@
         "internalType": "uint256",
         "name": "spotAmount",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "spotType",
+        "type": "string"
       },
       {
         "internalType": "uint256",

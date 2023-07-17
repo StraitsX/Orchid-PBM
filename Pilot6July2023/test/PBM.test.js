@@ -103,6 +103,7 @@ describe('PBM', async () => {
       await pbm.createPBMTokenType(
         'Test-1XSGD',
         ethers.utils.parseUnits('1', 6),
+        'XSGD',
         targetEpoch,
         accounts[0].address,
         'beforeExpiryURI',

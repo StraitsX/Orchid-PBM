@@ -58,10 +58,12 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - contract must not be expired
      * - `tokenExpiry` must be less than contract expiry
      * - `amount` should not be 0
+     * - `spotType` should be either "XSGD" or "DSGD"
      */
     function createPBMTokenType(
         string memory companyName,
         uint256 spotAmount,
+        string memory spotType,
         uint256 tokenExpiry,
         address creator,
         string memory tokenURI,
@@ -70,6 +72,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         PBMTokenManager(pbmTokenManager).createTokenType(
             companyName,
             spotAmount,
+            spotType,
             tokenExpiry,
             creator,
             tokenURI,

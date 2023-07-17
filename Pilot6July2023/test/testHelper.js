@@ -12,7 +12,7 @@ const getSigners = async () => {
 const parseUnits = (value, decimals) => {
   return ethers.utils.parseUnits(value, decimals);
 };
-async function createTokenType(pbm, name, spotValue, owner) {
+async function createTokenType(pbm, name, spotValue, spotType, owner) {
   let currentDate = new Date();
   let currentEpoch = Math.floor(currentDate / 1000);
   let targetEpoch = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
@@ -20,6 +20,7 @@ async function createTokenType(pbm, name, spotValue, owner) {
   await pbm.createPBMTokenType(
     name,
     parseUnits(spotValue, 6),
+    spotType,
     targetEpoch,
     owner.address,
     'beforeExpiryURI',

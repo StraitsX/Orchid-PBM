@@ -14,6 +14,7 @@ interface IPBM {
     /// @notice Creates a new PBM token type with the data provided
     /// @param companyName Name of the company issuing the PBM
     /// @param spotAmount Amount of the underlying ERC-20 tokens the PBM type wraps around
+    /// @param spotType The type of underlying ERC-20 token, can only be "DSGD" or "XSGD"
     /// @param tokenExpiry The expiry date (in epoch) for this particular PBM token type
     /// @param tokenURI the URI (returns json) of PBM type that will follows the Opensea NFT metadata standard
     /// @param postExpiryURI the URI (returns json) of expired PBM type that will follows the Opensea NFT metadata standard
@@ -34,6 +35,7 @@ interface IPBM {
     function createPBMTokenType(
         string memory companyName,
         uint256 spotAmount,
+        string memory spotType,
         uint256 tokenExpiry,
         address creator,
         string memory tokenURI,
