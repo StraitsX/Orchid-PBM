@@ -38,6 +38,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     //mapping to keep track of how much an user is allowed to withdraw from PBM
     mapping(address => mapping(address => uint256)) private _allowances;
 
+    //mapping to store whitelisted batch approvers
+    mapping(address => bool) private _batchSetApprovalWhitelist;
+
     function initialise(
         address _spotToken,
         uint256 _expiry,
@@ -389,6 +392,45 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         } else {
             _safeBatchTransferFrom(from, to, ids, amounts, data);
         }
+    }
+
+    /**
+     * @notice Grant or revoke approval for an operator on behalf of a list of owners.
+     * This function allows an operator to manage all tokens of the owners.
+     *
+     * @dev Iterates over a list of owners and calls the internal _setApprovalForAll
+     * function to set the approval status for the operator.
+     * The operator can be an EOA or a smart contract.
+     *
+     * @param pbmOwners The addresses of the owners that are granting or revoking approval.
+     * @param operator The address of the operator that will gain or lose approval.
+     * @param approved The new approval status of the operator for all tokens of the owners.
+     *
+     * Requirements:
+     *
+     * - The caller must be the contract owner or a whitelisted approver.
+     */
+    function batchSetApprovalForAll(address[] memory pbmOwners, address operator, bool approved) public whenNotPaused {
+        require(
+            _msgSender() == owner() || _batchSetApprovalWhitelist[_msgSender()],
+            "PBM: Only contract owner or whitelisted approver allowed to set approval"
+        );
+        for (uint256 i = 0; i < pbmOwners.length; i++) {
+            _setApprovalForAll(pbmOwners[i], operator, approved);
+        }
+    }
+
+    /**
+     * @notice Grant or revoke permission to an approver for the contract according the value of whitelisted.
+     *
+     * @param approver The address of the approver whose whitelisted status is to be set.
+     * @param whitelisted The new whitelisted status of the approver. True to add to the whitelist, false to remove from it.
+     *
+     * Requirements:
+     * This function can only be called by the contract owner.
+     */
+    function setWhitelistApprover(address approver, bool whitelisted) public onlyOwner {
+        _batchSetApprovalWhitelist[approver] = whitelisted;
     }
 
     /**
