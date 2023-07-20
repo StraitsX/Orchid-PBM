@@ -269,12 +269,15 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         }
     }
 
+    /**
+     *   @notice approval must be given to allow the simple swapcontract to pull money from the PBM smart contract
+     *    to initiate a swap.
+     */
     function _swapIfNeeded(uint256 tokenId, uint256 amount) internal {
         if (
             keccak256(abi.encodePacked((PBMTokenManager(pbmTokenManager).getSpotType(tokenId)))) ==
             keccak256(abi.encodePacked("DSGD"))
         ) {
-            //approve swap contract to spend DSGD on behalf of PBM
             ERC20(dsgdToken).increaseAllowance(swapContract, amount);
             ISwap(swapContract).swapDSGDtoXSGD(amount);
         }
