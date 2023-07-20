@@ -8,7 +8,8 @@ require('hardhat-deploy');
 const { Wallet } = require('ethers');
 
 const DEPLOYER_MNEMONIC = process.env.DEPLOYER_MNEMONIC;
-const ALCHEMY_ACCESS_TOKEN = process.env.ALCHEMY_ACCESS_TOKEN;
+const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL;
+const POLYGON_RPC_URL = process.env.POLYGON_RPC_URL;
 const POLYGON_SCAN_API_KEY = process.env.POLYGON_SCAN_API_KEY;
 const MUMBAI_SCAN_API_KEY = process.env.MUMBAI_SCAN_API_KEY;
 
@@ -46,7 +47,7 @@ module.exports = {
             accounts: [
                 Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey,
             ],
-            url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_ACCESS_TOKEN}`,
+            url: MUMBAI_RPC_URL,
             network_id: 80001,
             confirmations: 2,
             timeoutBlocks: 200,
@@ -59,7 +60,7 @@ module.exports = {
             accounts: [
                 Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey,
             ],
-            url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ACCESS_TOKEN}`,
+            url: POLYGON_RPC_URL,
             network_id: 137,
             confirmations: 2,
             timeoutBlocks: 200,
