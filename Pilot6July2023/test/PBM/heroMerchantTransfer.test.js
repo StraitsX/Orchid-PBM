@@ -60,6 +60,13 @@ describe('PBM', () => {
       await mintPBM(pbm, xsgdToken, 0, 1, owner.address, '1');
     });
 
+    // TODO: write tests for PBMAddresslist and move this test to that.
+    it('reverts with error when assigning heroNFT token id 0 to heroMerchant', async () => {
+        await expect(
+            addMerchantAsHero(addressList, [nonHeroMerchant.address], [0]),
+        ).to.be.revertedWith('PBMAddressList: heroNFT token_id cannot be 0');
+    });
+
     it('transfer to non hero merchant will not mint heroNFT to user', async () => {
       // Perform transfer
       await pbm.safeTransferFrom(

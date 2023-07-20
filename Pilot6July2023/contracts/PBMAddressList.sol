@@ -95,6 +95,7 @@ contract PBMAddressList is Ownable, IPBMAddressList {
     function addHeroMerchant(address[] memory addresses, uint256[] memory token_ids) external override onlyOwner {
         require(addresses.length == token_ids.length, "PBMAddressList: addresses and token_ids length mismatch");
         for (uint256 i = 0; i < addresses.length; i++) {
+            require(token_ids[i] != 0, "PBMAddressList: heroNFT token_id cannot be 0");
             heroNFTId[addresses[i]] = token_ids[i];
         }
     }
