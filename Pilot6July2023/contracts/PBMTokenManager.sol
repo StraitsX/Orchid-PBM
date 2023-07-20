@@ -17,6 +17,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     struct TokenConfig {
         string name;
         uint256 amount;
+        string spotType;
         uint256 expiry;
         address creator;
         uint256 balanceSupply;
@@ -42,6 +43,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     function createTokenType(
         string memory companyName,
         uint256 spotAmount,
+        string memory spotType,
         uint256 tokenExpiry,
         address creator,
         string memory tokenURI,
@@ -51,17 +53,23 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
         require(tokenExpiry <= contractExpiry, "Invalid token expiry-1");
         require(tokenExpiry > block.timestamp, "Invalid token expiry-2");
         require(spotAmount != 0, "Spot amount is 0");
+        require(
+            keccak256(bytes(spotType)) == keccak256(bytes("DSGD")) ||
+                keccak256(bytes(spotType)) == keccak256(bytes("XSGD")),
+            "SpotType must be DSGD or XSGD"
+        );
 
         string memory tokenName = string(abi.encodePacked(companyName, spotAmount.toString()));
         tokenTypes[tokenTypeCount].name = tokenName;
         tokenTypes[tokenTypeCount].amount = spotAmount;
+        tokenTypes[tokenTypeCount].spotType = spotType;
         tokenTypes[tokenTypeCount].expiry = tokenExpiry;
         tokenTypes[tokenTypeCount].creator = creator;
         tokenTypes[tokenTypeCount].balanceSupply = 0;
         tokenTypes[tokenTypeCount].uri = tokenURI;
         tokenTypes[tokenTypeCount].postExpiryURI = postExpiryURI;
 
-        emit NewPBMTypeCreated(tokenTypeCount, tokenName, spotAmount, tokenExpiry, creator);
+        emit NewPBMTypeCreated(tokenTypeCount, tokenName, spotAmount, spotType, tokenExpiry, creator);
         tokenTypeCount += 1;
     }
 
@@ -189,6 +197,14 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
             "PBM: Invalid Token Id(s)"
         );
         return tokenTypes[tokenId].amount;
+    }
+
+    function getSpotType(uint256 tokenId) external view override returns (string memory) {
+        require(
+            tokenTypes[tokenId].amount != 0 && block.timestamp < tokenTypes[tokenId].expiry,
+            "PBM: Invalid Token Id(s)"
+        );
+        return tokenTypes[tokenId].spotType;
     }
 
     /**

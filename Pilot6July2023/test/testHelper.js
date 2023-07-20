@@ -12,7 +12,26 @@ const getSigners = async () => {
 const parseUnits = (value, decimals) => {
   return ethers.utils.parseUnits(value, decimals);
 };
-async function createTokenType(pbm, name, spotValue, owner) {
+
+async function initPBM(
+  pbm,
+  xsgdTokenAdd,
+  dsgdTokenAdd,
+  swapContractAdd,
+  addressListAdd,
+  heroNFTAdd,
+) {
+  await pbm.initialise(
+    xsgdTokenAdd,
+    dsgdTokenAdd,
+    swapContractAdd,
+    Math.round(new Date().getTime() / 1000 + 86400 * 30),
+    addressListAdd,
+    heroNFTAdd,
+  );
+}
+
+async function createTokenType(pbm, name, spotValue, spotType, owner) {
   let currentDate = new Date();
   let currentEpoch = Math.floor(currentDate / 1000);
   let targetEpoch = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
@@ -20,6 +39,7 @@ async function createTokenType(pbm, name, spotValue, owner) {
   await pbm.createPBMTokenType(
     name,
     parseUnits(spotValue, 6),
+    spotType,
     targetEpoch,
     owner.address,
     'beforeExpiryURI',
@@ -44,6 +64,7 @@ module.exports = {
   deploy,
   getSigners,
   createTokenType,
+  initPBM,
   mintPBM,
   whilteListMerchant,
   addMerchantAsHero,
