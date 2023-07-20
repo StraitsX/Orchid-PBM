@@ -120,5 +120,49 @@ describe('PBM', () => {
       const ownerHeroNFTBalance = await heroNFT.balanceOf(owner.address, 1);
       expect(ownerHeroNFTBalance).to.be.equal(1);
     });
+
+    it('batch Transfer to hero merchant will not mint heroNFT if user already has it', async () => {
+      // fund swap contract with XSGD
+      await xsgdToken.mint(swapContract.address, parseUnits('4', 6));
+      await createTokenType(pbm, '2DSGD', '2', 'DSGD', owner);
+      await mintPBM(pbm, xsgdToken, 0, 1, owner.address, '1');
+      await mintPBM(pbm, dsgdToken, 1, 2, owner.address, '2');
+      // Perform transfer
+      await pbm.safeBatchTransferFrom(
+        owner.address,
+        merchant1.address,
+        [0, 1],
+        [1, 1],
+        '0x',
+      );
+      // Check balances after transfer
+      const heroMerchantAfterXsgdBalance = await xsgdToken.balanceOf(
+        merchant1.address,
+      );
+      expect(heroMerchantAfterXsgdBalance).to.be.equal(parseUnits('3', 6));
+      const ownerHeroNFTBalance = await heroNFT.balanceOf(owner.address, 1);
+      expect(ownerHeroNFTBalance).to.be.equal(1);
+
+      // Perform transfer batch again
+      await pbm.safeBatchTransferFrom(
+        owner.address,
+        merchant1.address,
+        [0, 1],
+        [1, 1],
+        '0x',
+      );
+      // Check balances after 2nd transfer
+      const merchantAfter2ndTransferXsgdBalance = await xsgdToken.balanceOf(
+        merchant1.address,
+      );
+      expect(merchantAfter2ndTransferXsgdBalance).to.be.equal(
+        parseUnits('6', 6),
+      );
+      const ownerHeroNFTBalanceAfter2nTransfer = await heroNFT.balanceOf(
+        owner.address,
+        1,
+      );
+      expect(ownerHeroNFTBalanceAfter2nTransfer).to.be.equal(1);
+    });
   });
 });
