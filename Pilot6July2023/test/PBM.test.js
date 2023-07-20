@@ -121,7 +121,7 @@ describe('PBM', async () => {
       await dsgdToken.mint(accounts[0].address, parseUnits('10000', 6));
     });
 
-    it('Minting before non existing token type throws an error', async () => {
+    it('throws an error when minting non existing token type', async () => {
       await expect(pbm.mint(0, 1, accounts[0].address)).to.be.revertedWith(
         'PBM: Invalid Token Id(s)',
       );
@@ -148,6 +148,7 @@ describe('PBM', async () => {
       createTokenType(pbm, 'Test-1XSGD', '1', 'XSGD', accounts[0]);
       let events = await pbmTokenManager.queryFilter(filter);
       expect(events.length).to.equal(1);
+      expect(events[0].event).to.equal('NewPBMTypeCreated');
 
       let tokenDetails = await pbm.getTokenDetails(0);
       assert.equal(tokenDetails['0'], 'Test-1XSGD1000000');
