@@ -12,11 +12,12 @@ const {
 
 describe('PBM', () => {
   let accounts;
-  let owner, merchant1, merchant2, merchant3, nonMerchant;
+  let owner, merchant1, merchant2, merchant3, nonHeroMerchant, nonMerchant;
 
   before(async () => {
     accounts = await getSigners();
-    [owner, merchant1, merchant2, merchant3, nonMerchant] = accounts;
+    [owner, merchant1, merchant2, merchant3, nonHeroMerchant, nonMerchant] =
+      accounts;
   });
 
   describe('PBM transfer test', () => {
@@ -49,6 +50,7 @@ describe('PBM', () => {
         merchant1.address,
         merchant2.address,
         merchant3.address,
+        nonHeroMerchant.address,
       ]);
       await addMerchantAsHero(
         addressList,
@@ -56,6 +58,28 @@ describe('PBM', () => {
         [1, 2, 3],
       );
       await mintPBM(pbm, xsgdToken, 0, 1, owner.address, '1');
+    });
+
+    it('transfer to non hero merchant will not mint heroNFT to user', async () => {
+      // Perform transfer
+      await pbm.safeTransferFrom(
+        owner.address,
+        nonHeroMerchant.address,
+        0,
+        1,
+        '0x',
+      );
+      // Check balances after transfer
+      const MerchantAfterXsgdBalance = await xsgdToken.balanceOf(
+        nonHeroMerchant.address,
+      );
+      expect(MerchantAfterXsgdBalance).to.be.equal(parseUnits('1', 6));
+      const ownerHeroNFT1Balance = await heroNFT.balanceOf(owner.address, 1);
+      expect(ownerHeroNFT1Balance).to.be.equal(0);
+      const ownerHeroNFT2Balance = await heroNFT.balanceOf(owner.address, 2);
+      expect(ownerHeroNFT2Balance).to.be.equal(0);
+      const ownerHeroNFT3Balance = await heroNFT.balanceOf(owner.address, 3);
+      expect(ownerHeroNFT3Balance).to.be.equal(0);
     });
 
     it('transfer to hero merchant successfully mint heroNFT to user', async () => {
