@@ -34,6 +34,20 @@ interface IPBMAddressList {
     /// @return True if address is a merchant, else false
     function isMerchant(address _address) external returns (bool);
 
+    /// @notice Adds wallet addresses of merchants who are hero merchants.
+    /// @param addresses The list of hero merchant wallet address
+    /// @param token_ids The list of heroNFT token_id
+    function addHeroMerchant(address[] memory addresses, uint256[] memory token_ids) external;
+
+    /// @notice Removes wallet addresses of merchants who are hero merchants.
+    /// @param addresses The list of hero merchant wallet address
+    function removeHeroMerchant(address[] memory addresses) external;
+
+    /// @notice Get the heroNFT token_id
+    /// @param _address The address in query
+    /// @return 0 if not a hero merchant, else the heroNFT token_id
+    function getHeroNFTId(address _address) external returns (uint256);
+
     /// @notice Event emitted when the Merchant List is edited
     /// @param action Tags "add" or "remove" for action type
     /// @param addresses The list of merchant wallet address

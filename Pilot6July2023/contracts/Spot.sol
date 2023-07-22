@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 contract Spot is ERC20, Pausable, Ownable {
     using Strings for uint256;
 
-    constructor() ERC20("XSGD", "XSGD") {}
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
 
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
