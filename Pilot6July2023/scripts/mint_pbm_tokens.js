@@ -4,8 +4,10 @@ async function main() {
   const deployerSigner = ethers.provider.getSigner(deployer);
 
   const pbmDeployment = await deployments.get('PBM');
+
+  // pbm on mumbai: 0xfEBf3DE57946F941432B8Da1D341D0647357Ee1a
   const pbm = (await ethers.getContractFactory('PBM'))
-    .attach(pbmDeployment.address)
+    .attach("0xfEBf3DE57946F941432B8Da1D341D0647357Ee1a")
     .connect(deployerSigner);
   const XSGD = await ethers.getContractFactory('Spot');
   const xsgd = await XSGD.attach(
@@ -13,8 +15,22 @@ async function main() {
   ).connect(deployerSigner); // XSGD deployed on mumbai
   await xsgd.increaseAllowance(pbm.address, 10000000000);
 
+  const dsgdDeployment = await deployments.get('Spot');
+  const dsgd = (await ethers.getContractFactory('Spot'))
+      .attach(dsgdDeployment.address)
+      .connect(deployerSigner);
+  await dsgd.increaseAllowance(pbm.address, 10000000000);
+
   // mint to deployer for testing
-  // await pbm.batchMint([0, 1, 2], [5, 5, 5], deployer);
+  await pbm.batchMint([1, 2, 3], [50, 50, 50], "0xfbfD2173795547B56FaAc32bCA87FEf59FC2B021");
+  await pbm.mint(4, 1, "0xfbfD2173795547B56FaAc32bCA87FEf59FC2B021")
+
+
+  // mint heroNFT
+  const heroNFTAddresss = '0x03d757C5b2BA632Af155794328aA98eF46999efC';
+  const heroNFT = (await ethers.getContractFactory('HeroNFT')).attach(heroNFTAddresss).connect(deployerSigner);
+  await heroNFT.mint('0xfbfD2173795547B56FaAc32bCA87FEf59FC2B021', 1, 1, '0x')
+  console.log('minted heroNFT')
 
   const grabAddresses = [
     '0xe9601df4dfda0d44ad3d22d66a5c0df80bc043db',
