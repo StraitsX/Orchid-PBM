@@ -7,7 +7,7 @@ async function main() {
     const heroNFTDeployment = await deployments.get('HeroNFT');
     const heroNFT = await HeroNFT.attach(heroNFTDeployment.address).connect(deployerSigner);
 
-    const pbmAddr = "fill in PBM contract address here"
+    const pbmAddr = "0xb9f5fc449dDd21302Ab52aF1FfeA8d7A49614D3b"
     // whitelist PBM to be minter
     await heroNFT.addWhitelisted(pbmAddr)
 
