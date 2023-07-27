@@ -315,6 +315,18 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
+     * @dev See {IPBM-balanceOf}.
+     */
+    function balanceOf(address account, uint256 tokenId) public view override returns (uint256) {
+        require(account != address(0), "ERC1155: balance query for the zero address");
+        if (PBMTokenManager(pbmTokenManager).areTokensValid(serialise(tokenId))) {
+            return super.balanceOf(account, tokenId);
+        } else {
+            return 0;
+        }
+    }
+
+    /**
      * @dev See {IPBM-getSpotAddress}.
      *
      */
