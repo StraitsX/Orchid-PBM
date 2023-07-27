@@ -42,7 +42,7 @@ module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
-      deploy: ['scripts/'],
+      deploy: ['deploy/'],
     },
     mumbai: {
       accounts: [Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey],
@@ -52,7 +52,7 @@ module.exports = {
       timeoutBlocks: 200,
       skipDryRun: true,
       saveDeployments: true,
-      deploy: ['scripts/'],
+      deploy: ['deploy/'],
       tags: ['testnet'],
     },
     polygon: {
@@ -65,7 +65,7 @@ module.exports = {
       gasPrice: 35000000000,
       skipDryRun: true,
       saveDeployments: true,
-      deploy: ['scripts/'],
+      deploy: ['deploy/'],
       tags: ['mainnet'],
     },
   },
