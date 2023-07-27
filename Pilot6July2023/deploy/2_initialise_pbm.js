@@ -15,8 +15,9 @@ module.exports = async ({ getNamedAccounts, deployments, ethers }) => {
   // Polygon XSGD address = "0xDC3326e71D45186F113a2F448984CA0e8D201995"
   // Mumbai XSGD address = "0x16e28369bc318636abbf6cb1035da77ffbf4a3bc"
   const xsgdAddress = '0x16e28369bc318636abbf6cb1035da77ffbf4a3bc';
-  // Mumbai heroNFT address = "0x03d757C5b2BA632Af155794328aA98eF46999efC"
-  const heroNFTAddresss = '0x03d757C5b2BA632Af155794328aA98eF46999efC';
+
+  // Mumbai heroNFT address = "0x773135F3B394F6334b35CD84003267F48eDB6547"
+  const heroNFTAddresss = '0x773135F3B394F6334b35CD84003267F48eDB6547';
 
   await pbm.initialise(
     xsgdAddress,
