@@ -4,20 +4,23 @@ async function main() {
   const deployerSigner = ethers.provider.getSigner(deployer);
 
   const pbmDeployment = await deployments.get('PBM');
-  const pbm = (await ethers.getContractFactory('PBM'))
-    .attach(pbmDeployment.address)
-    .connect(deployerSigner);
+  const pbm = (await ethers.getContractFactory('PBM')).attach(pbmDeployment.address).connect(deployerSigner);
 
-  const dsgdDeployment = await deployments.get('Spot');
+  const xsgdAddress = "0x787bD10Bb65AE206f70759D88a2ffc0F2653C0F6"
+  const dsgdAddress = "0xd769410dc8772695A7f55a304d2125320A65c2a5"
+
 
   const expiryDate = 1716469200; // Tue May 23 2024 21:00:00 GMT+0800 (Taipei Standard Time) 2024-05-23T21:00:00+08:00
 
   // mint 1000000 $SGD worth of DSGD to deployer
   const dsgdAmount = ethers.utils.parseUnits('1000000', 6);
-  const dsgd = (await ethers.getContractFactory('Spot'))
-    .attach(dsgdDeployment.address)
-    .connect(deployerSigner);
+  const dsgd = (await ethers.getContractFactory('Spot')).attach(dsgdAddress).connect(deployerSigner);
   await dsgd.mint(deployer, dsgdAmount);
+
+  // mint 1000000 $SGD worth of XSGD to deployer
+  const xsgdAmount = ethers.utils.parseUnits('1000000', 6);
+  const xsgd = (await ethers.getContractFactory('Spot')).attach(xsgdAddress).connect(deployerSigner);
+  await xsgd.mint(deployer, xsgdAmount);
 
   // creating token id 0: XSGD pbm - 1 XSGD
   await pbm.createPBMTokenType(

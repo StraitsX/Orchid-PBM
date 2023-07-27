@@ -17,11 +17,16 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     log: true,
   });
 
+  const xsgdDeployment = await deploy('Spot', {
+    from: deployer,
+    args: ['XSGD', 'XSGD'],
+    log: true,
+  });
+
   // Mumbai XSGD address = "0x16e28369bc318636abbf6cb1035da77ffbf4a3bc"
-  const xsgdAddress = '0x16e28369bc318636abbf6cb1035da77ffbf4a3bc';
   await deploy('Swap', {
     from: deployer,
-    args: [dsgdDeployment.address, xsgdAddress],
+    args: [dsgdDeployment.address, xsgdDeployment.address],
     log: true,
   });
 };

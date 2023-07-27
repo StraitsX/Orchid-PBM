@@ -3,8 +3,11 @@ const hre = require('hardhat');
 async function main() {
   const addressListDeployment = await deployments.get('PBMAddressList');
   const pbmDeployment = await deployments.get('PBM');
-  const dsgdDeployment = await deployments.get('Spot');
   const swapDeployment = await deployments.get('Swap');
+
+  // mainnet address
+  const xsgdAddress = "0x787bD10Bb65AE206f70759D88a2ffc0F2653C0F6"
+  const dsgdAddress = "0xd769410dc8772695A7f55a304d2125320A65c2a5"
 
   console.log('Verifying PBMAddressList');
   await hre.run('verify:verify', {
@@ -24,15 +27,22 @@ async function main() {
 
   console.log('Verifying DSGD test token');
   await hre.run('verify:verify', {
-    address: dsgdDeployment.address,
+    address: dsgdAddress,
     constructorArguments: ['DSGD', 'DSGD'],
   });
-  console.log(`Verified DSGD test token at ${dsgdDeployment.address}`);
+  console.log(`Verified DSGD test token at ${dsgdAddress}`);
+
+  console.log('Verifying XSGD test token');
+  await hre.run('verify:verify', {
+    address: xsgdAddress,
+    constructorArguments: ['XSGD', 'XSGD'],
+  });
+  console.log(`Verified XSGD test token at ${xsgdAddress}`);
 
   console.log('Verifying Swap');
   await hre.run('verify:verify', {
     address: swapDeployment.address,
-    constructorArguments: [dsgdDeployment.address, dsgdDeployment.address],
+    constructorArguments: [dsgdAddress, xsgdAddress],
   });
 
   console.log(`Verified Swap at ${swapDeployment.address}`);

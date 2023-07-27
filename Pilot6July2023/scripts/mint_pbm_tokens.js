@@ -10,26 +10,34 @@ async function main() {
     .connect(deployerSigner);
 
   // xsgd on mumbai: 0x16e28369bc318636abbf6cb1035da77ffbf4a3bc
+  const xsgdAddress = "0x787bD10Bb65AE206f70759D88a2ffc0F2653C0F6"
+  const dsgdAddress = "0xd769410dc8772695A7f55a304d2125320A65c2a5"
   const XSGD = await ethers.getContractFactory('Spot');
-  const xsgd = await XSGD.attach(
-    '0x16e28369bc318636abbf6cb1035da77ffbf4a3bc',
-  ).connect(deployerSigner); // XSGD deployed on mumbai
+  const xsgd = await XSGD.attach(xsgdAddress).connect(deployerSigner); // XSGD deployed on mumbai
 
   // increase allowance for PBM
-  await xsgd.increaseAllowance(pbm.address, 10000000000);
+  await xsgd.increaseAllowance(pbm.address, 10000000000000);
 
-  const dsgdDeployment = await deployments.get('Spot');
-  const dsgd = (await ethers.getContractFactory('Spot'))
-    .attach(dsgdDeployment.address)
-    .connect(deployerSigner);
+  const DSGD = await ethers.getContractFactory('Spot');
+  const dsgd = await DSGD.attach(dsgdAddress).connect(deployerSigner);
   // increase allowance for PBM
-  await dsgd.increaseAllowance(pbm.address, 10000000000);
+  await dsgd.increaseAllowance(pbm.address, 10000000000000);
+
+  const swapDeployment = await deployments.get('Swap');
+  const swap = (await ethers.getContractFactory('Swap')).attach(swapDeployment.address).connect(deployerSigner);
 
   // mint PBM token 0, 1, 2, 3
-  const mintTo = []
+  const tjAddr = "0x56285Cbc175a9c7eB347d95a15633D95f894ba7b"
+  const victorAddr = "0x4Ef6462589a2D509fc05dA74511FFB4275D36615"
+
+  // mint dummy XSGD
+  // await xsgd.mint(swap.address, ethers.utils.parseUnits('1000000', 6))
+  // await xsgd.mint(victorAddr, ethers.utils.parseUnits('1000000', 6))
+
+  const mintTo = [victorAddr]
   for (let i = 0; i < mintTo.length; i++) {
-    await pbm.batchMint([0, 1, 2, 3], [50, 50, 50, 50], mintTo[i]);
-    console.log(`minted PBM token 0, 1, 2 to address ${mintTo[i]}`);
+    await pbm.batchMint([0, 1, 2, 3], [5000, 5000, 5000, 5000], mintTo[i]);
+    console.log(`minted PBM token 0, 1, 2, 3 to address ${mintTo[i]}`);
     await new Promise((r) => setTimeout(r, 5000));
   }
 }
