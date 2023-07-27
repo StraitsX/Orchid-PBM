@@ -5,11 +5,10 @@ async function main() {
 
   const pbmDeployment = await deployments.get('PBM');
   const pbm = (await ethers.getContractFactory('PBM'))
-    .attach("0xfEBf3DE57946F941432B8Da1D341D0647357Ee1a")
+    .attach(pbmDeployment.address)
     .connect(deployerSigner);
 
   const dsgdDeployment = await deployments.get('Spot');
-  const swapDeployment = await deployments.get('Swap');
 
   const expiryDate = 1716469200; // Tue May 23 2024 21:00:00 GMT+0800 (Taipei Standard Time) 2024-05-23T21:00:00+08:00
 
@@ -27,8 +26,8 @@ async function main() {
     'XSGD',
     expiryDate,
     deployer,
-    'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/1XSGD.json',
-    'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/expired1XSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/1XSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired1XSGD.json',
   );
   console.log('PBM Token type 0 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
@@ -40,8 +39,8 @@ async function main() {
     'XSGD',
     expiryDate,
     deployer,
-    'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/2XSGD.json',
-    'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/expired2XSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/2XSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired2XSGD.json',
   );
   console.log('PBM Token type 1 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
@@ -53,38 +52,39 @@ async function main() {
     'XSGD',
     expiryDate,
     deployer,
-    'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/5XSGD.json',
-    'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/expired5XSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/5XSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired5XSGD.json',
   );
   console.log('PBM Token type 2 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 
   // creating token id 3: DSGD pbm - 1 DSGD
   await pbm.createPBMTokenType(
-      'Grab1DSGD',
-      ethers.utils.parseUnits('1', 6),
-      'DSGD',
-      expiryDate,
-      deployer,
-      'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/1XSGD.json',
-      'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/expired1XSGD.json',
+    'Grab1DSGD',
+    ethers.utils.parseUnits('1', 6),
+    'DSGD',
+    expiryDate,
+    deployer,
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/1DSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired1DSGD.json',
   );
   console.log('PBM Token type 3 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 
-  const expire721 = 1689907800;  // 2023-07-21T10:50:00+08:00
-  // creating token id 4: XSGD pbm - 1 XSGD expiring at
-  await pbm.createPBMTokenType(
-      'Grab1XSGD',
-      ethers.utils.parseUnits('1', 6),
-      'XSGD',
-      expire721,
-      deployer,
-      'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/1XSGD-ExpireSoon.json',
-      'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/expired1XSGD-7-21.json',
-  );
-  console.log('PBM Token type 4 created');
-  await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
+  // test expired token needs to change the expire time on the fly and remember to update metadata as well
+  // const expire721 = 1689907800; // 2023-07-21T10:50:00+08:00
+  // // creating token id 4: XSGD pbm - 1 XSGD expiring at
+  // await pbm.createPBMTokenType(
+  //   'Grab1XSGD',
+  //   ethers.utils.parseUnits('1', 6),
+  //   'XSGD',
+  //   expire721,
+  //   deployer,
+  //   'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/1XSGD-ExpireSoon.json',
+  //   'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/expired1XSGD-7-21.json',
+  // );
+  // console.log('PBM Token type 4 created');
+  // await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 }
 
 main()
