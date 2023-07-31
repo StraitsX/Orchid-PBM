@@ -19,7 +19,7 @@ async function main() {
       '0x',
     );
     await mintTx.wait();
-    console.log(`minted PBM token 1, 2 to address ${targetAddress[i]}`);
+    console.log(`minted HeroNFT token 1, 2 to address ${targetAddress[i]}`);
   }
 }
 main()
