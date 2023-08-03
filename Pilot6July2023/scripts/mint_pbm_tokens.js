@@ -29,6 +29,7 @@ async function main() {
   // mint PBM token 0, 1, 2, 3
   const tjAddr = "0x56285Cbc175a9c7eB347d95a15633D95f894ba7b"
   const victorAddr = "0x4Ef6462589a2D509fc05dA74511FFB4275D36615"
+  const grabAddr = ["0xf64b2f9577b09e83e23543208eaa8b1ec919458e", "0xb1fee2dbecd97132c401b0c068a69bb249423fb9"]
 
   // mint dummy XSGD
   // await xsgd.mint(swap.address, ethers.utils.parseUnits('1000000', 6))
