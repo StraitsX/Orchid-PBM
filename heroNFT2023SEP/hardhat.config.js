@@ -10,9 +10,11 @@ const { Wallet } = require('ethers');
 const DEPLOYER_MNEMONIC = process.env.DEPLOYER_MNEMONIC;
 const POLYGON_MUMBAI_NODE_HTTP_URL = process.env.POLYGON_MUMBAI_NODE_HTTP_URL;
 const POLYGON_MAINNET_NODE_HTTP_URL = process.env.POLYGON_MAINNET_NODE_HTTP_URL;
+const ARB_TESTNET_NODE_HTTP_URL = process.env.ARB_TESTNET_NODE_HTTP_URL;
 
 const POLYGON_SCAN_API_KEY = process.env.POLYGON_SCAN_API_KEY;
 const MUMBAI_SCAN_API_KEY = process.env.MUMBAI_SCAN_API_KEY;
+const ARB_SCAN_API_KEY = process.env.ARB_SCAN_API_KEY;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -42,7 +44,7 @@ module.exports = {
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
-      deploy: ['scripts/'],
+      deploy: ['deploy/'],
     },
     mumbai: {
       accounts: [Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey],
@@ -52,7 +54,7 @@ module.exports = {
       timeoutBlocks: 200,
       skipDryRun: true,
       saveDeployments: true,
-      deploy: ['scripts/'],
+      deploy: ['deploy/'],
       tags: ['testnet'],
     },
     polygon: {
@@ -61,18 +63,32 @@ module.exports = {
       network_id: 137,
       confirmations: 2,
       timeoutBlocks: 200,
+      gas: 6000000,
+      gasPrice: 230000000000,
+      skipDryRun: true,
+      saveDeployments: true,
+      deploy: ['deploy/'],
+      tags: ['mainnet'],
+    },
+    arbgo: {
+      accounts: [Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey],
+      url: ARB_TESTNET_NODE_HTTP_URL,
+      network_id: 421613,
+      confirmations: 2,
+      timeoutBlocks: 200,
       gas: 4500000,
       gasPrice: 35000000000,
       skipDryRun: true,
       saveDeployments: true,
-      deploy: ['scripts/'],
-      tags: ['mainnet'],
+      deploy: ['deploy/'],
+      tags: ['testnet'],
     },
   },
   etherscan: {
     apiKey: {
       mumbai: MUMBAI_SCAN_API_KEY,
       polygon: POLYGON_SCAN_API_KEY,
+      arbgo: ARB_SCAN_API_KEY,
     },
     customChains: [
       {
@@ -89,6 +105,14 @@ module.exports = {
         urls: {
           apiURL: 'https://api.polygonscan.com/api',
           browserURL: 'https://polygonscan.com',
+        },
+      },
+      {
+        network: 'arbgo',
+        chainId: 421613,
+        urls: {
+          apiURL: 'https://api-goerli.arbiscan.io/',
+          browserURL: 'https://goerli.arbiscan.io/',
         },
       },
     ],
