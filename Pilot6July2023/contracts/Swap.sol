@@ -15,7 +15,7 @@ contract Swap is Ownable, ReentrancyGuard {
         XSGDToken = _XSGDToken;
     }
 
-    function swapDSGDtoXSGD(uint256 DSGDAmount) public nonReentrant {
+    function swapDSGDtoXSGD(uint256 DSGDAmount) public nonReentrant returns (uint256) {
         require(DSGDToken.balanceOf(msg.sender) >= DSGDAmount, "Insufficient DSGD balance");
 
         uint256 XSGDAmount = (DSGDAmount * 10 ** XSGDToken.decimals()) / 10 ** DSGDToken.decimals();
@@ -27,6 +27,7 @@ contract Swap is Ownable, ReentrancyGuard {
 
         // Transfer XSGD from this contract to the caller
         ERC20Helper.safeTransfer(address(XSGDToken), msg.sender, XSGDAmount);
+        return XSGDAmount;
     }
 
     // This function is used to recover any ERC20 tokens that are sent to the contract by mistake

@@ -23,8 +23,8 @@ describe('PBM', () => {
     let xsgdToken, dsgdToken, swapContract, pbm, addressList, heroNFT;
 
     beforeEach(async () => {
-      xsgdToken = await deploy('Spot', 'XSGD', 'XSGD');
-      dsgdToken = await deploy('Spot', 'DSGD', 'DSGD');
+      xsgdToken = await deploy('Spot', 'XSGD', 'XSGD', 6);
+      dsgdToken = await deploy('Spot', 'DSGD', 'DSGD', 2);
       swapContract = await deploy('Swap', dsgdToken.address, xsgdToken.address);
       pbm = await deploy('PBM');
       addressList = await deploy('PBMAddressList');
@@ -38,10 +38,16 @@ describe('PBM', () => {
         heroNFT.address,
       );
 
-      await xsgdToken.mint(owner.address, parseUnits('10000', 6));
-      await dsgdToken.mint(owner.address, parseUnits('10000', 6));
-      await createTokenType(pbm, '1XSGD', '1', 'XSGD', owner); // token id 0
-      await createTokenType(pbm, '1DSGD', '1', 'DSGD', owner); // token id 1
+      await xsgdToken.mint(
+        owner.address,
+        parseUnits('10000', await xsgdToken.decimals()),
+      );
+      await dsgdToken.mint(
+        owner.address,
+        parseUnits('10000', await dsgdToken.decimals()),
+      );
+      await createTokenType(pbm, '1XSGD', '1', xsgdToken, owner); // token id 0
+      await createTokenType(pbm, '1DSGD', '1', dsgdToken, owner); // token id 1
       await whilteListMerchant(addressList, [
         merchant1.address,
         merchant2.address,
@@ -121,11 +127,16 @@ describe('PBM', () => {
 
     it('transfer DSGD PBM to merchant successfully and merchant receives XSGD', async () => {
       // fund swap contract with XSGD
-      await xsgdToken.mint(swapContract.address, parseUnits('1', 6));
+      await xsgdToken.mint(
+        swapContract.address,
+        parseUnits('1', await xsgdToken.decimals()),
+      );
 
+      console.log('xsgd decimals:', await xsgdToken.decimals());
+      console.log('dsgd decimals:', await dsgdToken.decimals());
       // check PBM DSGD balance
       const PBMBeforeDsgdBalance = await dsgdToken.balanceOf(pbm.address);
-      expect(PBMBeforeDsgdBalance).to.be.equal(1000000);
+      expect(PBMBeforeDsgdBalance).to.be.equal(100);
 
       // check swap contract DSGD before balance
       const SwapBeforeDsgdBalance = await dsgdToken.balanceOf(
@@ -146,7 +157,9 @@ describe('PBM', () => {
       const MerchantAfterXsgdBalance = await xsgdToken.balanceOf(
         merchant3.address,
       );
-      expect(MerchantAfterXsgdBalance).to.be.equal(parseUnits('1', 6));
+      expect(MerchantAfterXsgdBalance).to.be.equal(
+        parseUnits('1', await xsgdToken.decimals()),
+      );
 
       const ownerAfterBalance = await pbm.balanceOf(owner.address, 1);
       expect(ownerAfterBalance).to.be.equal(0);
@@ -155,7 +168,7 @@ describe('PBM', () => {
       const SwapAfterDsgdBalance = await dsgdToken.balanceOf(
         swapContract.address,
       );
-      expect(SwapAfterDsgdBalance).to.be.equal(1000000);
+      expect(SwapAfterDsgdBalance).to.be.equal(100);
 
       // check swap contract XSGD after balance
       const SwapAfterXsgdBalance = await xsgdToken.balanceOf(

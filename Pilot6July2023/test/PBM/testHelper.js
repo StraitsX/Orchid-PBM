@@ -48,7 +48,10 @@ async function createTokenType(pbm, name, spotValue, spot, owner) {
 }
 
 async function mintPBM(pbm, spot, tokenId, amount, to, spotValue) {
-  await spot.increaseAllowance(pbm.address, parseUnits(spotValue, 6) * amount);
+  await spot.increaseAllowance(
+    pbm.address,
+    parseUnits(spotValue, await spot.decimals()) * amount,
+  );
   await pbm.mint(tokenId, amount, to);
 }
 
