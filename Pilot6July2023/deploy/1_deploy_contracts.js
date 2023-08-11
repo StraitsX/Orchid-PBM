@@ -13,13 +13,13 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   });
   const dsgdDeployment = await deploy('Spot', {
     from: deployer,
-    args: ['DSGD', 'DSGD'],
+    args: ['DSGD', 'DSGD', 2],
     log: true,
   });
 
   const xsgdDeployment = await deploy('Spot', {
     from: deployer,
-    args: ['XSGD', 'XSGD'],
+    args: ['XSGD', 'XSGD', 6],
     log: true,
   });
 
