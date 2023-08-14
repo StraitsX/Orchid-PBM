@@ -7,7 +7,12 @@ async function main() {
     const heroNFTDeployment = await deployments.get('HeroNFT');
     const heroNFT = await HeroNFT.attach(heroNFTDeployment.address).connect(deployerSigner);
 
-    const pbmAddr = "0xb9f5fc449dDd21302Ab52aF1FfeA8d7A49614D3b"
+    // const pbmAddr = "0xb9f5fc449dDd21302Ab52aF1FfeA8d7A49614D3b"
+    // mainnet with 2 decimals DSGD
+    // const pbmAddr = "0xfEfF2DA6B1782BE7cB3908f9c92c0c275Dfc8a13"
+
+    // mainnet with real xsgd
+    const pbmAddr = "0x6d41906cce58491dAF2cA8141A1C4B180fa6E7B9"
     // whitelist PBM to be minter
     await heroNFT.addWhitelisted(pbmAddr)
 
