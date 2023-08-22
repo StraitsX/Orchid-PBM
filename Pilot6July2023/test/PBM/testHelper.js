@@ -31,15 +31,15 @@ async function initPBM(
   );
 }
 
-async function createTokenType(pbm, name, spotValue, spotType, owner) {
+async function createTokenType(pbm, name, spotValue, spot, owner) {
   let currentDate = new Date();
   let currentEpoch = Math.floor(currentDate / 1000);
   let targetEpoch = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
 
   await pbm.createPBMTokenType(
     name,
-    parseUnits(spotValue, 6),
-    spotType,
+    parseUnits(spotValue, await spot.decimals()),
+    spot.symbol(),
     targetEpoch,
     owner.address,
     'beforeExpiryURI',
@@ -48,7 +48,10 @@ async function createTokenType(pbm, name, spotValue, spotType, owner) {
 }
 
 async function mintPBM(pbm, spot, tokenId, amount, to, spotValue) {
-  await spot.increaseAllowance(pbm.address, parseUnits(spotValue, 6) * amount);
+  await spot.increaseAllowance(
+    pbm.address,
+    parseUnits(spotValue, await spot.decimals()) * amount,
+  );
   await pbm.mint(tokenId, amount, to);
 }
 

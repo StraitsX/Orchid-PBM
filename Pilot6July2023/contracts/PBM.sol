@@ -198,7 +198,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             _burn(from, id, amount);
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
             // swap dsgd to xsgd if token id wraps dsgd
-            _swapIfNeeded(id, valueOfTokens);
+            valueOfTokens = _swapIfNeeded(id, valueOfTokens);
 
             ERC20Helper.safeTransfer(xsgdToken, to, valueOfTokens);
             emit MerchantPayment(from, to, serialise(id), serialise(amount), xsgdToken, valueOfTokens);
@@ -237,7 +237,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
                 uint256 tokenId = ids[i];
                 uint256 amount = amounts[i];
                 uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
-                _swapIfNeeded(tokenId, valueOfTokens);
+                valueOfTokens = _swapIfNeeded(tokenId, valueOfTokens);
                 sumOfTokens += valueOfTokens;
             }
 
@@ -273,14 +273,16 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      *   @notice approval must be given to allow the simple swapcontract to pull money from the PBM smart contract
      *    to initiate a swap.
      */
-    function _swapIfNeeded(uint256 tokenId, uint256 amount) internal {
+    function _swapIfNeeded(uint256 tokenId, uint256 amount) internal returns (uint256) {
         if (
             keccak256(abi.encodePacked((PBMTokenManager(pbmTokenManager).getSpotType(tokenId)))) ==
             keccak256(abi.encodePacked("DSGD"))
         ) {
             ERC20(dsgdToken).increaseAllowance(swapContract, amount);
-            ISwap(swapContract).swapDSGDtoXSGD(amount);
+            uint256 xsgdAmount = ISwap(swapContract).swapDSGDtoXSGD(amount);
+            return xsgdAmount;
         }
+        return amount;
     }
 
     /**

@@ -13,11 +13,14 @@ import "@openzeppelin/contracts/security/Pausable.sol";
  */
 contract Spot is ERC20, Pausable, Ownable {
     using Strings for uint256;
+    uint8 private _decimals;
 
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
+    constructor(string memory name, string memory symbol, uint8 tokenDecimals) ERC20(name, symbol) {
+        _decimals = tokenDecimals;
+    }
 
     function decimals() public view virtual override returns (uint8) {
-        return 6;
+        return _decimals;
     }
 
     function mint(address to, uint256 amount) public onlyOwner {
