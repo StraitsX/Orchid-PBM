@@ -345,6 +345,25 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         return PBMTokenManager(pbmTokenManager).uri(tokenId);
     }
 
+    // @dev recoverAllERC20 is a function to recover all the balance of a specific ERC20 token from the PBM contract
+    // @param _token ERC20 token address
+    // requirements:
+    // - caller must be the owner
+    function recoverAllERC20(address _token) public onlyOwner {
+        ERC20 erc20 = ERC20(_token);
+        ERC20Helper.safeTransfer(address(erc20), owner(), erc20.balanceOf(address(this)));
+    }
+
+    // @dev recoverERC20 is a function to recover specific amount of a ERC20 token from the PBM contract
+    // @param _token ERC20 token address
+    // @param amount amount of ERC20 token to recover
+    // requirements:
+    // - caller must be the owner
+    function recoverERC20(address _token, uint256 amount) public onlyOwner {
+        ERC20 erc20 = ERC20(_token);
+        ERC20Helper.safeTransfer(address(erc20), owner(), amount);
+    }
+
     /**
      * @dev see {Pausable _pause}
      *
