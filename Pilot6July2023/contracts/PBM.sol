@@ -364,6 +364,13 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         ERC20Helper.safeTransfer(address(erc20), owner(), amount);
     }
 
+    // @dev see { PBMTokenManager - updateTokenExpiry}
+    // requirements:
+    // - caller must be the owner
+    function updateTokenExpiry(uint256 tokenId, uint256 expiry) external onlyOwner {
+        PBMTokenManager(pbmTokenManager).updateTokenExpiry(tokenId, expiry);
+    }
+
     /**
      * @dev see {Pausable _pause}
      *
