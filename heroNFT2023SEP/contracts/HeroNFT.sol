@@ -14,6 +14,8 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     // better open a dedicated repo on github to store the metadata
     string baseURI = "https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/heroNFT2023SEP/";
     mapping(address => bool) public whitelisted;
+    // token id => owner address => bool to indicate whether having the token id or not
+    mapping(uint256 => mapping(address => bool)) public ownersMap;
 
     function setURI(string memory baseUri) public onlyOwner {
         baseURI = baseUri;
@@ -33,8 +35,11 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
 
     function mint(address account, uint256 id, uint256 amount, bytes memory data) public onlyWhitelisted {
         require(amount == 1, "HeroNFT: Amount must be 1");
-        require(balanceOf(account, id) == 0, "HeroNFT: Account already owns this token_id");
+        if (isOwnerOf(id, account)) {
+            return;
+        }
         _mint(account, id, amount, data);
+        ownersMap[id][account] = true;
     }
 
     function mintBatch(
@@ -44,10 +49,13 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         bytes memory data
     ) public onlyWhitelisted {
         for (uint i = 0; i < ids.length; i++) {
+            if (isOwnerOf(ids[i], to)) {
+                continue;
+            }
             require(amounts[i] == 1, "HeroNFT: Amount must be 1");
-            require(balanceOf(to, ids[i]) == 0, "HeroNFT: Account already owns this token_id");
+            _mint(to, ids[i], amounts[i], data);
+            ownersMap[ids[i]][to] = true;  // Update the mapping
         }
-        _mintBatch(to, ids, amounts, data);
     }
 
     function _beforeTokenTransfer(
@@ -72,5 +80,10 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
 
     function removeWhitelisted(address _whitelistAddress) external onlyOwner {
         whitelisted[_whitelistAddress] = false;
+    }
+
+    // Helper function to check if an address already received a specific token ID before
+    function isOwnerOf(uint256 tokenId, address account) internal view returns (bool) {
+        return ownersMap[tokenId][account];
     }
 }
