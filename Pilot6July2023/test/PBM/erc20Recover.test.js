@@ -75,13 +75,13 @@ describe('PBM', async () => {
         pbm.address,
         parseUnits('10000', await xsgdToken.decimals()),
       );
-      expect(await xsgdToken.balanceOf(pbm.address)).equal(
+      expect(await xsgdToken.balanceOf(pbm.address)).to.equal(
         parseUnits('10000', await xsgdToken.decimals()),
       );
-      expect(await xsgdToken.balanceOf(accounts[0].address)).equal(0);
+      expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(0);
       await pbm.recoverAllERC20(xsgdToken.address);
-      expect(await xsgdToken.balanceOf(pbm.address)).equal(0);
-      expect(await xsgdToken.balanceOf(accounts[0].address)).equal(
+      expect(await xsgdToken.balanceOf(pbm.address)).to.equal(0);
+      expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(
         parseUnits('10000', await xsgdToken.decimals()),
       );
     });
@@ -91,18 +91,18 @@ describe('PBM', async () => {
         pbm.address,
         parseUnits('10000', await xsgdToken.decimals()),
       );
-      expect(await xsgdToken.balanceOf(pbm.address)).equal(
+      expect(await xsgdToken.balanceOf(pbm.address)).to.equal(
         parseUnits('10000', await xsgdToken.decimals()),
       );
-      expect(await xsgdToken.balanceOf(accounts[0].address)).equal(0);
+      expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(0);
       await pbm.recoverERC20(
         xsgdToken.address,
         parseUnits('8000', await xsgdToken.decimals()),
       );
-      expect(await xsgdToken.balanceOf(pbm.address)).equal(
+      expect(await xsgdToken.balanceOf(pbm.address)).to.equal(
         parseUnits('2000', await xsgdToken.decimals()),
       );
-      expect(await xsgdToken.balanceOf(accounts[0].address)).equal(
+      expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(
         parseUnits('8000', await xsgdToken.decimals()),
       );
     });
@@ -143,6 +143,49 @@ describe('PBM', async () => {
           parseUnits('10000', await xsgdToken.decimals()),
         ),
       ).to.be.revertedWith('Interaction with the spot token failed.');
+    });
+
+    it('update the expiry successfully', async () => {
+      let currentDate = new Date();
+      let currentEpoch = Math.floor(currentDate / 1000);
+      let targetEpoch = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
+      let newExpiryEpoch = 1692662400; // new expiry at the past: August 22, 2023 8:00:00 AM GMT+08:00
+
+      await pbm.createPBMTokenType(
+        'updateExpiryTest',
+        parseUnits('1', await xsgdToken.decimals()),
+        xsgdToken.symbol(),
+        targetEpoch,
+        accounts[0].address,
+        'beforeExpiryURI',
+        'postExpiryURI',
+      );
+
+      expect((await pbm.getTokenDetails(0))[2]).to.equal(targetEpoch);
+      await pbm.updateTokenExpiry(0, newExpiryEpoch);
+      expect((await pbm.getTokenDetails(0))[2]).to.equal(newExpiryEpoch);
+    });
+
+    it('revert with error when non owner trying to update the expiry', async () => {
+      let currentDate = new Date();
+      let currentEpoch = Math.floor(currentDate / 1000);
+      let targetEpoch = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
+      let newExpiryEpoch = 1692662400; // new expiry at the past: August 22, 2023 8:00:00 AM GMT+08:00
+
+      await pbm.createPBMTokenType(
+        'updateExpiryTest',
+        parseUnits('1', await xsgdToken.decimals()),
+        xsgdToken.symbol(),
+        targetEpoch,
+        accounts[0].address,
+        'beforeExpiryURI',
+        'postExpiryURI',
+      );
+
+      expect((await pbm.getTokenDetails(0))[2]).to.equal(targetEpoch);
+      await expect(
+        pbm.connect(accounts[1]).updateTokenExpiry(0, newExpiryEpoch),
+      ).to.be.revertedWith('Ownable: caller is not the owner');
     });
   });
 });

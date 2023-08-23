@@ -73,6 +73,20 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
         tokenTypeCount += 1;
     }
 
+    // function to update/set the expiry
+
+    // @dev updateTokenExpiry allows the owner to update the expiry of an existing token type
+    // @param tokenId tokenId of the token type to update the expiry
+    // @param expiry new expiry to update to
+    // requirements:
+    // - caller must be the owner
+    // - provided tokenId should be valid (less than the tokenTypeCount)
+    // @notice if we call this function to update the expiry we also need to update the metadata json
+    function updateTokenExpiry(uint256 tokenId, uint256 expiry) external onlyOwner {
+        require(tokenId < tokenTypeCount, "Invalid tokenId");
+        tokenTypes[tokenId].expiry = expiry;
+    }
+
     /**
      * @dev See {IPBMTokenManager-revokePBM}.
      *
