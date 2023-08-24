@@ -33,23 +33,23 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         _unpause();
     }
 
-    function mint(address account, uint256 id, uint256 amount, bytes memory data) public onlyWhitelisted {
+    function mintUnique(address account, uint256 id, uint256 amount, bytes memory data) public onlyWhitelisted {
         require(amount == 1, "HeroNFT: Amount must be 1");
-        if (isOwnerOf(id, account)) {
+        if (hasOwned(id, account)) {
             return;
         }
         _mint(account, id, amount, data);
         ownersMap[id][account] = true;
     }
 
-    function mintBatch(
+    function mintUniqueBatch(
         address to,
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
     ) public onlyWhitelisted {
         for (uint i = 0; i < ids.length; i++) {
-            if (isOwnerOf(ids[i], to)) {
+            if (hasOwned(ids[i], to)) {
                 continue;
             }
             require(amounts[i] == 1, "HeroNFT: Amount must be 1");
@@ -83,7 +83,7 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     }
 
     // Helper function to check if an address already received a specific token ID before
-    function isOwnerOf(uint256 tokenId, address account) internal view returns (bool) {
+    function hasOwned(uint256 tokenId, address account) internal view returns (bool) {
         return ownersMap[tokenId][account];
     }
 }

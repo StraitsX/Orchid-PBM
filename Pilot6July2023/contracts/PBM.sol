@@ -265,7 +265,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         // if getHeroNFTId returns 0 means the merchant is not a hero merchant
         if (heroNFTId != 0) {
             // mint the hero NFT to the user if user does not have it
-            IHeroNFT(heroNFT).mint(_msgSender(), heroNFTId, 1, "");
+            IHeroNFT(heroNFT).mintUnique(_msgSender(), heroNFTId, 1, "");
         }
     }
 
