@@ -160,7 +160,8 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      */
     function areTokensValid(uint256[] memory tokenIds) external view override returns (bool) {
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            if (block.timestamp > tokenTypes[i].expiry || tokenTypes[i].amount == 0) {
+            uint256 tokenId = tokenIds[i];
+            if (block.timestamp > tokenTypes[tokenId].expiry || tokenTypes[tokenId].amount == 0) {
                 return false;
             }
         }
