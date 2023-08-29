@@ -5,18 +5,13 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "./ERC20Helper.sol";
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "./IPBMAddressList.sol";
 
-// TODO: create IEscrowPayment.sol and EscrowPayment.sol
-
-contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
-    using ECDSA for bytes32;
+contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
     // undelrying ERC-20 tokens
     address public spotToken = address(0);
@@ -30,7 +25,7 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
     // time of expiry ( epoch )
     uint256 public contractExpiry;
 
-    constructor() ERC1155("") EIP712("PBM", "0.0.1") {
+    constructor() ERC1155("") {
         pbmTokenManager = address(new PBMTokenManager());
     }
 
@@ -45,20 +40,9 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
         initialised = true;
     }
 
-    struct TokenWalletBalance {
-        uint256 availableBalance; // when p2p topup happens, both avail and current balance removed.
-        uint256 currentBalance;
-    }
-
-    // each user_add -> token_id pair is the user's account number, that holds to the max faceValue.
-    mapping(address => mapping(uint256 => TokenWalletBalance)) private userAccountBalance;
-
-    function getUserBalance(
-        address user,
-        uint256 token_id
-    ) public view whenNotPaused returns (TokenWalletBalance memory twb) {
-        TokenWalletBalance memory walBal = userAccountBalance[user][token_id];
-        return walBal;
+    struct UserBalance {
+        uint256 walletBalance;
+        uint256 availableBalance;
     }
 
     enum OrderStatus {
@@ -68,17 +52,53 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
     }
 
     struct Order {
-        uint256 order_value; // how much this order cost.
-        address merchant_address; // need this to check upon redemption
+        uint256 orderValue; // how much this order cost.
+        string orderId;
+        address customerWallet;
+        address fundDisbursementAddress; // need this to check upon redemption
         OrderStatus status;
     }
 
-    // user address => order_id => Order
-    // change it to a direct mapping to avoid loops
-    // is there any case we need to loop through the orders? or get all orders for a user?
-    // can add a array of order_ids for a user, and then loop through the array to get the orders.
-    mapping(address => string[]) private userOrderIds;
-    mapping(address => mapping(string => Order)) private userOrders;
+    mapping(bytes32 => Order) public orders;
+
+    // user_address -> token_id -> UserBalance
+    // token_id being the account number
+    // user_address is the user’s identifier
+    mapping(address => mapping(uint256 => UserBalance)) private userBalances;
+
+    function getUserBalance(
+        address user,
+        uint256 token_id
+    ) public view whenNotPaused returns (UserBalance memory userBalance) {
+        UserBalance memory userBal = userBalances[user][token_id];
+        return userBal;
+    }
+
+    // order id hash => order mapping
+    mapping(bytes32 => Order) public orders;
+
+    // whitelist mapping
+    mapping(address => bool) public whitelist;
+
+    modifier onlyWhitelisted() {
+        require(whitelist[msg.sender], "You are not authorized to call this function");
+        _;
+    }
+
+    modifier orderExists(string memory orderId) {
+        bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
+        require(orders[orderIdHash].orderValue > 0, "Order with this ID does not exist");
+        _;
+    }
+
+    function addToWhitelist(address account) external onlyOwner {
+        whitelist[account] = true;
+    }
+
+    function removeFromWhitelist(address account) external onlyOwner {
+        whitelist[account] = false;
+    }
+
 
     function createOrder(string memory order_id, uint256 amount, address merchant_address) external whenNotPaused {
         // move the user's currentBalance into the order list
@@ -212,6 +232,20 @@ contract PBM is ERC1155, EIP712, Ownable, Pausable, IPBM {
         // mint the token if the contract - wrapping the xsgd
         PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
         _mint(receiver, tokenId, amount, "");
+    }
+
+    function mint(uint256 tokenId, uint256 amount, address userAddress) override whenNotPaused onlyOwner {
+        require(userAddress != address(0), "Invalid user address");
+        require(amount == 1, "Amount can only be 1");
+        require(tokenTypes[tokenId].spotAmount != 0, "Invalid token id");
+
+        UserBalance storage userBalance = userBalances[userAddress][tokenId];
+        userBalance.walletBalance += tokenTypes[tokenId].spotAmount;
+        userBalance.availableBalance += tokenTypes[tokenId].spotAmount;
+
+        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), tokenTypes[tokenId].spotAmount);
+        emit FundsAdded(userAddress, tokenTypes[tokenId].spotAmount);
+        _mint(userAddress, tokenId, amount, data);
     }
 
     /**
