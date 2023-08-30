@@ -12,7 +12,6 @@ import "./IPBM.sol";
 import "./IPBMAddressList.sol";
 
 contract PBM is ERC1155, Ownable, Pausable, IPBM {
-
     // undelrying ERC-20 tokens
     address public spotToken = address(0);
     // address of the token manager
@@ -59,8 +58,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         OrderStatus status;
     }
 
-    mapping(bytes32 => Order) public orders;
-
     // user_address -> token_id -> UserBalance
     // token_id being the account number
     // user_address is the user’s identifier
@@ -68,9 +65,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
     function getUserBalance(
         address user,
-        uint256 token_id
+        uint256 tokenId
     ) public view whenNotPaused returns (UserBalance memory userBalance) {
-        UserBalance memory userBal = userBalances[user][token_id];
+        UserBalance memory userBal = userBalances[user][tokenId];
         return userBal;
     }
 
@@ -81,7 +78,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     mapping(address => bool) public whitelist;
 
     modifier onlyWhitelisted() {
-        require(whitelist[msg.sender], "You are not authorized to call this function");
+        require(whitelist[_msgSender()], "You are not authorized to call this function");
         _;
     }
 
@@ -99,80 +96,83 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         whitelist[account] = false;
     }
 
+    function createOrder(
+        address customerWalletAddr,
+        uint256 tokenId,
+        string memory orderId,
+        uint256 orderValue,
+        address fundDisbursementAddr
+    ) external whenNotPaused onlyWhitelisted {
+        require(customerWalletAddr != address(0), "Invalid customer address");
+        require(orderValue > 0, "Invalid order value");
+        require(fundDisbursementAddr != address(0), "Invalid fund disbursement address");
 
-    function createOrder(string memory order_id, uint256 amount, address merchant_address) external whenNotPaused {
+        bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
+        // must protect this, this ensures cannot call createOrder multiple times
+        require(orders[orderIdHash].orderValue == 0, "Order with this ID already exists");
         // move the user's currentBalance into the order list
         // create Orders with the order_id, and how much this order_id cost.
-        // update userAccountBalance[user][token_id]; currentBalance
-        TokenWalletBalance storage balance = userAccountBalance[_msgSender()][0]; // Assuming the only token id is 0
-        require(balance.currentBalance >= amount, "Insufficient balance");
+        // update UserBalance[user][token_id]; currentBalance
+        UserBalance storage userBalance = userBalances[customerWalletAddr][tokenId];
+        require(userBalance.availableBalance >= orderValue, "Insufficient available funds");
 
-        balance.currentBalance -= amount;
+        orders[orderIdHash] = Order(orderValue, orderId, customerWalletAddr, fundDisbursementAddr, OrderStatus.PENDING);
 
-        Order memory newOrder = Order({
-            order_value: amount,
-            merchant_address: merchant_address,
-            status: OrderStatus.PENDING
-        });
+        userBalance.availableBalance -= orderValue;
 
-        userOrders[_msgSender()][order_id] = newOrder;
+        emit OrderCreated(customerWalletAddr, orderId, orderValue, fundDisbursementAddr);
     }
 
-    function cancelOrder(string memory order_id) external whenNotPaused {
-        // increase the currentBalance.
-        // eseentially in pay and cancel pay, we only touch the current balance.
-        // avail balance is only edited in the event of p2p transfer, or successful redeem.
-        Order storage order = userOrders[_msgSender()][order_id];
-        require(order.status == OrderStatus.PENDING, "Cannot cancel order");
+    function cancelOrder(
+        string memory orderId,
+        uint256 tokenId
+    ) external whenNotPaused onlyWhitelisted orderExists(orderId) {
+        bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
+        require(orders[orderIdHash].status != OrderStatus.CANCELLED, "This order has been canceled");
+        // increase the availableBalance.
+        // essentially in pay and cancel pay, we only touch the current balance.
+        // wallet balance is only edited in the event of p2p transfer, or successful redeem.
+        require(orders[orderIdHash].status == OrderStatus.PENDING, "This order is no longer pending");
+        uint256 order_value = orders[orderIdHash].orderValue;
 
-        TokenWalletBalance storage balance = userAccountBalance[_msgSender()][0];
-        balance.currentBalance += order.order_value;
+        UserBalance storage userBalance = userBalances[_msgSender()][tokenId];
+        require(
+            userBalance.walletBalance >= (userBalance.availableBalance + order_value),
+            "Avail balance can never be greater than walletBalance"
+        );
+        require(userBalance.walletBalance > 0, "Invalid user balance.");
 
-        order.status = OrderStatus.CANCELLED;
+        orders[orderIdHash].status = OrderStatus.CANCELLED;
+        emit OrderCanceled(orderId);
     }
-
-    struct OrderRedeemRequest {
-        address from; // redeem from who, ie: the sender should be the same as the from address.
-        address to; // merchant's wallet address. TBD: do we need this???
-        string order_id;
-    }
-
-    bytes32 private constant _TYPEHASH = keccak256("OrderRedeemRequest(address from,address to,string order_id)");
 
     // update order status
     // credit merchant wallet
-    function redeem(OrderRedeemRequest calldata req, bytes calldata signature) external whenNotPaused {
-        // verify the signature by calling verify
-        // upon redemption, we will update availBalance (reduce it)
-        require(IPBMAddressList(pbmAddressList).isMerchant(_msgSender()), "Caller not a merchant");
+    // TBD: do we need to check if fundDisbursementAddress is a merchant?
+    function redeemOrder(
+        string memory orderId,
+        uint256 tokenId,
+        address userWallet
+    ) external whenNotPaused onlyWhitelisted orderExists(orderId) {
+        bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
+        require(orders[orderIdHash].status != OrderStatus.CANCELLED, "This order has been canceled");
+        // this check is very important, to prevent this function() from being called more than once.
+        require(orders[orderIdHash].status == OrderStatus.PENDING, "This order is no longer pending");
+        uint256 order_value = orders[orderIdHash].orderValue;
+        UserBalance storage userBalance = userBalances[userWallet][tokenId];
+        require(userBalance.walletBalance >= order_value, "Insufficient wallet balance");
 
-        Order storage order = userOrders[req.from][req.order_id];
-        //if only the correct merchant can ever obtain the valid signature from the user, then we can remove this check
-
-        // the online merchant address most likely won't be the same so just remove this check
-        // whoever has access the the QR code(sig) can redeem the order
-        // require(order.merchant_address == _msgSender(), "Order not intended for this merchant");
-        require(order.status == OrderStatus.PENDING, "Cannot redeem order");
-        require(verify(req, signature), "Invalid signature");
-
-        TokenWalletBalance storage balance = userAccountBalance[req.from][0];
-        balance.availableBalance -= order.order_value;
-
-        order.status = OrderStatus.REDEEMED;
-        // credit merchant
-        ERC20Helper.safeTransfer(spotToken, req.to, order.order_value);
-    }
-
-    // rationale for verify:
-    // Without verify, merchant knowing the order details(from, to, order_id) could redeem an OrderRedeemRequest without needing to control the private key of the from address.
-    // With the verify function, you can be sure that the person who signed the OrderRedeemRequest controls the private key of the from address.
-    // The signature is generated by user (from wallet owner) signing the OrderRedeemRequest and can only obtained by merchant upon user redeeming
-
-    function verify(OrderRedeemRequest calldata req, bytes calldata signature) public view returns (bool) {
-        address signer = _hashTypedDataV4(keccak256(abi.encode(_TYPEHASH, req.from, req.to, req.order_id))).recover(
-            signature
+        require(
+            userBalance.walletBalance >= userBalance.availableBalance,
+            "Something is wrong, availableBalance must be deducted first"
         );
-        return signer == req.from;
+        userBalance.walletBalance -= order_value;
+
+        orders[orderIdHash].status = OrderStatus.REDEEMED;
+
+        ERC20Helper.safeTransfer(spotToken, orders[orderIdHash].fundDisbursementAddress, order_value);
+
+        emit OrderRedeemed(userWallet, orderId);
     }
 
     /**
@@ -185,6 +185,8 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - `tokenExpiry` must be less than contract expiry
      * - `amount` should not be 0
      */
+
+    // TODO: fix create pbm token type
     function createPBMTokenType(
         string memory companyName,
         uint256 spotAmount,
@@ -222,150 +224,48 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - caller should have approved the PBM contract to spend the ERC-20 tokens
      * - receiver should not be blacklisted
      */
-    function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused {
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
-        uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
 
-        //Transfer the spot token from the user to the contract to wrap it
-        ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
-
-        // mint the token if the contract - wrapping the xsgd
-        PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
-        _mint(receiver, tokenId, amount, "");
-    }
-
-    function mint(uint256 tokenId, uint256 amount, address userAddress) override whenNotPaused onlyOwner {
+    function mint(uint256 tokenId, uint256 amount, address userAddress) public override whenNotPaused onlyOwner {
+        // do we need to check whether user address already holds the account/tokenId?
+        // block mint to user alr holds the account/tokenId
+        require(balanceOf(userAddress, tokenId) == 0, "Address already holds this account");
+        require(!IPBMAddressList(pbmAddressList).isBlacklisted(userAddress), "PBM: 'to' address blacklisted");
         require(userAddress != address(0), "Invalid user address");
         require(amount == 1, "Amount can only be 1");
-        require(tokenTypes[tokenId].spotAmount != 0, "Invalid token id");
+
+        uint256 spotAmount = PBMTokenManager(pbmTokenManager).getTokenValue(tokenId);
 
         UserBalance storage userBalance = userBalances[userAddress][tokenId];
-        userBalance.walletBalance += tokenTypes[tokenId].spotAmount;
-        userBalance.availableBalance += tokenTypes[tokenId].spotAmount;
+        userBalance.walletBalance += spotAmount;
+        userBalance.availableBalance += spotAmount;
 
-        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), tokenTypes[tokenId].spotAmount);
-        emit FundsAdded(userAddress, tokenTypes[tokenId].spotAmount);
-        _mint(userAddress, tokenId, amount, data);
+        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), spotAmount);
+        emit FundsAdded(userAddress, spotAmount);
+
+        PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
+        _mint(userAddress, tokenId, amount, "");
     }
 
-    /**
-     * @dev See {IPBM-batchMint}.
-     *     
-     * IMPT: Before minting, the caller should approve the contract address to spend ERC-20 tokens on behalf of the caller.
-     *       This can be done by calling the `approve` or `increaseMinterAllowance` functions of the ERC-20 contract and specifying `_spender` to be the PBM contract address. 
-             Ref : https://eips.ethereum.org/EIPS/eip-20
+    // instead of minting multiple token ids to a single address
+    // mintBatch here would mint one token id (account) to multiple user addresses
+    function mintBatch(uint256 tokenId, uint256 amount, address[] memory userAddresses) public whenNotPaused onlyOwner {
+        uint256 spotAmount = PBMTokenManager(pbmTokenManager).getTokenValue(tokenId);
+        uint256 usersCount = userAddresses.length;
+        uint256 totalSpotAmount = spotAmount * usersCount;
+        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), totalSpotAmount);
 
-       WARNING: Any contracts that externally call these mint() and batchMint() functions should implement some sort of reentrancy guard procedure (such as OpenZeppelin's ReentrancyGuard).
-     *
-     * Requirements:
-     *
-     * - contract must not be paused
-     * - tokens must not be expired
-     * - `tokenIds` should all be valid ids that have already been created
-     * - `tokenIds` and `amounts` list need to have the same number of values
-     * - caller should have the necessary amount of the ERC-20 tokens required to mint
-     * - caller should have approved the PBM contract to spend the ERC-20 tokens
-     * - receiver should not be blacklisted
-     */
-    function batchMint(
-        uint256[] memory tokenIds,
-        uint256[] memory amounts,
-        address receiver
-    ) external override whenNotPaused {
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
-        require(tokenIds.length == amounts.length, "Unequal ids and amounts supplied");
+        // Loop over each address and mint
+        for (uint256 i = 0; i < usersCount; i++) {
+            address userAddress = userAddresses[i];
+            require(balanceOf(userAddress, tokenId) == 0, "Address already holds this account");
+            require(userAddress != address(0), "Invalid user address");
+            require(amount == 1, "Amount can only be 1 for each token");
 
-        // calculate the value of the new tokens
-        uint256 valueOfNewTokens = 0;
-
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            valueOfNewTokens += (amounts[i] * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenIds[i])));
-        }
-
-        // Transfer spot tokenf from user to contract to wrap it
-        ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
-        PBMTokenManager(pbmTokenManager).increaseBalanceSupply(tokenIds, amounts);
-        _mintBatch(receiver, tokenIds, amounts, "");
-    }
-
-    /**
-     * @dev See {IPBM-safeTransferFrom}.
-     *
-     *
-     * Requirements:
-     *
-     * - contract must not be paused
-     * - tokens must not be expired
-     * - `tokenId` should be a valid ids that has already been created
-     * - caller should have the PBMs that are being transferred (or)
-     *          caller should have the approval to spend the PBMs on behalf of the owner (`from` addresss)
-     */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
-    ) public override(ERC1155, IPBM) whenNotPaused {
-        require(
-            from == _msgSender() || isApprovedForAll(from, _msgSender()),
-            "ERC1155: caller is not token owner nor approved"
-        );
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
-
-        if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
-            uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
-
-            // burn and transfer underlying ERC-20
-            _burn(from, id, amount);
-            PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
-            ERC20Helper.safeTransfer(spotToken, to, valueOfTokens);
-            emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, valueOfTokens);
-        } else {
-            _safeTransferFrom(from, to, id, amount, data);
-        }
-    }
-
-    /**
-     * @dev See {IPBM-safeBatchTransferFrom}.
-     *
-     *
-     * Requirements:
-     *
-     * - contract must not be paused
-     * - tokens must not be expired
-     * - `tokenIds` should all be  valid ids that has already been created
-     * - `tokenIds` and `amounts` list need to have the same number of values
-     * - caller should have the PBMs that are being transferred (or)
-     *          caller should have the approval to spend the PBMs on behalf of the owner (`from` addresss)
-     */
-    function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    ) public override(ERC1155, IPBM) whenNotPaused {
-        require(
-            from == _msgSender() || isApprovedForAll(from, _msgSender()),
-            "ERC1155: caller is not token owner nor approved"
-        );
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
-        require(ids.length == amounts.length, "Unequal ids and amounts supplied");
-
-        if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
-            uint256 valueOfTokens = 0;
-            for (uint256 i = 0; i < ids.length; i++) {
-                valueOfTokens += (amounts[i] * (PBMTokenManager(pbmTokenManager).getTokenValue(ids[i])));
-            }
-
-            _burnBatch(from, ids, amounts);
-            PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(ids, amounts);
-            ERC20Helper.safeTransfer(spotToken, to, valueOfTokens);
-
-            emit MerchantPayment(from, to, ids, amounts, spotToken, valueOfTokens);
-        } else {
-            _safeBatchTransferFrom(from, to, ids, amounts, data);
+            UserBalance storage userBalance = userBalances[userAddress][tokenId];
+            userBalance.walletBalance += spotAmount;
+            userBalance.availableBalance += spotAmount;
+            _mint(userAddress, tokenId, amount, "");
+            emit FundsAdded(userAddress, spotAmount);
         }
     }
 
@@ -378,6 +278,8 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - caller must be the creator of the tokenType
      * - token must be expired
      */
+
+    // TODO: need to update revoke logic
     function revokePBM(uint256 tokenId) external override whenNotPaused {
         uint256 valueOfTokens = PBMTokenManager(pbmTokenManager).getPBMRevokeValue(tokenId);
 
@@ -432,4 +334,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         array[0] = num;
         return array;
     }
+
+    event OrderCreated(address customer, string orderId, uint256 orderValue, address fundDisbursementAddress);
+    event OrderRedeemed(address customer, string orderId);
+    event OrderCanceled(string orderId);
+    event FundsAdded(address customer, uint256 spotAmount);
 }

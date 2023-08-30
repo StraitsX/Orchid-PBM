@@ -49,7 +49,7 @@ interface IPBM {
     /// @param tokenIds The identifiers of the PBM token type
     /// @param amounts The number of the PBMs that are to be created for each tokenId
     /// @param receiver The wallet address to which the created PBMs need to be transferred to
-    function batchMint(uint256[] memory tokenIds, uint256[] memory amounts, address receiver) external;
+//    function batchMint(uint256[] memory tokenIds, uint256[] memory amounts, address receiver) external;
 
     /// @notice Transfers the PBM(NFT) from one wallet to another.
     /// If the receving wallet is a whitelisted merchant wallet address, the PBM(NFT) will be burnt and the underlying ERC-20 tokens will be transferred to the merchant wallet instead.
@@ -58,7 +58,7 @@ interface IPBM {
     /// @param id The identifier of the PBM token type
     /// @param amount The number of (quantity) the PBM type that are to be transferred of the PBM type
     /// @param data To record any data associated with the transaction, can be left blank if none
-    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) external;
+//    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) external;
 
     /// @notice Transfers the PBM(NFT)(s) from one wallet to another.
     /// If the receving wallet is a whitelisted merchant wallet address, the PBM(NFT)(s) will be burnt and the underlying ERC-20 tokens will be transferred to the merchant wallet instead.
@@ -67,13 +67,13 @@ interface IPBM {
     /// @param ids The identifiers of the different PBM token type
     /// @param amounts The number of ( quantity ) the different PBM types that are to be created
     /// @param data To record any data associated with the transaction, can be left blank if none.
-    function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    ) external;
+//    function safeBatchTransferFrom(
+//        address from,
+//        address to,
+//        uint256[] memory ids,
+//        uint256[] memory amounts,
+//        bytes memory data
+//    ) external;
 
     /// @notice Allows the creator of the PBM type to retrive all the locked up ERC-20 once they have expired for that particular token type
     /// @param tokenId The identifier of the PBM token type

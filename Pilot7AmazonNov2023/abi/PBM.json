@@ -5,22 +5,6 @@
     "type": "constructor"
   },
   {
-    "inputs": [],
-    "name": "InvalidShortString",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "str",
-        "type": "string"
-      }
-    ],
-    "name": "StringTooLong",
-    "type": "error"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -47,8 +31,21 @@
   },
   {
     "anonymous": false,
-    "inputs": [],
-    "name": "EIP712DomainChanged",
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "customer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "spotAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "FundsAdded",
     "type": "event"
   },
   {
@@ -92,6 +89,69 @@
       }
     ],
     "name": "MerchantPayment",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "orderId",
+        "type": "string"
+      }
+    ],
+    "name": "OrderCanceled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "customer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "orderId",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "orderValue",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "fundDisbursementAddress",
+        "type": "address"
+      }
+    ],
+    "name": "OrderCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "customer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "orderId",
+        "type": "string"
+      }
+    ],
+    "name": "OrderRedeemed",
     "type": "event"
   },
   {
@@ -269,6 +329,19 @@
         "internalType": "address",
         "name": "account",
         "type": "address"
+      }
+    ],
+    "name": "addToWhitelist",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
       },
       {
         "internalType": "uint256",
@@ -314,32 +387,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256[]",
-        "name": "tokenIds",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "amounts",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "address",
-        "name": "receiver",
-        "type": "address"
-      }
-    ],
-    "name": "batchMint",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "string",
-        "name": "order_id",
+        "name": "orderId",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
       }
     ],
     "name": "cancelOrder",
@@ -363,18 +418,28 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "customerWalletAddr",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
         "internalType": "string",
-        "name": "order_id",
+        "name": "orderId",
         "type": "string"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "orderValue",
         "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "merchant_address",
+        "name": "fundDisbursementAddr",
         "type": "address"
       }
     ],
@@ -422,49 +487,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "eip712Domain",
-    "outputs": [
-      {
-        "internalType": "bytes1",
-        "name": "fields",
-        "type": "bytes1"
-      },
-      {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "version",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "chainId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "verifyingContract",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "salt",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "extensions",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -507,7 +529,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "token_id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -517,17 +539,17 @@
         "components": [
           {
             "internalType": "uint256",
-            "name": "availableBalance",
+            "name": "walletBalance",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "currentBalance",
+            "name": "availableBalance",
             "type": "uint256"
           }
         ],
-        "internalType": "struct PBM.TokenWalletBalance",
-        "name": "twb",
+        "internalType": "struct PBM.UserBalance",
+        "name": "userBalance",
         "type": "tuple"
       }
     ],
@@ -595,13 +617,75 @@
       },
       {
         "internalType": "address",
-        "name": "receiver",
+        "name": "userAddress",
         "type": "address"
       }
     ],
     "name": "mint",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address[]",
+        "name": "userAddresses",
+        "type": "address[]"
+      }
+    ],
+    "name": "mintBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "orders",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "orderValue",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "orderId",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "customerWallet",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "fundDisbursementAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "enum PBM.OrderStatus",
+        "name": "status",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -666,34 +750,35 @@
   {
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "from",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
-          },
-          {
-            "internalType": "string",
-            "name": "order_id",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct PBM.OrderRedeemRequest",
-        "name": "req",
-        "type": "tuple"
+        "internalType": "string",
+        "name": "orderId",
+        "type": "string"
       },
       {
-        "internalType": "bytes",
-        "name": "signature",
-        "type": "bytes"
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "userWallet",
+        "type": "address"
       }
     ],
-    "name": "redeem",
+    "name": "redeemOrder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "removeFromWhitelist",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -876,34 +961,12 @@
   {
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "from",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
-          },
-          {
-            "internalType": "string",
-            "name": "order_id",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct PBM.OrderRedeemRequest",
-        "name": "req",
-        "type": "tuple"
-      },
-      {
-        "internalType": "bytes",
-        "name": "signature",
-        "type": "bytes"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    "name": "verify",
+    "name": "whitelist",
     "outputs": [
       {
         "internalType": "bool",
