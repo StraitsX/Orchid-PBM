@@ -216,7 +216,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
 
     function getSpotType(uint256 tokenId) external view override returns (string memory) {
         require(
-            tokenTypes[tokenId].amount != 0 && block.timestamp < tokenTypes[tokenId].expiry,
+            tokenTypes[tokenId].amount != 0,
             "PBM: Invalid Token Id(s)"
         );
         return tokenTypes[tokenId].spotType;
