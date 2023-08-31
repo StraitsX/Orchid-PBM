@@ -117,8 +117,8 @@ interface IPBM {
     /// @param ERC20Token The address of the underlying ERC-20 token
     /// @param ERC20TokenValue The number of underlying ERC-20 tokens transferred
     event MerchantPayment(
-        address from,
-        address to,
+        address indexed from,
+        address indexed to,
         uint256[] tokenIds,
         uint256[] amounts,
         address ERC20Token,
