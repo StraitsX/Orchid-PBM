@@ -14,12 +14,12 @@ async function main() {
   for (let i = 0; i < targetAddress.length; i++) {
     let mintTx = await heroNFT.mintUniqueBatch(
       targetAddress[i],
-      [1, 2,3,4],
-      [1, 1,1,1],
+      [1, 2, 3, 4],
+      [1, 1, 1, 1],
       '0x',
     );
     const receipt = await mintTx.wait();
-    console.log(receipt.transactionHash)
+    console.log(receipt.transactionHash);
     console.log(`minted HeroNFT token 1, 2 to address ${targetAddress[i]}`);
   }
 }
