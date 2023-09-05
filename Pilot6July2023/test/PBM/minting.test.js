@@ -197,7 +197,14 @@ describe('PBM', async () => {
       expect(afterDetails['2'].toString()).to.equal(originalExpiry+100);
     });
 
-    it('Update metadata uri successfully', async () => {
+
+    it('Non owner update metadata uri would revert with error', async () => {
+      let metadataUri = await pbm.uri(0);
+      expect(metadataUri).to.equal('beforeExpiryURI')
+      await expect(pbm.connect(accounts[1]).updateTokenURI(0, 'updatedURI')).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it('Owner update metadata uri successfully', async () => {
       let metadataUri = await pbm.uri(0);
       expect(metadataUri).to.equal('beforeExpiryURI')
       await pbm.updateTokenURI(0, 'updatedURI');
