@@ -9,7 +9,7 @@ async function main() {
     deployerSigner,
   );
 
-  const pbmAddr = '0xb9f5fc449dDd21302Ab52aF1FfeA8d7A49614D3b';
+  const pbmAddr = '0xD2D74e2136D60A3c0D252C6dE4102a82f2511DEF';
   // whitelist PBM to be minter
   await heroNFT.addWhitelisted(pbmAddr);
 

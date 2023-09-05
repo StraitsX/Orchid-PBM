@@ -4,13 +4,16 @@ async function main() {
   const deployerSigner = ethers.provider.getSigner(deployer);
 
   const HeroNFT = await ethers.getContractFactory('HeroNFT');
-  const heroNFTDeployment = await deployments.get('HeroNFT');
-  const heroNFT = await HeroNFT.attach(heroNFTDeployment.address).connect(
+  const heroNFTAddr = '0x9eA317880C2667136fe1a13976BeB3D7F523620D'
+  // const heroNFTDeployment = await deployments.get('HeroNFT');
+  const heroNFT = await HeroNFT.attach(heroNFTAddr).connect(
     deployerSigner,
   );
 
+  const grabAddr = '0x9aa230b2a1817ae5b4841c7bd59705e48080bfc1'
+
   // for this heroNFT will start token id from 1. 0 is reserved
-  const targetAddress = [deployer];
+  const targetAddress = [grabAddr];
   for (let i = 0; i < targetAddress.length; i++) {
     let mintTx = await heroNFT.mintUniqueBatch(
       targetAddress[i],
@@ -20,7 +23,7 @@ async function main() {
     );
     const receipt = await mintTx.wait();
     console.log(receipt.transactionHash);
-    console.log(`minted HeroNFT token 1, 2 to address ${targetAddress[i]}`);
+    console.log(`minted HeroNFT token 1, 2, 3, 4 to address ${targetAddress[i]}`);
   }
 }
 main()
