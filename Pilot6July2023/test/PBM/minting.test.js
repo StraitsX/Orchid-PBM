@@ -189,6 +189,21 @@ describe('PBM', async () => {
       assert.equal(tokenDetails['3'], accounts[0].address.toString());
     });
 
+    it('Update token expiry successfully', async () => {
+      let tokenDetails = await pbm.getTokenDetails(0);
+      const originalExpiry = tokenDetails['2'].toString();
+      await pbm.updateTokenExpiry(0, originalExpiry + 100);
+      let afterDetails = await pbm.getTokenDetails(0);
+      expect(afterDetails['2'].toString()).to.equal(originalExpiry+100);
+    });
+
+    it('Update metadata uri successfully', async () => {
+      let metadataUri = await pbm.uri(0);
+      expect(metadataUri).to.equal('beforeExpiryURI')
+      await pbm.updateTokenURI(0, 'updatedURI');
+      expect(await pbm.uri(0)).to.equal('updatedURI');
+    });
+
     it('Minting a PBM token before approving ERC20 spending should revert with error', async () => {
       await expect(pbm.mint(0, 1, accounts[0].address)).revertedWith(
         'ERC20: Insufficent balance or approval',
