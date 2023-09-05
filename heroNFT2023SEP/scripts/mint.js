@@ -12,13 +12,14 @@ async function main() {
   // for this heroNFT will start token id from 1. 0 is reserved
   const targetAddress = [deployer];
   for (let i = 0; i < targetAddress.length; i++) {
-    let mintTx = await heroNFT.mintBatch(
+    let mintTx = await heroNFT.mintUniqueBatch(
       targetAddress[i],
-      [1, 2],
-      [1, 1],
+      [1, 2,3,4],
+      [1, 1,1,1],
       '0x',
     );
-    await mintTx.wait();
+    const receipt = await mintTx.wait();
+    console.log(receipt.transactionHash)
     console.log(`minted HeroNFT token 1, 2 to address ${targetAddress[i]}`);
   }
 }
