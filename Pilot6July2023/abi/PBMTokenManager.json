@@ -394,7 +394,7 @@
       },
       {
         "internalType": "string",
-        "name": "uri",
+        "name": "tokenURI",
         "type": "string"
       }
     ],

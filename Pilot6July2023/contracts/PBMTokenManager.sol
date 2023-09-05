@@ -93,9 +93,9 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
     // requirements:
     // - caller must be the owner
     // - provided tokenId should be valid (less than the tokenTypeCount)
-    function updateTokenURI(uint256 tokenId, string memory uri) external onlyOwner {
+    function updateTokenURI(uint256 tokenId, string memory tokenURI) external onlyOwner {
         require(tokenId < tokenTypeCount, "Invalid tokenId");
-        tokenTypes[tokenId].uri = uri;
+        tokenTypes[tokenId].uri = tokenURI;
     }
 
     // @dev updatePostExpiryURI allows the owner to update the post expiry metadata URL of an existing token type
