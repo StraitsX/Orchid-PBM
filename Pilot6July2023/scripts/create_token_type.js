@@ -14,10 +14,10 @@ async function main() {
 
 
   // mumbai xsgd and 2 decimals dsgd addresses
-  const xsgdAddress = '0x16e28369bc318636abbf6cb1035da77ffbf4a3bc';
-  const dsgdAddress = '0xD2a6a1F2954a04EF90152da0fC9E15b5c68E7A69';
+  const xsgdAddress = '0x288a9587d97bdC0946449d78AC23cf805c14400d';
+  const dsgdAddress = '0xA15157eE77650367CC4e44A5Bd52c0c8fb025E5f';
 
-  const expiryDate = 1716469200; // Tue May 23 2024 21:00:00 GMT+0800 (Taipei Standard Time) 2024-05-23T21:00:00+08:00
+  const expiryDate = 1704038400; // 2024-01-01T00:00:00+08:00
 
   // mint 1000000 $SGD worth of DSGD to deployer
   const dsgd = (await ethers.getContractFactory('Spot'))
@@ -42,21 +42,21 @@ async function main() {
     'XSGD',
     expiryDate,
     deployer,
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/1XSGD.json',
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired1XSGD.json',
+    'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/1XSGD.json',
+    'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/expired1XSGD.json',
   );
   console.log('PBM Token type 0 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 
   // creating token id 1: XSGD pbm - 2 XSGD
   await pbm.createPBMTokenType(
-    'Grab2XSGD',
-    ethers.utils.parseUnits('2', await xsgd.decimals()),
-    'XSGD',
+    'Grab2DSGD',
+    ethers.utils.parseUnits('2', await dsgd.decimals()),
+    'DSGD',
     expiryDate,
     deployer,
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/2XSGD.json',
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired2XSGD.json',
+    'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/2XSGD.json',
+    'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/expired2XSGD.json',
   );
   console.log('PBM Token type 1 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
@@ -68,8 +68,8 @@ async function main() {
     'XSGD',
     expiryDate,
     deployer,
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/5XSGD.json',
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired5XSGD.json',
+    'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/5XSGD.json',
+    'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/expired5XSGD.json',
   );
   console.log('PBM Token type 2 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
@@ -84,25 +84,25 @@ async function main() {
       'XSGD',
       expiryDate,
       deployer,
-      'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/0.1XSGD.json',
-      'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired0.1XSGD.json',
+      'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/0.1XSGD.json',
+      'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/expired0.1XSGD.json',
   );
   console.log('PBM Token type 3 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 
 
   // creating token id 4: DSGD pbm - 1 DSGD
-  await pbm.createPBMTokenType(
-    'Grab1DSGD',
-    ethers.utils.parseUnits('1', await dsgd.decimals()),
-    'DSGD',
-    expiryDate,
-    deployer,
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/1DSGD.json',
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired1DSGD.json',
-  );
-  console.log('PBM Token type 4 created');
-  await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
+  // await pbm.createPBMTokenType(
+  //   'Grab1DSGD',
+  //   ethers.utils.parseUnits('1', await dsgd.decimals()),
+  //   'DSGD',
+  //   expiryDate,
+  //   deployer,
+  //   'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/1DSGD.json',
+  //   'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired1DSGD.json',
+  // );
+  // console.log('PBM Token type 4 created');
+  // await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 
   // test expired token needs to change the expire time on the fly and remember to update metadata as well
   // const expire721 = 1689907800; // 2023-07-21T10:50:00+08:00

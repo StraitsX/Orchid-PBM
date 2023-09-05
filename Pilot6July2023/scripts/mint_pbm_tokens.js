@@ -15,8 +15,8 @@ async function main() {
   // const dsgdAddress = '0xd769410dc8772695A7f55a304d2125320A65c2a5';
 
   // mumbai xsgd and 2 decimals dsgd addresses
-  const xsgdAddress = '0x16e28369bc318636abbf6cb1035da77ffbf4a3bc';
-  const dsgdAddress = '0xD2a6a1F2954a04EF90152da0fC9E15b5c68E7A69';
+  const xsgdAddress = '0x288a9587d97bdC0946449d78AC23cf805c14400d';
+  const dsgdAddress = '0xA15157eE77650367CC4e44A5Bd52c0c8fb025E5f';
 
   const XSGD = await ethers.getContractFactory('Spot');
   const xsgd = await XSGD.attach(xsgdAddress).connect(deployerSigner); // XSGD deployed on mumbai
@@ -46,9 +46,9 @@ async function main() {
   // await xsgd.mint(swap.address, ethers.utils.parseUnits('1000000', 6))
   // await xsgd.mint(victorAddr, ethers.utils.parseUnits('1000000', 6))
 
-  const mintTo = [victorAddr];
+  const mintTo = [deployer];
   for (let i = 0; i < mintTo.length; i++) {
-    await pbm.batchMint([0, 1, 2, 3, 4], [5000, 5000, 5000, 5000, 5000], mintTo[i]);
+    await pbm.batchMint([0, 1, 2, 3], [10, 10, 10, 10], mintTo[i]);
     console.log(`minted PBM token 0, 1, 2, 3, 4 to address ${mintTo[i]}`);
     await new Promise((r) => setTimeout(r, 5000));
   }
