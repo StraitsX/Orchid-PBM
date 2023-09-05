@@ -7,34 +7,36 @@ async function main() {
   const pbm = (await ethers.getContractFactory('PBM'))
     .attach(pbmDeployment.address)
     .connect(deployerSigner);
-  const addressListDeployment = await deployments.get('PBMAddressList');
 
-  // Polygon XSGD address = "0xDC3326e71D45186F113a2F448984CA0e8D201995"
-  // Mumbai XSGD address = "0x16e28369bc318636abbf6cb1035da77ffbf4a3bc"
-  // mainnet fake stable coins address
-  // const xsgdAddress = '0x787bD10Bb65AE206f70759D88a2ffc0F2653C0F6';
-  // const dsgdAddress = '0xd769410dc8772695A7f55a304d2125320A65c2a5';
+  console.log('PBM address', pbmDeployment.address);
 
-  // mumbai 2 decimals DSGD
-  const xsgdAddress = '0x288a9587d97bdC0946449d78AC23cf805c14400d';
-  const dsgdAddress = '0xA15157eE77650367CC4e44A5Bd52c0c8fb025E5f';
+  // const addressListDeployment = await deployments.get('PBMAddressList');
+
+  const addresListAddr = '0x42e2a9716F63684B9DCe70Bbe4e493437f6a7Bc9'
+  const addressList = (await ethers.getContractFactory('PBMAddressList')).attach(addresListAddr).connect(deployerSigner);
+  console.log('addressList address', addressList.address);
+
+  // mainnet xsgd and dsgd
+  const xsgdAddress = '0xDC3326e71D45186F113a2F448984CA0e8D201995';
+  const dsgdAddress = '0x057B501fD1daF8FB0E232C7003AaFe5500e4efc0';
 
   // const dummyDSGD = (await ethers.getContractFactory('Spot')).attach(xsgdAddress).connect(deployerSigner);
   // const dummyXSGD = (await ethers.getContractFactory('Spot')).attach(dsgdAddress).connect(deployerSigner);
-  const swapDeployment = await deployments.get('Swap');
+  // const swapDeployment = await deployments.get('Swap');
+  const swapAddr = '0x287E63eE76855a0eaFc5cDf3e0950253916c8aE6';
+    const swap = (await ethers.getContractFactory('Swap')).attach(swapAddr).connect(deployerSigner);
+  console.log('swap address', swap.address);
 
   const expiryDate = 1704038400; // 2024-01-01T00:00:00+08:00
 
-  // Mumbai heroNFT address = "0x773135F3B394F6334b35CD84003267F48eDB6547"
-  // Mainnet heroNFT address = "0xb3795e87a3ca2a1f9fd00362ea7c5c08884f7bbe"
-  const heroNFTAddresss = '0x42e2a9716F63684B9DCe70Bbe4e493437f6a7Bc9';
+  const heroNFTAddresss = '0x9eA317880C2667136fe1a13976BeB3D7F523620D';
 
   await pbm.initialise(
     xsgdAddress,
     dsgdAddress,
-    swapDeployment.address,
+    swap.address,
     expiryDate,
-    addressListDeployment.address,
+    addressList.address,
     heroNFTAddresss,
   );
   console.log('PBM initialised');

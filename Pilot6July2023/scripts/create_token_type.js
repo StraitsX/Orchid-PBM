@@ -8,14 +8,9 @@ async function main() {
     .attach(pbmDeployment.address)
     .connect(deployerSigner);
 
-  // polygon mainnet fake stable coins addresses
-  // const xsgdAddress = '0x787bD10Bb65AE206f70759D88a2ffc0F2653C0F6';
-  // const dsgdAddress = '0xd769410dc8772695A7f55a304d2125320A65c2a5';
-
-
-  // mumbai xsgd and 2 decimals dsgd addresses
-  const xsgdAddress = '0x288a9587d97bdC0946449d78AC23cf805c14400d';
-  const dsgdAddress = '0xA15157eE77650367CC4e44A5Bd52c0c8fb025E5f';
+  // mainnet xsgd and dsgd
+  const xsgdAddress = '0xDC3326e71D45186F113a2F448984CA0e8D201995';
+  const dsgdAddress = '0x057B501fD1daF8FB0E232C7003AaFe5500e4efc0';
 
   const expiryDate = 1704038400; // 2024-01-01T00:00:00+08:00
 
@@ -23,17 +18,17 @@ async function main() {
   const dsgd = (await ethers.getContractFactory('Spot'))
     .attach(dsgdAddress)
     .connect(deployerSigner);
-  const dsgdAmount = ethers.utils.parseUnits('1000000', await dsgd.decimals());
+  // const dsgdAmount = ethers.utils.parseUnits('1000000', await dsgd.decimals());
 
-  await dsgd.mint(deployer, dsgdAmount);
+  // await dsgd.mint(deployer, dsgdAmount);
 
   // mint 1000000 $SGD worth of XSGD to deployer
   const xsgd = (await ethers.getContractFactory('Spot'))
     .attach(xsgdAddress)
     .connect(deployerSigner);
-  const xsgdAmount = ethers.utils.parseUnits('1000000', await xsgd.decimals());
+  // const xsgdAmount = ethers.utils.parseUnits('1000000', await xsgd.decimals());
 
-  await xsgd.mint(deployer, xsgdAmount);
+  // await xsgd.mint(deployer, xsgdAmount);
 
   // creating token id 0: XSGD pbm - 1 XSGD
   await pbm.createPBMTokenType(
@@ -89,35 +84,6 @@ async function main() {
   );
   console.log('PBM Token type 3 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
-
-
-  // creating token id 4: DSGD pbm - 1 DSGD
-  // await pbm.createPBMTokenType(
-  //   'Grab1DSGD',
-  //   ethers.utils.parseUnits('1', await dsgd.decimals()),
-  //   'DSGD',
-  //   expiryDate,
-  //   deployer,
-  //   'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/1DSGD.json',
-  //   'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired1DSGD.json',
-  // );
-  // console.log('PBM Token type 4 created');
-  // await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
-
-  // test expired token needs to change the expire time on the fly and remember to update metadata as well
-  // const expire721 = 1689907800; // 2023-07-21T10:50:00+08:00
-  // // creating token id 4: XSGD pbm - 1 XSGD expiring at
-  // await pbm.createPBMTokenType(
-  //   'Grab1XSGD',
-  //   ethers.utils.parseUnits('1', 6),
-  //   'XSGD',
-  //   expire721,
-  //   deployer,
-  //   'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/1XSGD-ExpireSoon.json',
-  //   'https://raw.githubusercontent.com/StraitsX/NFT/main/pilot6July2023/expired1XSGD-7-21.json',
-  // );
-  // console.log('PBM Token type 4 created');
-  // await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 }
 
 main()
