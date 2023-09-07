@@ -126,7 +126,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         require(orders[orderIdHash].status == OrderStatus.PENDING, "This order is no longer pending");
         uint256 order_value = orders[orderIdHash].orderValue;
 
-        UserBalance storage userBalance = userBalances[_msgSender()][tokenId];
+        UserBalance storage userBalance = userBalances[orders[orderIdHash].customerWallet][tokenId];
         require(
             userBalance.walletBalance >= (userBalance.availableBalance + order_value),
             "Avail balance can never be greater than walletBalance"
@@ -308,12 +308,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      */
     function unpause() external onlyOwner {
         _unpause();
-    }
-
-    function serialise(uint256 num) internal pure returns (uint256[] memory) {
-        uint256[] memory array = new uint256[](1);
-        array[0] = num;
-        return array;
     }
 
     event OrderCreated(address customer, string orderId, uint256 orderValue, address fundDisbursementAddress);
