@@ -31,21 +31,15 @@ async function main() {
     .attach(swapAddr)
     .connect(deployerSigner);
 
-  // mint PBM token 0 -> 1 xsgd, 1 -> 2 xsgd, 2 -> 5 xsgd, 3 -> 0.1 xsgd, 4 -> 1 dsgd
-  // const tjAddr = '0x56285Cbc175a9c7eB347d95a15633D95f894ba7b';
-  // const victorAddr = '0xE3639cd0EbE69F9f5189b9DEfe95C81BC89CBF69';
-  // const grabAddr = '0x9aa230b2a1817ae5b4841c7bd59705e48080bfc1';
-  const grabDevAddr = '0x5395e64f7fa3049826d3d0138bdff32ac79b3eab';
-  const gloria = '0x64b1ab364d0fc2a2df9e00ffbc65ab34dfb73b3d'
-  const tianwei = '0xe036517f1c5577277a9fe442f43f670530f30a64'
-  const fomo1 = '0xed8bd195e027d21ca94f2ac11dd70767e212f60d'
-  const fomo2 = '0xfd92d326f5363826ba960cc2983cf80593e60f03'
+  // mint PBM token 0 -> 1 xsgd, 1 -> 2 dsgd, 2 -> 5 xsgd, 3 -> 0.1 xsgd
+  const test1 = '0xed8bd195e027d21ca94f2ac11dd70767e212f60d'
+  const test2 = '0xfd92d326f5363826ba960cc2983cf80593e60f03'
 
   // mint dummy XSGD
   // await xsgd.mint(swap.address, ethers.utils.parseUnits('1000000', 6))
   // await xsgd.mint(victorAddr, ethers.utils.parseUnits('1000000', 6))
 
-  const mintTo = [fomo1, fomo2];
+  const mintTo = [test1, test2];
   for (let i = 0; i < mintTo.length; i++) {
     const mintTxn = await pbm.batchMint([3], [10], mintTo[i]);
     const receipt = await mintTxn.wait()
