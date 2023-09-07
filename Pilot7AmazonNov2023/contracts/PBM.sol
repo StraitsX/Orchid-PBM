@@ -2,6 +2,7 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -9,15 +10,12 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./ERC20Helper.sol";
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
-import "./IPBMAddressList.sol";
 
 contract PBM is ERC1155, Ownable, Pausable, IPBM {
     // undelrying ERC-20 tokens
     address public spotToken = address(0);
     // address of the token manager
     address public pbmTokenManager = address(0);
-    // address of the PBM-Addresslist
-    address public pbmAddressList = address(0);
 
     // tracks contract initialisation
     bool internal initialised = false;
@@ -28,14 +26,11 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         pbmTokenManager = address(new PBMTokenManager());
     }
 
-    function initialise(address _spotToken, uint256 _expiry, address _pbmAddressList) external override onlyOwner {
+    function initialise(address _spotToken, uint256 _expiry) external override onlyOwner {
         require(!initialised, "PBM: Already initialised");
         require(Address.isContract(_spotToken), "Invalid spot token");
-        require(Address.isContract(_pbmAddressList), "Invalid spot token");
         spotToken = _spotToken;
         contractExpiry = _expiry;
-        pbmAddressList = _pbmAddressList;
-
         initialised = true;
     }
 
@@ -128,10 +123,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         uint256 tokenId
     ) external whenNotPaused onlyWhitelisted orderExists(orderId) {
         bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
-        require(orders[orderIdHash].status != OrderStatus.CANCELLED, "This order has been canceled");
-        // increase the availableBalance.
-        // essentially in pay and cancel pay, we only touch the current balance.
-        // wallet balance is only edited in the event of p2p transfer, or successful redeem.
         require(orders[orderIdHash].status == OrderStatus.PENDING, "This order is no longer pending");
         uint256 order_value = orders[orderIdHash].orderValue;
 
@@ -142,7 +133,11 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         );
         require(userBalance.walletBalance > 0, "Invalid user balance.");
 
+        // increase the availableBalance.
+        // essentially in pay and cancel pay, we only touch the availableBalance.
+        // wallet balance is only edited in the event of p2p transfer, or successful redeem.
         orders[orderIdHash].status = OrderStatus.CANCELLED;
+        userBalance.availableBalance += order_value;
         emit OrderCanceled(orderId);
     }
 
@@ -155,7 +150,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         address userWallet
     ) external whenNotPaused onlyWhitelisted orderExists(orderId) {
         bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
-        require(orders[orderIdHash].status != OrderStatus.CANCELLED, "This order has been canceled");
         // this check is very important, to prevent this function() from being called more than once.
         require(orders[orderIdHash].status == OrderStatus.PENDING, "This order is no longer pending");
         uint256 order_value = orders[orderIdHash].orderValue;
@@ -186,20 +180,15 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - `amount` should not be 0
      */
 
-    // TODO: fix create pbm token type
     function createPBMTokenType(
-        string memory companyName,
         uint256 spotAmount,
         uint256 tokenExpiry,
-        address creator,
         string memory tokenURI,
         string memory postExpiryURI
     ) external override onlyOwner {
         PBMTokenManager(pbmTokenManager).createTokenType(
-            companyName,
             spotAmount,
             tokenExpiry,
-            creator,
             tokenURI,
             postExpiryURI,
             contractExpiry
@@ -229,10 +218,10 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         // do we need to check whether user address already holds the account/tokenId?
         // block mint to user alr holds the account/tokenId
         require(balanceOf(userAddress, tokenId) == 0, "Address already holds this account");
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(userAddress), "PBM: 'to' address blacklisted");
         require(userAddress != address(0), "Invalid user address");
         require(amount == 1, "Amount can only be 1");
 
+        // get token value here checks if the tokenId is created alr
         uint256 spotAmount = PBMTokenManager(pbmTokenManager).getTokenValue(tokenId);
 
         UserBalance storage userBalance = userBalances[userAddress][tokenId];
@@ -242,13 +231,13 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), spotAmount);
         emit FundsAdded(userAddress, spotAmount);
 
-        PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
         _mint(userAddress, tokenId, amount, "");
     }
 
     // instead of minting multiple token ids to a single address
     // mintBatch here would mint one token id (account) to multiple user addresses
     function mintBatch(uint256 tokenId, uint256 amount, address[] memory userAddresses) public whenNotPaused onlyOwner {
+        // get token value here checks if the tokenId is created alr
         uint256 spotAmount = PBMTokenManager(pbmTokenManager).getTokenValue(tokenId);
         uint256 usersCount = userAddresses.length;
         uint256 totalSpotAmount = spotAmount * usersCount;
@@ -271,33 +260,25 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
     /**
      * @dev See {IPBM-revokePBM}.
-     *
      * Requirements:
      *
-     * - `tokenId` should be a valid ids that has already been created
-     * - caller must be the creator of the tokenType
+     * - caller must be the owner of the contract
      * - token must be expired
      */
 
-    // TODO: need to update revoke logic
-    function revokePBM(uint256 tokenId) external override whenNotPaused {
-        uint256 valueOfTokens = PBMTokenManager(pbmTokenManager).getPBMRevokeValue(tokenId);
+    function revokePBM() external onlyOwner whenNotPaused {
+        ERC20 erc20 = ERC20(spotToken);
+        uint256 valueOfTokens = erc20.balanceOf(address(this));
+        ERC20Helper.safeTransfer(address(erc20), owner(), valueOfTokens);
 
-        PBMTokenManager(pbmTokenManager).revokePBM(tokenId, msg.sender);
-
-        // transfering underlying ERC20 tokens
-        ERC20Helper.safeTransfer(spotToken, msg.sender, valueOfTokens);
-
-        emit PBMrevokeWithdraw(msg.sender, tokenId, spotToken, valueOfTokens);
+        emit PBMrevokeWithdraw(_msgSender(), spotToken, valueOfTokens);
     }
 
     /**
      * @dev See {IPBM-getTokenDetails}.
      *
      */
-    function getTokenDetails(
-        uint256 tokenId
-    ) external view override returns (string memory, uint256, uint256, address) {
+    function getTokenDetails(uint256 tokenId) external view override returns (uint256, uint256) {
         return PBMTokenManager(pbmTokenManager).getTokenDetails(tokenId);
     }
 

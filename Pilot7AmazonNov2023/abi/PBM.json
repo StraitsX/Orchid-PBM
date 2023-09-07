@@ -53,49 +53,6 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "tokenIds",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "amounts",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "ERC20Token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "ERC20TokenValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "MerchantPayment",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "string",
         "name": "orderId",
         "type": "string"
@@ -181,12 +138,6 @@
         "internalType": "address",
         "name": "beneficiary",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "PBMTokenId",
-        "type": "uint256"
       },
       {
         "indexed": false,
@@ -451,11 +402,6 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "companyName",
-        "type": "string"
-      },
-      {
         "internalType": "uint256",
         "name": "spotAmount",
         "type": "uint256"
@@ -464,11 +410,6 @@
         "internalType": "uint256",
         "name": "tokenExpiry",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "creator",
-        "type": "address"
       },
       {
         "internalType": "string",
@@ -497,11 +438,6 @@
     "name": "getTokenDetails",
     "outputs": [
       {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      },
-      {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
@@ -510,11 +446,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -567,11 +498,6 @@
         "internalType": "uint256",
         "name": "_expiry",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_pbmAddressList",
-        "type": "address"
       }
     ],
     "name": "initialise",
@@ -723,19 +649,6 @@
   },
   {
     "inputs": [],
-    "name": "pbmAddressList",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "pbmTokenManager",
     "outputs": [
       {
@@ -791,13 +704,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
     "name": "revokePBM",
     "outputs": [],
     "stateMutability": "nonpayable",
