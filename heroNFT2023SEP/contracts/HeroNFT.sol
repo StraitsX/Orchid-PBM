@@ -12,7 +12,7 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     constructor() ERC1155("") {}
 
     // better open a dedicated repo on github to store the metadata
-    string baseURI = "https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/heroNFT2023SEP/";
+    string baseURI = "https://stxpilot6.mypinata.cloud/ipfs/QmVqM4couQf82ioz68wYuQEoxCD53UL8wfoYWCur74CMAt/";
     mapping(address => bool) public whitelisted;
     // token id => owner address => bool to indicate whether having the token id or not
     mapping(uint256 => mapping(address => bool)) public ownersMap;
@@ -54,7 +54,7 @@ contract HeroNFT is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
             }
             require(amounts[i] == 1, "HeroNFT: Amount must be 1");
             _mint(to, ids[i], amounts[i], data);
-            ownersMap[ids[i]][to] = true;  // Update the mapping
+            ownersMap[ids[i]][to] = true; // Update the mapping
         }
     }
 

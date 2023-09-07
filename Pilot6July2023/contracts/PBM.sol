@@ -371,6 +371,20 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         PBMTokenManager(pbmTokenManager).updateTokenExpiry(tokenId, expiry);
     }
 
+    // @dev see { PBMTokenManager - updateTokenURI}
+    // requirements:
+    // - caller must be the owner
+    function updateTokenURI(uint256 tokenId, string memory tokenURI) external onlyOwner {
+        PBMTokenManager(pbmTokenManager).updateTokenURI(tokenId, tokenURI);
+    }
+
+    // @dev see { PBMTokenManager - updatePostExpiryURI}
+    // requirements:
+    // - caller must be the owner
+    function updatePostExpiryURI(uint256 tokenId, string memory postExpiryURI) external onlyOwner {
+        PBMTokenManager(pbmTokenManager).updatePostExpiryURI(tokenId, postExpiryURI);
+    }
+
     /**
      * @dev see {Pausable _pause}
      *
