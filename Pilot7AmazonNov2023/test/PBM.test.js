@@ -1,24 +1,24 @@
-const { ethers, waffle } = require("hardhat");
+const { ethers, waffle } = require('hardhat');
 const { expect } = require('chai');
 
 let PBM, pbmInstance, Spot, spotInstance, owner, addr1, addr2;
 
-describe("PBM Deployment", function () {
-  it("Should deploy PBM contract", async function () {
-    PBM = await ethers.getContractFactory("PBM");
+describe('PBM Deployment', function () {
+  it('Should deploy PBM contract', async function () {
+    PBM = await ethers.getContractFactory('PBM');
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
     pbmInstance = await PBM.deploy();
     expect(pbmInstance.address).to.properAddress;
   });
 
-  it("Should deploy Spot contract", async function () {
-    Spot = await ethers.getContractFactory("Spot");
+  it('Should deploy Spot contract', async function () {
+    Spot = await ethers.getContractFactory('Spot');
     spotInstance = await Spot.deploy();
     expect(spotInstance.address).to.properAddress;
   });
 });
 
-describe("Initialisation", function() {
+describe('Initialisation', function () {
   it('should properly initialise with the correct parameters', async () => {
     let currentDate = new Date();
     let currentEpoch = Math.floor(currentDate / 1000);
@@ -32,7 +32,7 @@ describe("Initialisation", function() {
   });
 });
 
-describe("Whitelisting", function() {
+describe('Whitelisting', function () {
   it('should allow owner to whitelist an address', async () => {
     await pbmInstance.addToWhitelist(addr1.address);
     const isWhitelisted = await pbmInstance.whitelist(addr1.address);

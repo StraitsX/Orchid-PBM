@@ -47,29 +47,27 @@ interface IPBM {
     /// @param receivers The wallet addresses to which the created PBMs need to be transferred to
     function mintBatch(uint256 tokenId, uint256 amount, address[] memory receivers) external;
 
-    /// @notice Transfers the PBM(NFT) from one wallet to another.
-    /// If the receving wallet is a whitelisted merchant wallet address, the PBM(NFT) will be burnt and the underlying ERC-20 tokens will be transferred to the merchant wallet instead.
-    /// @param from The account from which the PBM ( NFT ) is moving from
-    /// @param to The account which is receiving the PBM ( NFT )
-    /// @param id The identifier of the PBM token type
-    /// @param amount The number of (quantity) the PBM type that are to be transferred of the PBM type
+    /// @notice Doesn't transfer the underlying ERC20 tokens. Instead, it only updates the user balances within this contract.
+    /// @param from The account from which the balance is moving from
+    /// @param to The account which is receiving the balance
+    /// @param id The identifier of the PBM token type(account id)
+    /// @param amount The number of (quantity) the PBM type, which should always be 1.
     /// @param data To record any data associated with the transaction, can be left blank if none
-    //    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) external;
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) external;
 
-    /// @notice Transfers the PBM(NFT)(s) from one wallet to another.
-    /// If the receving wallet is a whitelisted merchant wallet address, the PBM(NFT)(s) will be burnt and the underlying ERC-20 tokens will be transferred to the merchant wallet instead.
-    /// @param from The account from which the PBM ( NFT )(s) is moving from
-    /// @param to The account which is receiving the PBM ( NFT )(s)
-    /// @param ids The identifiers of the different PBM token type
-    /// @param amounts The number of ( quantity ) the different PBM types that are to be created
+    /// @notice Doesn't transfer the underlying ERC20 tokens. Instead, it only updates the user balances within this contract.
+    /// @param from The account from which the balance is moving from
+    /// @param to The account which is receiving the balance
+    /// @param ids The identifiers of the different PBM token type(account ids)
+    /// @param amounts The number of (quantity) the PBM type, which should always be 1.
     /// @param data To record any data associated with the transaction, can be left blank if none.
-    //    function safeBatchTransferFrom(
-    //        address from,
-    //        address to,
-    //        uint256[] memory ids,
-    //        uint256[] memory amounts,
-    //        bytes memory data
-    //    ) external;
+        function safeBatchTransferFrom(
+            address from,
+            address to,
+            uint256[] memory ids,
+            uint256[] memory amounts,
+            bytes memory data
+        ) external;
 
     /// @notice Allows the creator of the PBM type to retrive all the locked up ERC-20 once they have expired for that particular token type
     function revokePBM() external;

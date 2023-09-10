@@ -6,12 +6,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./ERC20Helper.sol";
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 
-contract PBM is ERC1155, Ownable, Pausable, IPBM {
+contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
     // undelrying ERC-20 tokens
     address public spotToken = address(0);
     // address of the token manager
@@ -259,6 +260,106 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
+     * @dev See {IPBM-safeTransferFrom}.
+     *
+     * IMPT: This function doesn't actually transfer the underlying ERC20 tokens. Instead, it only updates the user balances within this contract.
+     *
+     * Requirements:
+     *
+     * - contract must not be paused.
+     * - `amount` should be exactly 1.
+     * - sender (`from` address) should have a positive available balance.
+     * - recipient (`to` address) should not be the zero address.
+     * - caller must be either the token owner or approved to transfer the token.
+     */
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 amount,
+        bytes memory data
+    ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
+        require(amount == 1, "Amount can only be 1");
+        require(userBalances[from][tokenId].availableBalance > 0, "Invalid available balance");
+        require(to != address(0), "Invalid recipient address");
+        require(from == _msgSender() || isApprovedForAll(from, _msgSender()), "Caller is not token owner or approved");
+
+        uint256 transferAmount = userBalances[from][tokenId].availableBalance;
+
+        userBalances[from][tokenId].walletBalance -= transferAmount;
+        userBalances[from][tokenId].availableBalance -= transferAmount;
+
+        userBalances[to][tokenId].walletBalance += transferAmount;
+        userBalances[to][tokenId].availableBalance += transferAmount;
+
+        emit UserBalanceUpdated(
+            from,
+            tokenId,
+            userBalances[from][tokenId].walletBalance,
+            userBalances[from][tokenId].availableBalance
+        );
+        emit UserBalanceUpdated(
+            to,
+            tokenId,
+            userBalances[to][tokenId].walletBalance,
+            userBalances[to][tokenId].availableBalance
+        );
+    }
+
+    /**
+     * @dev See {IPBM-safeBatchTransferFrom}.
+     *
+     * IMPT: This function doesn't actually transfer the underlying ERC20 tokens. Instead, it only updates the user balances within this contract.
+     *
+     * Requirements:
+     *
+     * - contract must not be paused.
+     * - `amounts` for each tokenId should be exactly 1.
+     * - sender (`from` address) should have a positive available balance for each tokenId.
+     * - recipient (`to` address) should not be the zero address.
+     * - caller must be either the token owner or approved to transfer the tokens.
+     */
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory tokenIds,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
+        require(to != address(0), "Invalid recipient address");
+        require(tokenIds.length == amounts.length, "TokenIDs and amounts length mismatch");
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            uint256 tokenId = tokenIds[i];
+            uint256 amount = amounts[i];
+
+            require(amount == 1, "Amount for each tokenId can only be 1");
+            require(userBalances[from][tokenId].availableBalance > 0, "Invalid available balance for tokenId");
+
+            uint256 transferAmount = userBalances[from][tokenId].availableBalance;
+
+            userBalances[from][tokenId].walletBalance -= transferAmount;
+            userBalances[from][tokenId].availableBalance -= transferAmount;
+
+            userBalances[to][tokenId].walletBalance += transferAmount;
+            userBalances[to][tokenId].availableBalance += transferAmount;
+
+            emit UserBalanceUpdated(
+                from,
+                tokenId,
+                userBalances[from][tokenId].walletBalance,
+                userBalances[from][tokenId].availableBalance
+            );
+            emit UserBalanceUpdated(
+                to,
+                tokenId,
+                userBalances[to][tokenId].walletBalance,
+                userBalances[to][tokenId].availableBalance
+            );
+        }
+    }
+
+    /**
      * @dev See {IPBM-revokePBM}.
      * Requirements:
      *
@@ -314,4 +415,10 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     event OrderRedeemed(address customer, string orderId);
     event OrderCanceled(string orderId);
     event FundsAdded(address customer, uint256 spotAmount);
+    event UserBalanceUpdated(
+        address indexed user,
+        uint256 tokenId,
+        uint256 newWalletBalance,
+        uint256 newAvailableBalance
+    );
 }
