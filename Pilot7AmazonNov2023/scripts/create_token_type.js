@@ -19,10 +19,8 @@ async function main() {
 
   // creating token id 0: XSGD pbm - 1 XSGD
   await pbm.createPBMTokenType(
-    'test-amazn',
     ethers.utils.parseUnits('20', await xsgd.decimals()),
     expiryDate,
-    deployer,
     'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/1XSGD.json',
     'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired1XSGD.json',
   );

@@ -20,8 +20,8 @@ async function main() {
 
   const mintTo = [deployer];
   for (let i = 0; i < mintTo.length; i++) {
-    await pbm.mint(0,1, mintTo[i]);
-    console.log(`minted PBM token 0 to address ${mintTo[i]}`);
+    await pbm.mint(1,1, mintTo[i]);
+    console.log(`minted PBM token 1 to address ${mintTo[i]}`);
     await new Promise((r) => setTimeout(r, 5000));
   }
 }
