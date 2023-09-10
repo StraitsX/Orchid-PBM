@@ -10,11 +10,8 @@ async function main() {
 
   const expiryDate = 1725739503; // Sunday, September 8, 2024 4:05:03 AM GMT+08:00
   // mumbai xsgd address
-  const xsgdAddress = "0x16e28369bc318636abbf6cb1035da77ffbf4a3bc"
-  await pbm.initialise(
-    xsgdAddress,
-    expiryDate
-  );
+  const xsgdAddress = '0x16e28369bc318636abbf6cb1035da77ffbf4a3bc';
+  await pbm.initialise(xsgdAddress, expiryDate);
   console.log('PBM initialised');
 }
 main()

@@ -61,13 +61,13 @@ interface IPBM {
     /// @param ids The identifiers of the different PBM token type(account ids)
     /// @param amounts The number of (quantity) the PBM type, which should always be 1.
     /// @param data To record any data associated with the transaction, can be left blank if none.
-        function safeBatchTransferFrom(
-            address from,
-            address to,
-            uint256[] memory ids,
-            uint256[] memory amounts,
-            bytes memory data
-        ) external;
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) external;
 
     /// @notice Allows the creator of the PBM type to retrive all the locked up ERC-20 once they have expired for that particular token type
     function revokePBM() external;
