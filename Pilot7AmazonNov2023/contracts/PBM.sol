@@ -35,11 +35,6 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         initialised = true;
     }
 
-    struct UserBalance {
-        uint256 walletBalance;
-        uint256 availableBalance;
-    }
-
     enum OrderStatus {
         PENDING,
         REDEEMED,
