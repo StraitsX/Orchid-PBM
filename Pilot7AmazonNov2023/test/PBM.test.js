@@ -1,19 +1,21 @@
 const { ethers, waffle } = require('hardhat');
 const { expect } = require('chai');
+async function deploy(name, ...params) {
+  const Contract = await ethers.getContractFactory(name);
+  return await Contract.deploy(...params).then((f) => f.deployed());
+}
 
 let PBM, pbmInstance, Spot, spotInstance, owner, addr1, addr2;
 
 describe('PBM Deployment', function () {
   it('Should deploy PBM contract', async function () {
-    PBM = await ethers.getContractFactory('PBM');
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
-    pbmInstance = await PBM.deploy();
+    pbmInstance = await deploy('PBM');
     expect(pbmInstance.address).to.properAddress;
   });
 
   it('Should deploy Spot contract', async function () {
-    Spot = await ethers.getContractFactory('Spot');
-    spotInstance = await Spot.deploy();
+    spotInstance = await deploy('Spot', 'XSGD', 'XSGD', 6);
     expect(spotInstance.address).to.properAddress;
   });
 });

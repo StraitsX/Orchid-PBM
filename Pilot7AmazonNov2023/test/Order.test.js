@@ -25,7 +25,7 @@ describe('Order Management', async () => {
       ...addrs
     ] = await ethers.getSigners();
     pbmInstance = await deploy('PBM');
-    spotInstance = await deploy('Spot');
+    spotInstance = await deploy('Spot', 'XSGD', 'XSGD', 6);
 
     let currentDate = new Date();
     let currentEpoch = Math.floor(currentDate / 1000);
