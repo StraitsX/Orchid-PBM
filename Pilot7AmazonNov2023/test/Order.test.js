@@ -16,8 +16,14 @@ describe('Order Management', async () => {
     orderValue;
   beforeEach(async () => {
     // Deploy PBM and initialise
-    [owner, orchestratorWallet, customerWallet, customer2Wallet, fundDisbursementAddr, ...addrs] =
-      await ethers.getSigners();
+    [
+      owner,
+      orchestratorWallet,
+      customerWallet,
+      customer2Wallet,
+      fundDisbursementAddr,
+      ...addrs
+    ] = await ethers.getSigners();
     pbmInstance = await deploy('PBM');
     spotInstance = await deploy('Spot');
 
@@ -48,9 +54,19 @@ describe('Order Management', async () => {
     // mint token id 1 to customerWallet
     await pbmInstance.mint(1, 1, customerWallet.address);
     await spotInstance.increaseAllowance(pbmInstance.address, spotTokenAmount);
-    await pbmInstance.addUserBalance(1, spotTokenAmount, customerWallet.address);
+    await pbmInstance.addUserBalance(
+      1,
+      spotTokenAmount,
+      customerWallet.address,
+    );
   });
 
+  it('should not allow non-whitelisted address to create an order', async () => {
+    //   to be implemented
+  });
+  it('should not allow whitelisted address without approval to create an order', async () => {
+    //   to be implemented
+  });
   it('should allow whitelisted address to create an order', async () => {
     const balance = await pbmInstance.getUserBalance(customerWallet.address, 1);
     expect(balance.walletBalance.toString()).to.equal(
