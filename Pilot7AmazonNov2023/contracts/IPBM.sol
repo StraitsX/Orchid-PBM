@@ -26,31 +26,39 @@ interface IPBM {
         string memory postExpiryURI
     ) external;
 
-    /// @notice Mints a new PBM instance, ensuring it's backed by the necessary ERC-20 token value.
-    /// @param tokenId Identifier of the PBM token type.
-    /// @param amount Quantity of PBMs to be minted (should be 1 by design).
+    /// @notice Mints a new PBM instance, essentially creating a PBM account for the specified user. (userAddress->tokenId will be an unique identifier)
+    /// @param tokenId Identifier of the PBM token type. (account_id)
+    /// @param amount Quantity of PBMs to be minted. When minting to a user directly this should always be 1. When minting to an orchestrator this could be more.
     /// @param receiver Address to receive the minted PBMs.
     function mint(uint256 tokenId, uint256 amount, address receiver) external;
 
-    /// @notice Mints multiple PBM instances in a batch for multiple receivers.
-    /// @param tokenId Identifier of the PBM token type.
-    /// @param amount Quantity of PBMs to be minted for each receiver (should be 1 by design).
+    /// @notice Mints multiple PBM instances in a batch for multiple receivers. Essentially creating a PBM account for the each specified user. (userAddress->tokenId will be an unique identifier)
+    /// @param tokenId Identifier of the PBM token type. (account_id)
+    /// @param amount Quantity of PBMs to be minted for each receiver. When minting to a user directly this should always be 1. When minting to an orchestrator this could be more.
     /// @param receivers List of addresses to receive the minted PBMs.
     function mintBatch(uint256 tokenId, uint256 amount, address[] memory receivers) external;
+
+    /// @notice Adds the specified amount of underlying ERC-20 tokens to a user's specific PBM token id.
+    /// @notice Updates the user's wallet balance and available balance.
+    /// @notice Emits a FundsAdded event.
+    /// @param tokenId Identifier of the PBM token type. (account_id)
+    /// @param spotAmount Quantity of underlying ERC-20 tokens to be added.
+    /// @param recipientAddress Address of the user whose balance is to be updated.
+    function addUserBalance(uint256 tokenId, uint256 spotAmount, address recipientAddress) external;
 
     /// @notice Transfers a PBM without moving the underlying ERC20 tokens.
     /// @param from Address sending the PBM.
     /// @param to Address receiving the PBM.
     /// @param id Identifier of the PBM token type being transferred.
-    /// @param amount Quantity of PBM to transfer (should always be 1).
+    /// @param amount Amount of underlying spotToken to be transferred. (can not be greater than the available balance)
     /// @param data Optional additional data to accompany the transfer.
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) external;
 
-    /// @notice Batch transfers multiple PBMs without moving the underlying ERC20 tokens.
+    /// @notice Batch transfers multiple PBMs without moving the underlying ERC20 tokens. This function is unlikely to be used.
     /// @param from Address sending the PBMs.
     /// @param to Address receiving the PBMs.
     /// @param ids List of identifiers for the PBM token types being transferred.
-    /// @param amounts List of quantities of PBMs to transfer (each should be 1).
+    /// @param amounts List of amounts of underlying spotToken to be transferred. (can not be greater than the available balance)
     /// @param data Optional additional data to accompany the transfer.
     function safeBatchTransferFrom(
         address from,

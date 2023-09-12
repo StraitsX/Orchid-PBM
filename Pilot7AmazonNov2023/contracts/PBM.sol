@@ -238,6 +238,19 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         }
     }
 
+    /**
+     * @dev See {IPBM-addUserBalance}.
+     *
+     *  WARNING: Any contracts that externally call these mint() and batchMint() functions should implement some sort of reentrancy guard procedure (such as OpenZeppelin's ReentrancyGuard).
+     *
+     * Requirements:
+     *
+     * - contract must not be paused
+     * - tokens must not be expired
+     * - `tokenId` should be a valid id that has already been created
+     * - recipient should have the token id
+     * - `spotAmount` should be greater than 0
+     */
     // spotAmount is the amount of spotToken to be transferred from caller to this contract
     // spotAmount = walletBalance * amountOfUserAddresses
     function addUserBalance(
@@ -245,6 +258,9 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         uint256 spotAmount,
         address recipientAddress
     ) external whenNotPaused onlyOwner {
+        require(recipientAddress != address(0), "Invalid recipient address");
+        require(spotAmount > 0, "Invalid spot amount");
+        require(balanceOf(recipientAddress, tokenId) > 0, "Recipient does not have the token id");
         // transfer spotToken from caller to this contract
         ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), spotAmount);
 

@@ -73,7 +73,9 @@ describe('Transfer', async () => {
     expect(beforeBalance.availableBalance.toString()).to.equal(
       ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
     );
-    expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(5);
+    expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(
+      5,
+    );
     expect(await pbmInstance.balanceOf(recipientWallet.address, 1)).to.equal(0);
 
     const recipientBeforeBalance = await pbmInstance.getUserBalance(
@@ -117,71 +119,77 @@ describe('Transfer', async () => {
     expect(recipientAfterBalance.availableBalance.toString()).to.equal(
       ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
     );
-    expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(4);
+    expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(
+      4,
+    );
     expect(await pbmInstance.balanceOf(recipientWallet.address, 1)).to.equal(1);
   });
 
   it('orchestrator transfer to a recipient wallet with the bank account adds balance to it', async () => {
     const beforeBalance = await pbmInstance.getUserBalance(
-        orchestratorWallet.address,
-        1,
+      orchestratorWallet.address,
+      1,
     );
     expect(beforeBalance.walletBalance.toString()).to.equal(
-        ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
     );
     expect(beforeBalance.availableBalance.toString()).to.equal(
-        ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
     );
 
     // mint token id 1 to recipientWallet
     await pbmInstance.mint(1, 1, recipientWallet.address);
-    expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(5);
+    expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(
+      5,
+    );
     expect(await pbmInstance.balanceOf(recipientWallet.address, 1)).to.equal(1);
 
     const recipientBeforeBalance = await pbmInstance.getUserBalance(
-        recipientWallet.address,
-        1,
+      recipientWallet.address,
+      1,
     );
     expect(recipientBeforeBalance.walletBalance.toString()).to.equal(
-        ethers.utils.parseUnits('0', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('0', await spotInstance.decimals()).toString(),
     );
     expect(recipientBeforeBalance.availableBalance.toString()).to.equal(
-        ethers.utils.parseUnits('0', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('0', await spotInstance.decimals()).toString(),
     );
 
     await pbmInstance
-        .connect(orchestratorWallet)
-        .safeTransferFrom(
-            orchestratorWallet.address,
-            recipientWallet.address,
-            1,
-            ethers.utils.parseUnits('20', await spotInstance.decimals()),
-            '0x',
-        );
-    const afterBalance = await pbmInstance.getUserBalance(
+      .connect(orchestratorWallet)
+      .safeTransferFrom(
         orchestratorWallet.address,
+        recipientWallet.address,
         1,
+        ethers.utils.parseUnits('20', await spotInstance.decimals()),
+        '0x',
+      );
+    const afterBalance = await pbmInstance.getUserBalance(
+      orchestratorWallet.address,
+      1,
     );
     expect(afterBalance.walletBalance.toString()).to.equal(
-        ethers.utils.parseUnits('80', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('80', await spotInstance.decimals()).toString(),
     );
     expect(afterBalance.availableBalance.toString()).to.equal(
-        ethers.utils.parseUnits('80', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('80', await spotInstance.decimals()).toString(),
     );
 
     const recipientAfterBalance = await pbmInstance.getUserBalance(
-        recipientWallet.address,
-        1,
+      recipientWallet.address,
+      1,
     );
     expect(recipientAfterBalance.walletBalance.toString()).to.equal(
-        ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
     );
     expect(recipientAfterBalance.availableBalance.toString()).to.equal(
-        ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
     );
 
     // recipientWallet still only has 1 token id 1 after transfer
-    expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(5);
+    expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(
+      5,
+    );
     expect(await pbmInstance.balanceOf(recipientWallet.address, 1)).to.equal(1);
   });
 });
