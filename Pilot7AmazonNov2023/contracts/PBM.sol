@@ -87,6 +87,7 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         whitelist[account] = false;
     }
 
+    // FIXME: this function need to implement a check to see user approve the caller to create the order on their behalf
     function createOrder(
         address customerWalletAddr,
         uint256 tokenId,
@@ -193,71 +194,78 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
 
     /**
      * @dev See {IPBM-mint}.
-     *     
-     * IMPT: Before minting, the caller should approve the contract address to spend ERC-20 tokens on behalf of the caller.
-     *       This can be done by calling the `approve` or `increaseMinterAllowance` functions of the ERC-20 contract and specifying `_spender` to be the PBM contract address. 
-             Ref : https://eips.ethereum.org/EIPS/eip-20
-
-       WARNING: Any contracts that externally call these mint() and batchMint() functions should implement some sort of reentrancy guard procedure (such as OpenZeppelin's ReentrancyGuard).
+     *
+     *  WARNING: Any contracts that externally call these mint() and batchMint() functions should implement some sort of reentrancy guard procedure (such as OpenZeppelin's ReentrancyGuard).
      *
      * Requirements:
      *
      * - contract must not be paused
      * - tokens must not be expired
      * - `tokenId` should be a valid id that has already been created
-     * - caller should have the necessary amount of the ERC-20 tokens required to mint
-     * - caller should have approved the PBM contract to spend the ERC-20 tokens
-     * - receiver should not be blacklisted
+     * - when recipient is not whitelisted and does not have the token id, the amount should be 1
      */
 
-    function mint(uint256 tokenId, uint256 amount, address userAddress) public override whenNotPaused onlyOwner {
+    function mint(uint256 tokenId, uint256 amount, address recipientAddress) public override whenNotPaused onlyOwner {
         // do we need to check whether user address already holds the account/tokenId?
         // block mint to user alr holds the account/tokenId
-        require(balanceOf(userAddress, tokenId) == 0, "Address already holds this account");
-        require(userAddress != address(0), "Invalid user address");
-        require(amount == 1, "Amount can only be 1");
+        require(recipientAddress != address(0), "Invalid user address");
+        require(
+            balanceOf(recipientAddress, tokenId) == 0 || whitelist[recipientAddress] == true,
+            "Recipient address is not whitelisted or already holds this account"
+        );
 
-        // get token value here checks if the tokenId is created alr
-        uint256 spotAmount = PBMTokenManager(pbmTokenManager).getTokenValue(tokenId);
-
-        UserBalance storage userBalance = userBalances[userAddress][tokenId];
-        userBalance.walletBalance += spotAmount;
-        userBalance.availableBalance += spotAmount;
-
-        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), spotAmount);
-        emit FundsAdded(userAddress, spotAmount);
-
-        _mint(userAddress, tokenId, amount, "");
+        _mint(recipientAddress, tokenId, amount, "");
     }
 
     // instead of minting multiple token ids to a single address
     // mintBatch here would mint one token id (account) to multiple user addresses
-    function mintBatch(uint256 tokenId, uint256 amount, address[] memory userAddresses) public whenNotPaused onlyOwner {
-        // get token value here checks if the tokenId is created alr
-        uint256 spotAmount = PBMTokenManager(pbmTokenManager).getTokenValue(tokenId);
-        uint256 usersCount = userAddresses.length;
-        uint256 totalSpotAmount = spotAmount * usersCount;
-        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), totalSpotAmount);
+    function mintBatch(
+        uint256 tokenId,
+        uint256 amount,
+        address[] memory recipientAddresses
+    ) public whenNotPaused onlyOwner {
+        uint256 recipientCount = recipientAddresses.length;
 
         // Loop over each address and mint
-        for (uint256 i = 0; i < usersCount; i++) {
-            address userAddress = userAddresses[i];
-            require(balanceOf(userAddress, tokenId) == 0, "Address already holds this account");
-            require(userAddress != address(0), "Invalid user address");
-            require(amount == 1, "Amount can only be 1 for each token");
-
-            UserBalance storage userBalance = userBalances[userAddress][tokenId];
-            userBalance.walletBalance += spotAmount;
-            userBalance.availableBalance += spotAmount;
-            _mint(userAddress, tokenId, amount, "");
-            emit FundsAdded(userAddress, spotAmount);
+        for (uint256 i = 0; i < recipientCount; i++) {
+            address recipientAddress = recipientAddresses[i];
+            require(recipientAddress != address(0), "Invalid recipient address");
+            require(
+                balanceOf(recipientAddress, tokenId) == 0 || whitelist[recipientAddress] == true,
+                "Recipient address is not whitelisted or already holds this account"
+            );
+            _mint(recipientAddress, tokenId, amount, "");
         }
+    }
+
+    // spotAmount is the amount of spotToken to be transferred from caller to this contract
+    // spotAmount = walletBalance * amountOfUserAddresses
+    function addUserBalance(
+        uint256 tokenId,
+        uint256 spotAmount,
+        address recipientAddress
+    ) external whenNotPaused onlyOwner {
+        // transfer spotToken from caller to this contract
+        ERC20Helper.safeTransferFrom(spotToken, _msgSender(), address(this), spotAmount);
+
+        // update user balance
+        UserBalance storage userBalance = userBalances[recipientAddress][tokenId];
+        userBalance.walletBalance += spotAmount;
+        userBalance.availableBalance += spotAmount;
+        emit FundsAdded(recipientAddress, spotAmount);
     }
 
     /**
      * @dev See {IPBM-safeTransferFrom}.
      *
      * IMPT: This function doesn't actually transfer the underlying ERC20 tokens. Instead, it only updates the user balances within this contract.
+     *
+     * Note:
+     * - use cases:
+     * 1) orchestrator to airdrop to user addresses
+     * 2) P2P transfer underlying ERC20 tokens to an existing user account
+     *
+     * - transferAmount here is the amount of underlying ERC20 tokens instead of the amount of PBM tokens
      *
      * Requirements:
      *
@@ -271,16 +279,70 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         address from,
         address to,
         uint256 tokenId,
-        uint256 amount,
+        uint256 transferAmount,
         bytes memory data
     ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
-        require(amount == 1, "Amount can only be 1");
-        require(userBalances[from][tokenId].availableBalance > 0, "Invalid available balance");
         require(to != address(0), "Invalid recipient address");
         require(from == _msgSender() || isApprovedForAll(from, _msgSender()), "Caller is not token owner or approved");
+        require(userBalances[from][tokenId].availableBalance >= transferAmount, "Invalid available balance");
+        require(userBalances[from][tokenId].walletBalance >= transferAmount, "Invalid wallet balance");
+        require(
+            balanceOf(to, tokenId) > 0 || whitelist[from] == true,
+            "Neither caller address is whitelisted nor recipient does not have the token id"
+        );
 
-        uint256 transferAmount = userBalances[from][tokenId].availableBalance;
+        // if to user has no token id and from user is whitelisted call _safeTransferFrom and update userBalances
+        if (balanceOf(to, tokenId) == 0 && whitelist[from] == true) {
+            _safeTransferFrom(from, to, tokenId, 1, data);
+        }
+        updateUserBalances(from, to, tokenId, transferAmount);
+    }
 
+    /**
+     * @dev See {IPBM-safeBatchTransferFrom}.
+     *
+     * IMPT: This function doesn't actually transfer the underlying ERC20 tokens. Instead, it only updates the user balances within this contract.
+     *
+     * Note:
+     * - this function is very unlikely to be used.
+     *
+     * Requirements:
+     *
+     * - contract must not be paused.
+     * - sender (`from` address) should have a positive available balance for each tokenId.
+     * - recipient (`to` address) should not be the zero address.
+     * - caller must be either the token owner or approved to transfer the tokens.
+     */
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory tokenIds,
+        uint256[] memory transferAmounts,
+        bytes memory data
+    ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
+        require(to != address(0), "Invalid recipient address");
+        require(from == _msgSender() || isApprovedForAll(from, _msgSender()), "Caller is not token owner or approved");
+        require(tokenIds.length == transferAmounts.length, "TokenIDs and amounts length mismatch");
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            uint256 tokenId = tokenIds[i];
+            uint256 transferAmount = transferAmounts[i];
+            require(userBalances[from][tokenId].availableBalance >= transferAmount, "Invalid available balance");
+            require(userBalances[from][tokenId].walletBalance >= transferAmount, "Invalid wallet balance");
+            require(
+                balanceOf(to, tokenId) > 0 || whitelist[from] == true,
+                "Neither caller address is whitelisted nor recipient does not have the token id"
+            );
+
+            // if to user has no token id and from user is whitelisted call _safeTransferFrom and update userBalances
+            if (balanceOf(to, tokenId) == 0 && whitelist[from] == true) {
+                _safeTransferFrom(from, to, tokenId, 1, data);
+            }
+            updateUserBalances(from, to, tokenId, transferAmount);
+        }
+    }
+
+    function updateUserBalances(address from, address to, uint256 tokenId, uint256 transferAmount) private {
         userBalances[from][tokenId].walletBalance -= transferAmount;
         userBalances[from][tokenId].availableBalance -= transferAmount;
 
@@ -299,59 +361,6 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
             userBalances[to][tokenId].walletBalance,
             userBalances[to][tokenId].availableBalance
         );
-    }
-
-    /**
-     * @dev See {IPBM-safeBatchTransferFrom}.
-     *
-     * IMPT: This function doesn't actually transfer the underlying ERC20 tokens. Instead, it only updates the user balances within this contract.
-     *
-     * Requirements:
-     *
-     * - contract must not be paused.
-     * - `amounts` for each tokenId should be exactly 1.
-     * - sender (`from` address) should have a positive available balance for each tokenId.
-     * - recipient (`to` address) should not be the zero address.
-     * - caller must be either the token owner or approved to transfer the tokens.
-     */
-    function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] memory tokenIds,
-        uint256[] memory amounts,
-        bytes memory data
-    ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
-        require(to != address(0), "Invalid recipient address");
-        require(tokenIds.length == amounts.length, "TokenIDs and amounts length mismatch");
-
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            uint256 amount = amounts[i];
-
-            require(amount == 1, "Amount for each tokenId can only be 1");
-            require(userBalances[from][tokenId].availableBalance > 0, "Invalid available balance for tokenId");
-
-            uint256 transferAmount = userBalances[from][tokenId].availableBalance;
-
-            userBalances[from][tokenId].walletBalance -= transferAmount;
-            userBalances[from][tokenId].availableBalance -= transferAmount;
-
-            userBalances[to][tokenId].walletBalance += transferAmount;
-            userBalances[to][tokenId].availableBalance += transferAmount;
-
-            emit UserBalanceUpdated(
-                from,
-                tokenId,
-                userBalances[from][tokenId].walletBalance,
-                userBalances[from][tokenId].availableBalance
-            );
-            emit UserBalanceUpdated(
-                to,
-                tokenId,
-                userBalances[to][tokenId].walletBalance,
-                userBalances[to][tokenId].availableBalance
-            );
-        }
     }
 
     /**
