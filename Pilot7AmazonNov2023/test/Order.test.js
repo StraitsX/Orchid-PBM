@@ -7,14 +7,16 @@ async function deploy(name, ...params) {
 describe('Order Management', async () => {
   let pbmInstance,
     owner,
+    orchestratorWallet,
     customerWallet,
+    customer2Wallet,
     fundDisbursementAddr,
     addrs,
     spotInstance,
     orderValue;
   beforeEach(async () => {
     // Deploy PBM and initialise
-    [owner, customerWallet, fundDisbursementAddr, ...addrs] =
+    [owner, orchestratorWallet, customerWallet, customer2Wallet, fundDisbursementAddr, ...addrs] =
       await ethers.getSigners();
     pbmInstance = await deploy('PBM');
     spotInstance = await deploy('Spot');
@@ -44,8 +46,9 @@ describe('Order Management', async () => {
     await spotInstance.mint(owner.address, spotTokenAmount);
 
     // mint token id 1 to customerWallet
-    await spotInstance.increaseAllowance(pbmInstance.address, spotTokenAmount);
     await pbmInstance.mint(1, 1, customerWallet.address);
+    await spotInstance.increaseAllowance(pbmInstance.address, spotTokenAmount);
+    await pbmInstance.addUserBalance(1, spotTokenAmount, customerWallet.address);
   });
 
   it('should allow whitelisted address to create an order', async () => {
