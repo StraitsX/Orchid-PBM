@@ -16,11 +16,20 @@ async function main() {
   const xsgd = await XSGD.attach(xsgdAddress).connect(deployerSigner); // XSGD deployed on mumbai
 
   // increase allowance for PBM
-  await xsgd.increaseAllowance(pbm.address, 10000000000000);
+  // await xsgd.increaseAllowance(pbm.address, 10000000000000);
 
-  const mintTo = [deployer];
+  const amazonOrchestrator = '0xDF4BF9d0fF8748445b3eaE0e21D34e37A5264194'
+  const amazonOrchestrator2 = '0xc2DF1084cfb5e79eD627Ae56bB5CdDE6a3791748'
+  // const whitelistTxn1 = await pbm.addToWhitelist(amazonOrchestrator);
+  // await whitelistTxn1.wait();
+  // const whitelistTxn2 = await pbm.addToWhitelist(amazonOrchestrator2);
+  // await whitelistTxn2.wait();
+
+  const mintTo = [amazonOrchestrator2];
   for (let i = 0; i < mintTo.length; i++) {
-    await pbm.mint(1, 1, mintTo[i]);
+    const mintTxn = await pbm.mint(1, 50, mintTo[i]);
+    await mintTxn.wait();
+    await pbm.addUserBalance(1, ethers.utils.parseUnits('1000', await xsgd.decimals()), mintTo[i]);
     console.log(`minted PBM token 1 to address ${mintTo[i]}`);
     await new Promise((r) => setTimeout(r, 5000));
   }
