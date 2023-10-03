@@ -113,24 +113,62 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
             customerWalletAddr == _msgSender() || isApprovedForAll(customerWalletAddr, _msgSender()),
             "Caller is not token owner or approved to create order on behalf of user"
         );
-        require(customerWalletAddr != address(0), "Invalid customer address");
+        _createOrder(customerWalletAddr, tokenId, orderId, orderValue, fundDisbursementAddr, false);
+    }
+
+    /**
+     * @dev See {IPBM-createOrderGrab}.
+     *
+     * Note: createOrderGrab doesn't require user approval to create order on behalf of user
+     *       instead if can only be called by whitelisted wallets
+
+     * Requirements:
+     *
+     * - only whitelisted wallets can call this function
+     * - `customerWalletAddr` must not be the zero address.
+     * - `fundDisbursementAddr` must not be the zero address.
+     * - `orderValue` must be greater than 0
+     * - `orderId` must be unique
+     * - user must have sufficient available balance
+     * - contract must not be paused
+     */
+    function createOrderGrab(
+        address grabWalletAddr,
+        uint256 tokenId,
+        string memory orderId,
+        uint256 orderValue,
+        address fundDisbursementAddr
+    ) external whenNotPaused onlyWhitelisted {
+        _createOrder(grabWalletAddr, tokenId, orderId, orderValue, fundDisbursementAddr, true);
+    }
+
+    function _createOrder(
+        address walletAddr,
+        uint256 tokenId,
+        string memory orderId,
+        uint256 orderValue,
+        address fundDisbursementAddr,
+        bool shouldBurnToken
+    ) private {
+        require(walletAddr != address(0), "Invalid customer address");
         require(orderValue > 0, "Invalid order value");
         require(fundDisbursementAddr != address(0), "Invalid fund disbursement address");
 
         bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
-        // must protect this, this ensures cannot call createOrder multiple times
         require(orders[orderIdHash].orderValue == 0, "Order with this ID already exists");
-        // move the user's currentBalance into the order list
-        // create Orders with the order_id, and how much this order_id cost.
-        // update UserBalance[user][token_id]; currentBalance
-        UserBalance storage userBalance = userBalances[customerWalletAddr][tokenId];
+
+        UserBalance storage userBalance = userBalances[walletAddr][tokenId];
         require(userBalance.availableBalance >= orderValue, "Insufficient available funds");
 
-        orders[orderIdHash] = Order(orderValue, orderId, customerWalletAddr, fundDisbursementAddr, OrderStatus.PENDING);
+        orders[orderIdHash] = Order(orderValue, orderId, walletAddr, fundDisbursementAddr, OrderStatus.PENDING);
 
         userBalance.availableBalance -= orderValue;
 
-        emit OrderCreated(customerWalletAddr, orderId, orderValue, fundDisbursementAddr);
+        if (shouldBurnToken) {
+            _burn(walletAddr, tokenId, 1);
+        }
+
+        emit OrderCreated(walletAddr, orderId, orderValue, fundDisbursementAddr);
     }
 
     function cancelOrder(
