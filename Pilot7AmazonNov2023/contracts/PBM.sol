@@ -87,14 +87,32 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         whitelist[account] = false;
     }
 
-    // FIXME: this function need to implement a check to see user approve the caller to create the order on their behalf
+    /**
+     * @dev See {IPBM-createOrder}.
+     *
+     * Note: user needs to call setApprovalForAll() to approve the caller to create order on behalf of user
+
+     * Requirements:
+     *
+     * - caller must be token owner or approved to create order on behalf of user
+     * - `customerWalletAddr` must not be the zero address.
+     * - `fundDisbursementAddr` must not be the zero address.
+     * - `orderValue` must be greater than 0
+     * - `orderId` must be unique
+     * - user must have sufficient available balance
+     * - contract must not be paused
+     */
     function createOrder(
         address customerWalletAddr,
         uint256 tokenId,
         string memory orderId,
         uint256 orderValue,
         address fundDisbursementAddr
-    ) external whenNotPaused onlyWhitelisted {
+    ) external whenNotPaused {
+        require(
+            customerWalletAddr == _msgSender() || isApprovedForAll(customerWalletAddr, _msgSender()),
+            "Caller is not token owner or approved to create order on behalf of user"
+        );
         require(customerWalletAddr != address(0), "Invalid customer address");
         require(orderValue > 0, "Invalid order value");
         require(fundDisbursementAddr != address(0), "Invalid fund disbursement address");

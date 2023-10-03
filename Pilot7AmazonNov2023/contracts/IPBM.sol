@@ -68,7 +68,8 @@ interface IPBM {
         bytes memory data
     ) external;
 
-    /// @notice Initiates a new order, locking the specified ERC-20 token value within this contract.
+    /// @notice Creates order with the order_id, and how much this order_id cost.
+    /// @notice Escrows the user's currentBalance into the contract and update user availableBalance
     /// @param customerWalletAddr Address of the customer placing the order.
     /// @param tokenId Identifier of the PBM token type.
     /// @param orderId Platform-generated identifier for the order.
