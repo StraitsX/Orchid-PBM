@@ -70,6 +70,7 @@ interface IPBM {
 
     /// @notice Creates order with the order_id, and how much this order_id cost.
     /// @notice Escrows the user's currentBalance into the contract and update user availableBalance
+    /// @notice User needs to call setApprovalForAll() to approve the caller to create order on behalf of user
     /// @param customerWalletAddr Address of the customer placing the order.
     /// @param tokenId Identifier of the PBM token type.
     /// @param orderId Platform-generated identifier for the order.
