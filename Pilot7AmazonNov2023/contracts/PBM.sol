@@ -113,7 +113,7 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
             customerWalletAddr == _msgSender() || isApprovedForAll(customerWalletAddr, _msgSender()),
             "Caller is not token owner or approved to create order on behalf of user"
         );
-        _createOrder(customerWalletAddr, tokenId, orderId, orderValue, fundDisbursementAddr, false);
+        _createOrder(customerWalletAddr, tokenId, orderId, orderValue, fundDisbursementAddr);
     }
 
     /**
@@ -139,7 +139,8 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         uint256 orderValue,
         address fundDisbursementAddr
     ) external whenNotPaused onlyWhitelisted {
-        _createOrder(grabWalletAddr, tokenId, orderId, orderValue, fundDisbursementAddr, true);
+        _createOrder(grabWalletAddr, tokenId, orderId, orderValue, fundDisbursementAddr);
+        _burn(grabWalletAddr, tokenId, 1);
     }
 
     function _createOrder(
@@ -147,8 +148,7 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         uint256 tokenId,
         string memory orderId,
         uint256 orderValue,
-        address fundDisbursementAddr,
-        bool shouldBurnToken
+        address fundDisbursementAddr
     ) private {
         require(walletAddr != address(0), "Invalid customer address");
         require(orderValue > 0, "Invalid order value");
@@ -163,10 +163,6 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         orders[orderIdHash] = Order(orderValue, orderId, walletAddr, fundDisbursementAddr, OrderStatus.PENDING);
 
         userBalance.availableBalance -= orderValue;
-
-        if (shouldBurnToken) {
-            _burn(walletAddr, tokenId, 1);
-        }
 
         emit OrderCreated(walletAddr, orderId, orderValue, fundDisbursementAddr);
     }
