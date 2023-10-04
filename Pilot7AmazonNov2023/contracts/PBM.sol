@@ -331,21 +331,21 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
      * @dev See {IPBM-safeTransferFrom}.
      *
      * IMPT: This function doesn't actually transfer the underlying ERC20 tokens. Instead, it only updates the user balances within this contract.
-     *
+     *       And should only be used for whitelisted wallets to airdrop to user wallets.
      * Note:
-     * - use cases:
+     *
      * 1) orchestrator to airdrop to user addresses
-     * 2) P2P transfer underlying ERC20 tokens to an existing user account
+     * 2) P2P transfer is disabled for non whitelisted wallets
      *
      * - transferAmount here is the amount of underlying ERC20 tokens instead of the amount of PBM tokens
      *
      * Requirements:
      *
      * - contract must not be paused.
-     * - `amount` should be exactly 1.
+     * - `amount` in the _safeTransferFrom should be exactly 1.
      * - sender (`from` address) should have a positive available balance.
      * - recipient (`to` address) should not be the zero address.
-     * - caller must be either the token owner or approved to transfer the token.
+     * - caller must be whitelisted.
      */
     function safeTransferFrom(
         address from,
@@ -353,18 +353,15 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         uint256 tokenId,
         uint256 transferAmount,
         bytes memory data
-    ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
+    ) public override(ERC1155, IPBM) whenNotPaused onlyWhitelisted nonReentrant {
         require(to != address(0), "Invalid recipient address");
         require(from == _msgSender() || isApprovedForAll(from, _msgSender()), "Caller is not token owner or approved");
         require(userBalances[from][tokenId].availableBalance >= transferAmount, "Invalid available balance");
+        // redundant check
         require(userBalances[from][tokenId].walletBalance >= transferAmount, "Invalid wallet balance");
-        require(
-            balanceOf(to, tokenId) > 0 || whitelist[from] == true,
-            "Neither caller address is whitelisted nor recipient does not have the token id"
-        );
 
         // if to user has no token id and from user is whitelisted call _safeTransferFrom and update userBalances
-        if (balanceOf(to, tokenId) == 0 && whitelist[from] == true) {
+        if (balanceOf(to, tokenId) == 0) {
             _safeTransferFrom(from, to, tokenId, 1, data);
         }
         updateUserBalances(from, to, tokenId, transferAmount);
@@ -383,7 +380,7 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
      * - contract must not be paused.
      * - sender (`from` address) should have a positive available balance for each tokenId.
      * - recipient (`to` address) should not be the zero address.
-     * - caller must be either the token owner or approved to transfer the tokens.
+     * - caller must be whitelisted.
      */
     function safeBatchTransferFrom(
         address from,
@@ -391,7 +388,7 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         uint256[] memory tokenIds,
         uint256[] memory transferAmounts,
         bytes memory data
-    ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
+    ) public override(ERC1155, IPBM) whenNotPaused onlyWhitelisted nonReentrant {
         require(to != address(0), "Invalid recipient address");
         require(from == _msgSender() || isApprovedForAll(from, _msgSender()), "Caller is not token owner or approved");
         require(tokenIds.length == transferAmounts.length, "TokenIDs and amounts length mismatch");
@@ -401,13 +398,9 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
             uint256 transferAmount = transferAmounts[i];
             require(userBalances[from][tokenId].availableBalance >= transferAmount, "Invalid available balance");
             require(userBalances[from][tokenId].walletBalance >= transferAmount, "Invalid wallet balance");
-            require(
-                balanceOf(to, tokenId) > 0 || whitelist[from] == true,
-                "Neither caller address is whitelisted nor recipient does not have the token id"
-            );
 
             // if to user has no token id and from user is whitelisted call _safeTransferFrom and update userBalances
-            if (balanceOf(to, tokenId) == 0 && whitelist[from] == true) {
+            if (balanceOf(to, tokenId) == 0) {
                 _safeTransferFrom(from, to, tokenId, 1, data);
             }
             updateUserBalances(from, to, tokenId, transferAmount);
