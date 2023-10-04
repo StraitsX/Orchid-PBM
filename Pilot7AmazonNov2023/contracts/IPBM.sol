@@ -68,13 +68,31 @@ interface IPBM {
         bytes memory data
     ) external;
 
-    /// @notice Initiates a new order, locking the specified ERC-20 token value within this contract.
+    /// @notice Creates order with the order_id, and how much this order_id cost.
+    /// @notice Escrows the user's currentBalance into the contract and update user availableBalance
+    /// @notice User needs to call setApprovalForAll() to approve the caller to create order on behalf of user
     /// @param customerWalletAddr Address of the customer placing the order.
     /// @param tokenId Identifier of the PBM token type.
     /// @param orderId Platform-generated identifier for the order.
     /// @param orderValue Value of the order in underlying ERC-20 tokens.
     /// @param fundDisbursementAddr Merchant address to receive the ERC-20 tokens upon order redemption.
     function createOrder(
+        address customerWalletAddr,
+        uint256 tokenId,
+        string memory orderId,
+        uint256 orderValue,
+        address fundDisbursementAddr
+    ) external;
+
+    /// @notice Creates order for grab wallet user with the order_id, and how much this order_id cost.
+    /// @notice Escrows the user's currentBalance into the contract and update user availableBalance
+    /// @notice Burns the token after the order is created.
+    /// @param customerWalletAddr Address of the customer placing the order.
+    /// @param tokenId Identifier of the PBM token type.
+    /// @param orderId Platform-generated identifier for the order.
+    /// @param orderValue Value of the order in underlying ERC-20 tokens.
+    /// @param fundDisbursementAddr Merchant address to receive the ERC-20 tokens upon order redemption.
+    function createOrderGrab(
         address customerWalletAddr,
         uint256 tokenId,
         string memory orderId,
