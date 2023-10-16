@@ -477,6 +477,14 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         _unpause();
     }
 
+    /**
+     * @dev Allows the owner to burn `amount` of tokens of `id` from `account`.
+     * `amount` here typically would be 1.
+     */
+    function adminBurn(address account, uint256 id, uint256 amount) external onlyOwner {
+        _burn(account, id, amount);
+    }
+
     event OrderCreated(address customer, string orderId, uint256 orderValue, address fundDisbursementAddress);
     event OrderRedeemed(address customer, string orderId);
     event OrderCanceled(string orderId);
