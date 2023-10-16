@@ -140,7 +140,6 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         address fundDisbursementAddr
     ) external whenNotPaused onlyWhitelisted {
         _createOrder(grabWalletAddr, tokenId, orderId, orderValue, fundDisbursementAddr);
-        _burn(grabWalletAddr, tokenId, 1);
     }
 
     function _createOrder(
@@ -215,6 +214,8 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
 
         ERC20Helper.safeTransfer(spotToken, orders[orderIdHash].fundDisbursementAddress, order_value);
 
+        // burn the token after order redemption
+        _burn(userWallet, tokenId, 1);
         emit OrderRedeemed(userWallet, orderId);
     }
 
@@ -338,7 +339,7 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
      * Requirements:
      *
      * - contract must not be paused.
-     * - `amount` in the _safeTransferFrom should be exactly 1.
+     * - `transferAmount` in the _safeTransferFrom should be exactly 10 and is referring to underlying ERC20 token.
      * - sender (`from` address) should have a positive available balance.
      * - recipient (`to` address) should not be the zero address.
      * - caller must be whitelisted.
