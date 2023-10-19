@@ -106,4 +106,38 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
         require(tokenTypes[tokenId].amount != 0, "PBM: Invalid Token Id(s)");
         return (tokenTypes[tokenId].amount, tokenTypes[tokenId].expiry);
     }
+
+    // @dev updateTokenExpiry allows the owner to update the expiry of an existing token type
+    // @param tokenId tokenId of the token type to update the expiry
+    // @param expiry new expiry to update to
+    // requirements:
+    // - caller must be the owner
+    // - provided tokenId should be valid (less than the tokenTypeCount)
+    // @notice if we call this function to update the expiry we also need to update the metadata json
+    function updateTokenExpiry(uint256 tokenId, uint256 expiry) external onlyOwner {
+        require(tokenId < tokenTypeCount, "Invalid tokenId");
+        tokenTypes[tokenId].expiry = expiry;
+    }
+
+    // @dev updateTokenURI allows the owner to update the metadata URL of an existing token type
+    // @param tokenId tokenId of the token type to update the expiry
+    // @param uri new metadata URL
+    // requirements:
+    // - caller must be the owner
+    // - provided tokenId should be valid (less than the tokenTypeCount)
+    function updateTokenURI(uint256 tokenId, string memory tokenURI) external onlyOwner {
+        require(tokenId < tokenTypeCount, "Invalid tokenId");
+        tokenTypes[tokenId].uri = tokenURI;
+    }
+
+    // @dev updatePostExpiryURI allows the owner to update the post expiry metadata URL of an existing token type
+    // @param tokenId tokenId of the token type to update the expiry
+    // @param postExpiryURI new post expiry metadata URL
+    // requirements:
+    // - caller must be the owner
+    // - provided tokenId should be valid (less than the tokenTypeCount)
+    function updatePostExpiryURI(uint256 tokenId, string memory postExpiryURI) external onlyOwner {
+        require(tokenId < tokenTypeCount, "Invalid tokenId");
+        tokenTypes[tokenId].postExpiryURI = postExpiryURI;
+    }
 }

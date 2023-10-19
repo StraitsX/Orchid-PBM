@@ -140,7 +140,6 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         address fundDisbursementAddr
     ) external whenNotPaused onlyWhitelisted {
         _createOrder(grabWalletAddr, tokenId, orderId, orderValue, fundDisbursementAddr);
-        _burn(grabWalletAddr, tokenId, 1);
     }
 
     function _createOrder(
@@ -215,6 +214,8 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
 
         ERC20Helper.safeTransfer(spotToken, orders[orderIdHash].fundDisbursementAddress, order_value);
 
+        // burn the token after order redemption
+        _burn(userWallet, tokenId, 1);
         emit OrderRedeemed(userWallet, orderId);
     }
 
@@ -338,7 +339,7 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
      * Requirements:
      *
      * - contract must not be paused.
-     * - `amount` in the _safeTransferFrom should be exactly 1.
+     * - `transferAmount` in the _safeTransferFrom should be exactly 10 and is referring to underlying ERC20 token.
      * - sender (`from` address) should have a positive available balance.
      * - recipient (`to` address) should not be the zero address.
      * - caller must be whitelisted.
@@ -476,6 +477,56 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         _unpause();
     }
 
+    /**
+     * @dev Allows the owner to burn `amount` of tokens of `id` from `account`.
+     * `amount` here typically would be 1.
+     */
+    function adminBurn(address account, uint256 id, uint256 amount) external onlyOwner {
+        _burn(account, id, amount);
+    }
+
+    // @dev recoverAllERC20 is a function to recover all the balance of a specific ERC20 token from the PBM contract
+    // @param _token ERC20 token address
+    // requirements:
+    // - caller must be the owner
+    function recoverAllERC20(address _token) public onlyOwner {
+        ERC20 erc20 = ERC20(_token);
+        ERC20Helper.safeTransfer(address(erc20), owner(), erc20.balanceOf(address(this)));
+    }
+
+    // @dev recoverERC20 is a function to recover specific amount of a ERC20 token from the PBM contract
+    // @param _token ERC20 token address
+    // @param amount amount of ERC20 token to recover
+    // requirements:
+    // - caller must be the owner
+    function recoverERC20(address _token, uint256 amount) public onlyOwner {
+        ERC20 erc20 = ERC20(_token);
+        ERC20Helper.safeTransfer(address(erc20), owner(), amount);
+    }
+
+    // @dev see { PBMTokenManager - updateTokenExpiry}
+    // requirements:
+    // - caller must be the owner
+    function updateTokenExpiry(uint256 tokenId, uint256 expiry) external onlyOwner {
+        PBMTokenManager(pbmTokenManager).updateTokenExpiry(tokenId, expiry);
+    }
+
+    // @dev see { PBMTokenManager - updateTokenURI}
+    // requirements:
+    // - caller must be the owner
+    function updateTokenURI(uint256 tokenId, string memory tokenURI) external onlyOwner {
+        PBMTokenManager(pbmTokenManager).updateTokenURI(tokenId, tokenURI);
+        emit MetadataUpdated(tokenId, tokenURI);
+    }
+
+    // @dev see { PBMTokenManager - updatePostExpiryURI}
+    // requirements:
+    // - caller must be the owner
+    function updatePostExpiryURI(uint256 tokenId, string memory postExpiryURI) external onlyOwner {
+        PBMTokenManager(pbmTokenManager).updatePostExpiryURI(tokenId, postExpiryURI);
+        emit PostExpiryMetadataUpdated(tokenId, postExpiryURI);
+    }
+
     event OrderCreated(address customer, string orderId, uint256 orderValue, address fundDisbursementAddress);
     event OrderRedeemed(address customer, string orderId);
     event OrderCanceled(string orderId);
@@ -486,4 +537,6 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         uint256 newWalletBalance,
         uint256 newAvailableBalance
     );
+    event MetadataUpdated(uint256 tokenId, string uri);
+    event PostExpiryMetadataUpdated(uint256 tokenId, string uri);
 }

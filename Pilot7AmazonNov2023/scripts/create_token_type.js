@@ -15,14 +15,14 @@ async function main() {
 
   const expiryDate = 1716469200; // Tue May 23 2024 21:00:00 GMT+0800 (Taipei Standard Time) 2024-05-23T21:00:00+08:00
 
-  // creating token id 0: XSGD pbm - 1 XSGD
+  // creating token id 1: Amazon pbm - 10 XSGD
   await pbm.createPBMTokenType(
-    ethers.utils.parseUnits('20', await xsgd.decimals()),
+    ethers.utils.parseUnits('10', await xsgd.decimals()),
     expiryDate,
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/1XSGD.json',
-    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot6July2023/expired1XSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot7Nov2023/10XSGD.json',
+    'https://raw.githubusercontent.com/StraitsX/NFT-Metadata/main/pilot7Nov2023/expired10XSGD.json',
   );
-  console.log('PBM Token type 0 created');
+  console.log('PBM Token type 1 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 }
 
