@@ -578,6 +578,52 @@
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "orderId",
+        "type": "string"
+      }
+    ],
+    "name": "getOrder",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "orderValue",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "orderId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "customerWallet",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "fundDisbursementAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "enum IPBM.OrderStatus",
+            "name": "status",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct IPBM.Order",
+        "name": "order",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
@@ -754,7 +800,7 @@
         "type": "address"
       },
       {
-        "internalType": "enum PBM.OrderStatus",
+        "internalType": "enum IPBM.OrderStatus",
         "name": "status",
         "type": "uint8"
       }
