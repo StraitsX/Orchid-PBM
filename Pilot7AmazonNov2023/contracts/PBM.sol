@@ -26,22 +26,6 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
     bool internal initialised = false;
     uint256 public contractExpiry;
 
-    // structs
-    struct Order {
-        uint256 orderValue;
-        string orderId;
-        address customerWallet;
-        address fundDisbursementAddress;
-        OrderStatus status;
-    }
-
-    // enums
-    enum OrderStatus {
-        PENDING,
-        REDEEMED,
-        CANCELLED
-    }
-
     /**
      * @dev mappings
      *
@@ -77,12 +61,23 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         initialised = true;
     }
 
+    /**
+     * @dev See {IPBM-getUserBalance}.
+     */
     function getUserBalance(
         address user,
         uint256 tokenId
     ) public view whenNotPaused returns (UserBalance memory userBalance) {
         UserBalance memory userBal = userBalances[user][tokenId];
         return userBal;
+    }
+
+    /**
+     * @dev See {IPBM-getOrder}.
+     */
+    function getOrder(string calldata orderId) public view whenNotPaused returns (Order memory order) {
+        bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
+        return orders[orderIdHash];
     }
 
     function addToWhitelist(address account) external onlyOwner {

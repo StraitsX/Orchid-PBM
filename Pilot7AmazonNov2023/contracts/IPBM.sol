@@ -9,6 +9,20 @@ interface IPBM {
         uint256 availableBalance;
     }
 
+    struct Order {
+        uint256 orderValue;
+        string orderId;
+        address customerWallet;
+        address fundDisbursementAddress;
+        OrderStatus status;
+    }
+
+    enum OrderStatus {
+        PENDING,
+        REDEEMED,
+        CANCELLED
+    }
+
     /// @notice Initializes the contract with the address of the underlying ERC20 token, contract expiration, and the PBM address list.
     /// @param _spotToken The address of the underlying ERC20 token.
     /// @param _expiry Global expiry timestamp for the contract.
@@ -116,6 +130,11 @@ interface IPBM {
     /// @param tokenId The identifier of the PBM token type.
     /// @return userBalance The total wrapped erc20 token balance of the user for the specified PBM token.(walletBalance, availableBalance)
     function getUserBalance(address user, uint256 tokenId) external view returns (UserBalance memory userBalance);
+
+    /// @notice Fetches the order details for a specific order ID.
+    /// @param orderId The unique identifier for the order.
+    /// @return order The details of the order corresponding to the provided order ID (orderValue, orderId, customerWallet, fundDisbursementAddress, status).
+    function getOrder(string calldata orderId) external view returns (Order memory order);
 
     /// @notice Allows the PBM contract owner to claim the underlying ERC-20 tokens after they expire.
     function revokePBM() external;
