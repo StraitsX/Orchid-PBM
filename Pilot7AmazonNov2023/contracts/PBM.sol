@@ -13,15 +13,57 @@ import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 
 contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
-    // undelrying ERC-20 tokens
+    /**
+     * @dev state variables
+     *
+     * - spotToken is the address of the underlying ERC20 token
+     * - pbmTokenManager is the address of the PBMTokenManager contract
+     * - initialised is a boolean to track contract initialisation
+     * - contractExpiry is the time of expiry in epoch
+     */
     address public spotToken = address(0);
-    // address of the token manager
     address public pbmTokenManager = address(0);
-
-    // tracks contract initialisation
     bool internal initialised = false;
-    // time of expiry ( epoch )
     uint256 public contractExpiry;
+
+    // structs
+    struct Order {
+        uint256 orderValue;
+        string orderId;
+        address customerWallet;
+        address fundDisbursementAddress;
+        OrderStatus status;
+    }
+
+    // enums
+    enum OrderStatus {
+        PENDING,
+        REDEEMED,
+        CANCELLED
+    }
+
+    /**
+     * @dev mappings
+     *
+     * - userBalances is a mapping of user address to token id to UserBalance struct. user_address -> token_id -> UserBalance
+     * - orders is a mapping of order id hash to Order struct. order_id_hash -> Order
+     * - whitelist is a mapping of address to bool, indicating an address is whitelisted or not. address -> bool
+     */
+    mapping(address => mapping(uint256 => UserBalance)) private userBalances;
+    mapping(bytes32 => Order) public orders;
+    mapping(address => bool) public whitelist;
+
+    // modifiers
+    modifier onlyWhitelisted() {
+        require(whitelist[_msgSender()], "You are not authorized to call this function");
+        _;
+    }
+
+    modifier orderExists(string memory orderId) {
+        bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
+        require(orders[orderIdHash].orderValue > 0, "Order with this ID does not exist");
+        _;
+    }
 
     constructor() ERC1155("") {
         pbmTokenManager = address(new PBMTokenManager());
@@ -35,48 +77,12 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
         initialised = true;
     }
 
-    enum OrderStatus {
-        PENDING,
-        REDEEMED,
-        CANCELLED
-    }
-
-    struct Order {
-        uint256 orderValue; // how much this order cost.
-        string orderId;
-        address customerWallet;
-        address fundDisbursementAddress; // need this to check upon redemption
-        OrderStatus status;
-    }
-
-    // user_address -> token_id -> UserBalance
-    // token_id being the account number
-    // user_address is the user’s identifier
-    mapping(address => mapping(uint256 => UserBalance)) private userBalances;
-
     function getUserBalance(
         address user,
         uint256 tokenId
     ) public view whenNotPaused returns (UserBalance memory userBalance) {
         UserBalance memory userBal = userBalances[user][tokenId];
         return userBal;
-    }
-
-    // order id hash => order mapping
-    mapping(bytes32 => Order) public orders;
-
-    // whitelist mapping
-    mapping(address => bool) public whitelist;
-
-    modifier onlyWhitelisted() {
-        require(whitelist[_msgSender()], "You are not authorized to call this function");
-        _;
-    }
-
-    modifier orderExists(string memory orderId) {
-        bytes32 orderIdHash = keccak256(abi.encodePacked(orderId));
-        require(orders[orderIdHash].orderValue > 0, "Order with this ID does not exist");
-        _;
     }
 
     function addToWhitelist(address account) external onlyOwner {
