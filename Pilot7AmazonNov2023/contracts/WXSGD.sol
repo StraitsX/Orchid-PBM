@@ -36,7 +36,7 @@ contract WXSGD is ERC20, Ownable, ReentrancyGuard {
     }
 
     // make sure we can recover any ERC20 tokens locked in the contract if something went wrong
-    function recoverERC20(address _token) external onlyOwner nonReentrant{
+    function recoverERC20(address _token) external onlyOwner nonReentrant {
         IERC20 erc20 = IERC20(_token);
         uint256 recoverAmount = erc20.balanceOf(address(this));
         ERC20Helper.safeTransfer(address(erc20), owner(), recoverAmount);
