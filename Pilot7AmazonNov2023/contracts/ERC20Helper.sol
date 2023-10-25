@@ -31,6 +31,6 @@ library ERC20Helper {
         (bool success, bytes memory data) = token.call(
             abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, value)
         );
-        require(success && (data.length == 0 || abi.decode(data, (bool))), "ERC20: Insufficent balance or approval");
+        require(success && (data.length == 0 || abi.decode(data, (bool))), "ERC20: Insufficient balance or approval");
     }
 }
