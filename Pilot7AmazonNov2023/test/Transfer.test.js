@@ -13,7 +13,8 @@ describe('Transfer', async () => {
     fundDisbursementAddr,
     recipientWallet,
     spotInstance,
-    orderValue;
+    orderValue,
+    spotDecimals;
   beforeEach(async () => {
     // Deploy PBM and initialise
     [
@@ -30,16 +31,15 @@ describe('Transfer', async () => {
     let currentDate = new Date();
     let currentEpoch = Math.floor(currentDate / 1000);
     let expectedExpiry = currentEpoch + 100000; // Expiry is set to 1 day 3.6 hours from current time
-    orderValue = ethers.utils.parseUnits('15', await spotInstance.decimals());
+
+    spotDecimals = await spotInstance.decimals();
+    orderValue = ethers.utils.parseUnits('15', spotDecimals);
     await pbmInstance.initialise(spotInstance.address, expectedExpiry);
 
     // Whitelist orchestratorWallet
     await pbmInstance.addToWhitelist(orchestratorWallet.address);
 
-    const spotTokenAmount = ethers.utils.parseUnits(
-      '20',
-      await spotInstance.decimals(),
-    );
+    const spotTokenAmount = ethers.utils.parseUnits('20', spotDecimals);
     // create token id 1
     await pbmInstance.createPBMTokenType(
       spotTokenAmount,
@@ -68,10 +68,10 @@ describe('Transfer', async () => {
       1,
     );
     expect(beforeBalance.walletBalance.toString()).to.equal(
-      ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('100', spotDecimals).toString(),
     );
     expect(beforeBalance.availableBalance.toString()).to.equal(
-      ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('100', spotDecimals).toString(),
     );
     expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(
       5,
@@ -83,10 +83,10 @@ describe('Transfer', async () => {
       1,
     );
     expect(recipientBeforeBalance.walletBalance.toString()).to.equal(
-      ethers.utils.parseUnits('0', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('0', spotDecimals).toString(),
     );
     expect(recipientBeforeBalance.availableBalance.toString()).to.equal(
-      ethers.utils.parseUnits('0', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('0', spotDecimals).toString(),
     );
 
     await pbmInstance
@@ -95,7 +95,7 @@ describe('Transfer', async () => {
         orchestratorWallet.address,
         recipientWallet.address,
         1,
-        ethers.utils.parseUnits('20', await spotInstance.decimals()),
+        ethers.utils.parseUnits('20', spotDecimals),
         '0x',
       );
     const afterBalance = await pbmInstance.getUserBalance(
@@ -103,10 +103,10 @@ describe('Transfer', async () => {
       1,
     );
     expect(afterBalance.walletBalance.toString()).to.equal(
-      ethers.utils.parseUnits('80', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('80', spotDecimals).toString(),
     );
     expect(afterBalance.availableBalance.toString()).to.equal(
-      ethers.utils.parseUnits('80', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('80', spotDecimals).toString(),
     );
 
     const recipientAfterBalance = await pbmInstance.getUserBalance(
@@ -114,10 +114,10 @@ describe('Transfer', async () => {
       1,
     );
     expect(recipientAfterBalance.walletBalance.toString()).to.equal(
-      ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('20', spotDecimals).toString(),
     );
     expect(recipientAfterBalance.availableBalance.toString()).to.equal(
-      ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('20', spotDecimals).toString(),
     );
     expect(await pbmInstance.balanceOf(orchestratorWallet.address, 1)).to.equal(
       4,
@@ -131,10 +131,10 @@ describe('Transfer', async () => {
       1,
     );
     expect(beforeBalance.walletBalance.toString()).to.equal(
-      ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('100', spotDecimals).toString(),
     );
     expect(beforeBalance.availableBalance.toString()).to.equal(
-      ethers.utils.parseUnits('100', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('100', spotDecimals).toString(),
     );
 
     // mint token id 1 to recipientWallet
@@ -149,10 +149,10 @@ describe('Transfer', async () => {
       1,
     );
     expect(recipientBeforeBalance.walletBalance.toString()).to.equal(
-      ethers.utils.parseUnits('0', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('0', spotDecimals).toString(),
     );
     expect(recipientBeforeBalance.availableBalance.toString()).to.equal(
-      ethers.utils.parseUnits('0', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('0', spotDecimals).toString(),
     );
 
     await pbmInstance
@@ -161,7 +161,7 @@ describe('Transfer', async () => {
         orchestratorWallet.address,
         recipientWallet.address,
         1,
-        ethers.utils.parseUnits('20', await spotInstance.decimals()),
+        ethers.utils.parseUnits('20', spotDecimals),
         '0x',
       );
     const afterBalance = await pbmInstance.getUserBalance(
@@ -169,10 +169,10 @@ describe('Transfer', async () => {
       1,
     );
     expect(afterBalance.walletBalance.toString()).to.equal(
-      ethers.utils.parseUnits('80', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('80', spotDecimals).toString(),
     );
     expect(afterBalance.availableBalance.toString()).to.equal(
-      ethers.utils.parseUnits('80', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('80', spotDecimals).toString(),
     );
 
     const recipientAfterBalance = await pbmInstance.getUserBalance(
@@ -180,10 +180,10 @@ describe('Transfer', async () => {
       1,
     );
     expect(recipientAfterBalance.walletBalance.toString()).to.equal(
-      ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('20', spotDecimals).toString(),
     );
     expect(recipientAfterBalance.availableBalance.toString()).to.equal(
-      ethers.utils.parseUnits('20', await spotInstance.decimals()).toString(),
+      ethers.utils.parseUnits('20', spotDecimals).toString(),
     );
 
     // recipientWallet still only has 1 token id 1 after transfer
@@ -191,5 +191,17 @@ describe('Transfer', async () => {
       5,
     );
     expect(await pbmInstance.balanceOf(recipientWallet.address, 1)).to.equal(1);
+  });
+
+  it('non whitelisted address cannot call transfer function', async () => {
+    await expect(
+      pbmInstance.safeTransferFrom(
+        owner.address,
+        recipientWallet.address,
+        1,
+        ethers.utils.parseUnits('20', spotDecimals),
+        '0x',
+      ),
+    ).to.be.revertedWith('You are not authorized to call this function');
   });
 });
