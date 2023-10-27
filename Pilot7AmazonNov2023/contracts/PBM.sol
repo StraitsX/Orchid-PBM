@@ -192,7 +192,6 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
 
     // update order status
     // credit merchant wallet
-    // TBD: do we need to check if fundDisbursementAddress is a merchant?
     function redeemOrder(
         string memory orderId,
         uint256 tokenId,
@@ -481,9 +480,14 @@ contract PBM is ERC1155, Ownable, Pausable, ReentrancyGuard, IPBM {
     /**
      * @dev Allows the owner to burn `amount` of tokens of `id` from `account`.
      * `amount` here typically would be 1.
+     *  set user balance to 0 after admin burn
      */
     function adminBurn(address account, uint256 id, uint256 amount) external onlyOwner {
         _burn(account, id, amount);
+
+        userBalances[account][id].walletBalance = 0;
+        userBalances[account][id].availableBalance = 0;
+        emit UserBalanceUpdated(account, id, 0, 0);
     }
 
     // @dev recoverAllERC20 is a function to recover all the balance of a specific ERC20 token from the PBM contract
