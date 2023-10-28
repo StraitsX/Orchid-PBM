@@ -50,7 +50,7 @@ contract IssuerHelper is IIssuerHelper, ERC2771Context, Ownable {
         // msg.sender -> user EOA
         IPBM(targetPBM).loadTo(_msgSender(), tokenId, amount);
         uint256 amountToEncode = amount;
-        // encode spot amount into bytes
+        // encode spot amount into bytes, amount here should consider the erc20token decimals
         bytes memory data = abi.encode(amountToEncode);
         IPBM(targetPBM).safeTransferFrom(_msgSender(), merchantWallet, tokenId, 1, data);
     }
