@@ -84,6 +84,19 @@ async function main() {
   );
   console.log('PBM Token type 3 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
+
+  // creating token id 4: fomo XSGD pbm - 1 XSGD
+  await pbm.createPBMTokenType(
+      'FOMO1XSGD',
+      ethers.utils.parseUnits('1', await xsgd.decimals()),
+      'XSGD',
+      expiryDate,
+      deployer,
+      'https://stxpilot6.mypinata.cloud/ipfs/QmTWJgz3sDB49xg3DFK7c7UN8giZqm8YiswJz1ZTPX2EwX/fomo1XSGD.json',
+      'https://stxpilot6.mypinata.cloud/ipfs/QmTWJgz3sDB49xg3DFK7c7UN8giZqm8YiswJz1ZTPX2EwX/expiredFomo1XSGD.json',
+  );
+  console.log('PBM Token type 4 created');
+  await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
 }
 
 main()
