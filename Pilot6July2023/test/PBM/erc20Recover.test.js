@@ -196,44 +196,43 @@ describe('PBM', async () => {
 
       // token id 0
       await pbm.createPBMTokenType(
-          'updateExpiryTest',
-          parseUnits('1', await xsgdToken.decimals()),
-          xsgdToken.symbol(),
-          targetEpoch,
-          accounts[0].address,
-          'beforeExpiryURI',
-          'postExpiryURI',
+        'updateExpiryTest',
+        parseUnits('1', await xsgdToken.decimals()),
+        xsgdToken.symbol(),
+        targetEpoch,
+        accounts[0].address,
+        'beforeExpiryURI',
+        'postExpiryURI',
       );
 
       // token id 1
       await pbm.createPBMTokenType(
-          'updateExpiryTest',
-          parseUnits('1', await xsgdToken.decimals()),
-          xsgdToken.symbol(),
-          targetEpoch,
-          accounts[0].address,
-          'beforeExpiryURI',
-          'postExpiryURI',
+        'updateExpiryTest',
+        parseUnits('1', await xsgdToken.decimals()),
+        xsgdToken.symbol(),
+        targetEpoch,
+        accounts[0].address,
+        'beforeExpiryURI',
+        'postExpiryURI',
       );
-
 
       const pbmTokenManagerAddress = await pbm.pbmTokenManager();
       const PBMTokenManagerContract = await ethers.getContractFactory(
-          'PBMTokenManager',
+        'PBMTokenManager',
       );
       const pbmTokenManager = await PBMTokenManagerContract.attach(
-          pbmTokenManagerAddress,
+        pbmTokenManagerAddress,
       );
 
       expect((await pbm.getTokenDetails(1))[2]).to.equal(targetEpoch);
-      expect((await pbmTokenManager.areTokensValid([0,1]))).to.equal(true)
+      expect(await pbmTokenManager.areTokensValid([0, 1])).to.equal(true);
       // update token id 1 expiry to a time in the past
       await pbm.updateTokenExpiry(1, newExpiryEpoch);
       expect((await pbm.getTokenDetails(1))[2]).to.equal(newExpiryEpoch);
 
-      expect((await pbmTokenManager.areTokensValid([0]))).to.equal(true)
-      expect((await pbmTokenManager.areTokensValid([0,1]))).to.equal(false)
-      expect((await pbmTokenManager.areTokensValid([1]))).to.equal(false)
+      expect(await pbmTokenManager.areTokensValid([0])).to.equal(true);
+      expect(await pbmTokenManager.areTokensValid([0, 1])).to.equal(false);
+      expect(await pbmTokenManager.areTokensValid([1])).to.equal(false);
     });
   });
 });

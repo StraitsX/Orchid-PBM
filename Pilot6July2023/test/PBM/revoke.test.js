@@ -7,7 +7,7 @@ const {
   parseUnits,
   mintPBM,
 } = require('./testHelper.js');
-const { time } = require("@nomicfoundation/hardhat-network-helpers");
+const { time } = require('@nomicfoundation/hardhat-network-helpers');
 
 // Main Test script
 describe('PBM', () => {
@@ -59,7 +59,7 @@ describe('PBM', () => {
     it('revoke expired token type successfully', async () => {
       expect(await xsgdToken.balanceOf(pbm.address)).to.be.equal(1000000);
       expect(await xsgdToken.balanceOf(owner.address)).to.be.equal(0);
-      expect(await pbm.balanceOf(nonMerchant.address, 0)).to.be.equal(1)
+      expect(await pbm.balanceOf(nonMerchant.address, 0)).to.be.equal(1);
       await time.increase(100001);
       await pbm.revokePBM(0);
       expect(await xsgdToken.balanceOf(pbm.address)).to.be.equal(0);
