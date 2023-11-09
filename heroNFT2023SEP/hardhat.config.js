@@ -10,11 +10,11 @@ const { Wallet } = require('ethers');
 const DEPLOYER_MNEMONIC = process.env.DEPLOYER_MNEMONIC;
 const POLYGON_MUMBAI_NODE_HTTP_URL = process.env.POLYGON_MUMBAI_NODE_HTTP_URL;
 const POLYGON_MAINNET_NODE_HTTP_URL = process.env.POLYGON_MAINNET_NODE_HTTP_URL;
-const ARB_TESTNET_NODE_HTTP_URL = process.env.ARB_TESTNET_NODE_HTTP_URL;
 
 const POLYGON_SCAN_API_KEY = process.env.POLYGON_SCAN_API_KEY;
 const MUMBAI_SCAN_API_KEY = process.env.MUMBAI_SCAN_API_KEY;
-const ARB_SCAN_API_KEY = process.env.ARB_SCAN_API_KEY;
+const ARBI_SCAN_API_KEY = process.env.ARBI_SCAN_API_KEY;
+const ARBI_RPC_URL = process.env.ARBI_RPC_URL;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -70,25 +70,25 @@ module.exports = {
       deploy: ['deploy/'],
       tags: ['mainnet'],
     },
-    arbgo: {
-      accounts: [Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey],
-      url: ARB_TESTNET_NODE_HTTP_URL,
-      network_id: 421613,
+    arbitrum: {
+      accounts: [
+        Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey,
+      ],
+      url: ARBI_RPC_URL,
+      network_id: 42161,
       confirmations: 2,
       timeoutBlocks: 200,
-      gas: 4500000,
-      gasPrice: 35000000000,
       skipDryRun: true,
       saveDeployments: true,
       deploy: ['deploy/'],
-      tags: ['testnet'],
-    },
+      tags: ["mainnet"],
+    }
   },
   etherscan: {
     apiKey: {
       mumbai: MUMBAI_SCAN_API_KEY,
       polygon: POLYGON_SCAN_API_KEY,
-      arbgo: ARB_SCAN_API_KEY,
+      arbitrum: ARBI_SCAN_API_KEY,
     },
     customChains: [
       {
@@ -108,11 +108,11 @@ module.exports = {
         },
       },
       {
-        network: 'arbgo',
-        chainId: 421613,
+        network: 'arbitrum',
+        chainId: 42161,
         urls: {
-          apiURL: 'https://api-goerli.arbiscan.io/',
-          browserURL: 'https://goerli.arbiscan.io/',
+          apiURL: 'https://api.arbiscan.io/api',
+          browserURL: 'https://arbiscan.io',
         },
       },
     ],
