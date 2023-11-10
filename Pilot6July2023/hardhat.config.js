@@ -14,6 +14,8 @@ const POLYGON_SCAN_API_KEY = process.env.POLYGON_SCAN_API_KEY;
 const MUMBAI_SCAN_API_KEY = process.env.MUMBAI_SCAN_API_KEY;
 const ARBI_RPC_URL = process.env.ARBI_RPC_URL;
 const ARBI_SCAN_API_KEY = process.env.ARBI_SCAN_API_KEY;
+const AVAX_RPC_URL = process.env.AVAX_RPC_URL;
+const SNOWTRACE_API_KEY = process.env.SNOWTRACE_API_KEY;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -65,7 +67,7 @@ module.exports = {
             ],
             url: POLYGON_RPC_URL,
             network_id: 137,
-            confirmations: 2,
+            confirmations: 1,
             timeoutBlocks: 200,
             gas: 6000000,
             gasPrice: 230000000000,
@@ -87,6 +89,20 @@ module.exports = {
             deploy: ['deploy/'],
             tags: ["mainnet"],
             loggingEnabled: true,
+        },
+        avax: {
+            accounts: [
+                Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey,
+            ],
+            url: AVAX_RPC_URL,
+            network_id: 43114,
+            confirmations: 1,
+            timeoutBlocks: 200,
+            skipDryRun: true,
+            saveDeployments: true,
+            deploy: ['deploy/'],
+            tags: ["mainnet"],
+            loggingEnabled: true,
         }
     },
     etherscan: {
@@ -94,6 +110,7 @@ module.exports = {
             mumbai: MUMBAI_SCAN_API_KEY,
             polygon: POLYGON_SCAN_API_KEY,
             arbitrum: ARBI_SCAN_API_KEY,
+            avax: SNOWTRACE_API_KEY,
         },
         customChains: [
             {
@@ -118,6 +135,14 @@ module.exports = {
                 urls: {
                     apiURL: 'https://api.arbiscan.io/api',
                     browserURL: 'https://arbiscan.io',
+                },
+            },
+            {
+                network: 'avax',
+                chainId: 43114,
+                urls: {
+                    apiURL: 'https://api.snowtrace.io/api',
+                    browserURL: 'https://snowtrace.io',
                 },
             }
         ],

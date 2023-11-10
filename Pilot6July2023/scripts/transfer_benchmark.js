@@ -5,7 +5,8 @@ async function main() {
 
   // pbm on arbitrum: 0xF28A99687a5d40Cb18c1d555f5e2d4b17a7ACFD4
   // pbm on polygon: 0xD2D74e2136D60A3c0D252C6dE4102a82f2511DEF
-  const pbmAddr = '0xF28A99687a5d40Cb18c1d555f5e2d4b17a7ACFD4';
+  // pbm on avax: 0x200898584f14c4213787556d40693c163CC677Af
+  const pbmAddr = '0x200898584f14c4213787556d40693c163CC677Af';
   const pbm = (await ethers.getContractFactory('PBM'))
     .attach(pbmAddr)
     .connect(deployerSigner);

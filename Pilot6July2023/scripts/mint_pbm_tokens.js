@@ -5,14 +5,14 @@ async function main() {
 
   // const pbmDeployment = await deployments.get('PBM');
 
-  const pbmAddr = '0xF28A99687a5d40Cb18c1d555f5e2d4b17a7ACFD4';
+  const pbmAddr = '0x200898584f14c4213787556d40693c163CC677Af';
   const pbm = (await ethers.getContractFactory('PBM'))
     .attach(pbmAddr)
     .connect(deployerSigner);
 
   // mainnet xsgd and dsgd
-  const xsgdAddress = '0xa05245Ade25cC1063EE50Cf7c083B4524c1C4302';
-  const dsgdAddress = '0xcFf17e464626aDEF615FFC1Ecdb1661f1Ed1ca16';
+  const xsgdAddress = '0xcFf17e464626aDEF615FFC1Ecdb1661f1Ed1ca16';
+  const dsgdAddress = '0xF28A99687a5d40Cb18c1d555f5e2d4b17a7ACFD4';
 
   const XSGD = await ethers.getContractFactory('Spot');
   const xsgd = await XSGD.attach(xsgdAddress).connect(deployerSigner);
@@ -20,7 +20,7 @@ async function main() {
   // increase allowance for PBM
   await xsgd.increaseAllowance(
     pbm.address,
-    ethers.utils.parseUnits('10', await xsgd.decimals()),
+    ethers.utils.parseUnits('10000000', await xsgd.decimals()),
   );
 
   const DSGD = await ethers.getContractFactory('Spot');
@@ -45,7 +45,7 @@ async function main() {
 
   const mintTo = [jacob];
   for (let i = 0; i < mintTo.length; i++) {
-    const mintTxn = await pbm.batchMint([0], [100], mintTo[i]);
+    const mintTxn = await pbm.batchMint([0], [1000000], mintTo[i]);
     const receipt = await mintTxn.wait();
     console.log(`minted PBM token 3 to address ${mintTo[i]}`);
     console.log(`txn hash ${receipt.transactionHash}`);

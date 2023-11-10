@@ -12,15 +12,15 @@ async function main() {
 
   // const addressListDeployment = await deployments.get('PBMAddressList');
 
-  const addresListAddr = '0x200898584f14c4213787556d40693c163CC677Af';
+  const addresListAddr = '0x124eDB77c52c7fb707AeeF7695342D5B3f999d55';
   const addressList = (await ethers.getContractFactory('PBMAddressList'))
     .attach(addresListAddr)
     .connect(deployerSigner);
   console.log('addressList address', addressList.address);
 
   // mainnet xsgd and dsgd
-  const xsgdAddress = '0xa05245Ade25cC1063EE50Cf7c083B4524c1C4302';
-  const dsgdAddress = '0xcFf17e464626aDEF615FFC1Ecdb1661f1Ed1ca16';
+  const xsgdAddress = '0xcFf17e464626aDEF615FFC1Ecdb1661f1Ed1ca16';
+  const dsgdAddress = '0xF28A99687a5d40Cb18c1d555f5e2d4b17a7ACFD4';
 
   // const dummyDSGD = (await ethers.getContractFactory('Spot')).attach(xsgdAddress).connect(deployerSigner);
   // const dummyXSGD = (await ethers.getContractFactory('Spot')).attach(dsgdAddress).connect(deployerSigner);
