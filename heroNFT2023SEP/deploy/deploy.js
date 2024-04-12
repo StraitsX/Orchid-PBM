@@ -10,6 +10,7 @@ module.exports = async () => {
     from: deployer,
     args: [],
     log: true,
+    gasPrice: hre.ethers.utils.parseUnits('15', 'gwei'),
   });
   console.log(`Deployed HeroNFT to ${heroNFT.address}`);
 };

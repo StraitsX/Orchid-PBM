@@ -56,6 +56,16 @@ module.exports = {
             deploy: ['deploy/'],
             tags: ["testnet"],
         },
+        amoy: {
+            accounts: [
+                Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey,
+            ],
+            url: process.env.AMOY_RPC_URL,
+            network_id: 80002,
+            saveDeployments: true,
+            deploy: ["deploy/"],
+            tags: ["amoy"],
+        },
         polygon: {
             accounts: [
                 Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey,

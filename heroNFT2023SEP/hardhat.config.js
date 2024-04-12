@@ -57,6 +57,16 @@ module.exports = {
       deploy: ['deploy/'],
       tags: ['testnet'],
     },
+    amoy: {
+      accounts: [
+        Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey,
+      ],
+      url: process.env.AMOY_RPC_URL,
+      network_id: 80002,
+      saveDeployments: true,
+      deploy: ["deploy/"],
+      tags: ["amoy"],
+    },
     polygon: {
       accounts: [Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey],
       url: POLYGON_MAINNET_NODE_HTTP_URL,
@@ -69,19 +79,6 @@ module.exports = {
       saveDeployments: true,
       deploy: ['deploy/'],
       tags: ['mainnet'],
-    },
-    arbgo: {
-      accounts: [Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey],
-      url: ARB_TESTNET_NODE_HTTP_URL,
-      network_id: 421613,
-      confirmations: 2,
-      timeoutBlocks: 200,
-      gas: 4500000,
-      gasPrice: 35000000000,
-      skipDryRun: true,
-      saveDeployments: true,
-      deploy: ['deploy/'],
-      tags: ['testnet'],
     },
   },
   etherscan: {
