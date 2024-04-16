@@ -11,3 +11,11 @@ The following interface and standards are defined for Noah PBM:
 `ICompliantService` defines a set of events required to be emitted for compliance check purposes. Additionally, it outlines common functions for country / campaign-specific compliance checks. 
 
 This interface facilitates interoperability and consistency across different PBM implementations.
+
+## Proxy and upgradeability 
+
+If upgradeability is required on a PBM, the recommended approach is to use [Openzeppelin](https://docs.openzeppelin.com/contracts/5.x/api/proxy#UUPSUpgradeable-_authorizeUpgrade-address-) `TransparentUpgradeableProxy`
+
+UUPS is not required unless we want to upgrade the proxy itself on a regular basis. We want to keep things simple and just use a TransparentProxy at the expense of being able to upgrade the proxy contract itself. 
+
+Proxy contracts are copied from th [Openzeppelin Github](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.1/contracts/proxy/transparent/TransparentUpgradeableProxy.sol) repo for ease of deployment and acts as a snaphot.
