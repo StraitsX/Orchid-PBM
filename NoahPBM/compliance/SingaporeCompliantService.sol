@@ -14,7 +14,7 @@ contract SingaporeCompliantService is ICompliantService {
     /// requirements:
     /// 1. Payment amount is < 20,000 SGD per transaction
     /// 2. Payment is done for purchase of goods and services.
-    /// 3. Sender is KYC'ed  
+    /// 3. Source of fund is from an identifiable source. (ie: by checking if a wallet has an identity token)
     function checkNonKYCPaymentAllowed(address receiver, uint256 amt, uint256 pbmValue) external returns (bool) {
         bool isCompliant = complyPaymentAmount(amt, pbmValue) && complyReceiverIsMerchant(receiver);
         emit NonKYCPaymentCheck(receiver, amt, pbmValue, isCompliant);
