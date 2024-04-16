@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 /// @title Manages the payment lifecycle for the internal Noah pbm payment network
-interface NoahPaymentManager {
+/// a PBM will use this contract to store the underlying token for making payments
+interface INoahPaymentStateMachine {
     /// @notice Payment success event
     event PaymentCompleted(
         address campaignPBM,

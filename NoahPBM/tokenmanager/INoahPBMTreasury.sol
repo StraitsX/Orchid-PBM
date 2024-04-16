@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @title Holds the underlying wrapped token for a list of campaign PBM
-interface NoahPBMTreasury {
+interface INoahPBMTreasury {
   
     /// @notice gets the spot type of underlying ERC20 tokens each of the the PBM type holds
     /// @param tokenId The id for the PBM in query
