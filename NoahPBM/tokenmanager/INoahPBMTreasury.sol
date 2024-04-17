@@ -18,4 +18,9 @@ interface INoahPBMTreasury {
     /// @notice Call this function to allow the treasury to pull money from a designated wallet
     /// and credit it to treasury smart contract
     function depositForPBMAddress() external;
+
+    /// @notice allows the owner to rescue ERC20 tokens sent to this contract.
+    /// TODO: implement circle fi Rescuable contract instead
+    // function rescueFunds() external;
+
 }
