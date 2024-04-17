@@ -16,6 +16,10 @@ contract NoahPaymentManager is INoahPaymentStateMachine, INoahPBMTreasury {
       // call increaseTrasuryBalance to increase pbmTokenBalance
     }  
 
+    function swap() public {
+      // how to swap underlying token with another token using a defi app?
+    }
+
     // called by campaign PBM to initiate a payment request to a merchant wallet.
     function createPayment() public{
       // emit PaymentCreatedEvent
