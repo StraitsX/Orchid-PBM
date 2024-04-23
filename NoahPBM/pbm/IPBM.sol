@@ -4,26 +4,20 @@ pragma solidity ^0.8.0;
 /// @title PBM interface
 /// @notice The PBM (purpose bound money) allows us to add logical requirements on the use of ERC-20 tokens. The PBM acts as wrapper around the ERC-20 tokens and implements the necessary logic.
 interface IPBM {
-    /// @notice sets the address of the underlying ERC20 token, Contract Expiry, and the address of pbm address list
-    /// @param _xsgdToken address of the XSGD
-    /// @param _dsgdToken address of the DSGD
-    /// @param _swapContract address of the Swap contract
-    /// @param _expiry contract wide expiry ( in epoch )
-    /// @param _pbmAddressList address of the PBMAddressList smartcontract
-    /// @param _heroNFT address of the HeroNFT smartcontract
+    
+    /// @notice Sets up basic information for the campaign PBM
+    /// @param _expiry Global contract wide expiry ( in epoch ) 
+    /// @param _pbmAddressList address of the PBMAddressList smartcontract for determining merchant targets.
     function initialise(
-        address _xsgdToken,
-        address _dsgdToken,
-        address _swapContract,
         uint256 _expiry,
-        address _pbmAddressList,
-        address _heroNFT
+        address _pbmAddressList
     ) external;
 
     /// @notice Creates a new PBM token type with the data provided
     /// @param companyName Name of the company issuing the PBM
+    /// @param spotAddress ERC-20 token address for the token type
     /// @param spotAmount Amount of the underlying ERC-20 tokens the PBM type wraps around
-    /// @param spotType The type of underlying ERC-20 token, can only be "DSGD" or "XSGD"
+    /// @param spotType The type of underlying ERC-20 token, eg. "USDC", "XSGD", "XUSD"
     /// @param tokenExpiry The expiry date (in epoch) for this particular PBM token type
     /// @param tokenURI the URI (returns json) of PBM type that will follows the Opensea NFT metadata standard
     /// @param postExpiryURI the URI (returns json) of expired PBM type that will follows the Opensea NFT metadata standard
@@ -43,6 +37,7 @@ interface IPBM {
      */
     function createPBMTokenType(
         string memory companyName,
+        address spotAddres,
         uint256 spotAmount,
         string memory spotType,
         uint256 tokenExpiry,
