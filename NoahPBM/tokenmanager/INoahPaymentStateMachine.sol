@@ -7,6 +7,11 @@ pragma solidity ^0.8.0;
 interface INoahPaymentStateMachine {
     
     /// @notice Initiates the start of the payment life cycle.
+    /// metadata usage:
+    /// 1. Specify discount code for discount type PBM, or Product type PBM to pass on to acquirer 
+    /// 2. Indicate FX rates for POST payment swap settlement. 
+    /// ie: Get a USDC<>XSGD quote from STX, pay in USDC and indicate quote ref here
+    /// 3. NFT metadata for airdrops
     event PaymentCreated(
         address campaignPBM,
         address from,

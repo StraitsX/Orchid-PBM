@@ -16,6 +16,20 @@ contract NoahPaymentManager is INoahPaymentStateMachine, INoahPBMTreasury {
     // pbmContract address => {ERC20Token1 => Amt, ERC20Token2 => Amt}
     mapping(address => mapping (address => uint256)) internal pbmTokenBalance;
 
+    // reserve storage slots. Useful in the future if 
+    // subclasses of this contract is used and modification to the base logic requires state management
+    address public slot1Reserved = address(0);
+    address public slot2Reserved = address(0);
+    address public slot3Reserved = address(0);
+    address public slot4Reserved = address(0);
+    address public slot5Reserved = address(0);
+    address public slot6Reserved = address(0);
+    address public slot7Reserved = address(0);
+    address public slot8Reserved = address(0);  
+    address public slot9Reserved = address(0);  
+    address public slot10Reserved = address(0);  
+
+
     // A campaign PBM would call this function to pull money from a minter's wallet 
     // and credit it to a PBM Contract address
     function depositForPBMAddress(address creditForPBM, address erc20token, uint256 amt) external override {
