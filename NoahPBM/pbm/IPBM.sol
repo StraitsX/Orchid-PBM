@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 /// @title PBM interface
-/// @notice The PBM (purpose bound money) allows us to add logical requirements on the use of ERC-20 tokens. The PBM acts as wrapper around the ERC-20 tokens and implements the necessary logic.
+/// @notice The PBM (purpose bound money) allows us to add logical requirements on the use of ERC-20 tokens. 
+/// The PBM acts as wrapper around the ERC-20 tokens and implements appropriate business logic
 interface IPBM {
     
     /// @notice Sets up basic information for the campaign PBM

@@ -12,8 +12,8 @@ import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "./IPBMAddressList.sol";
 
-/// @title This PBM smart contract manages the underlying ERC20 token directly by itself.
-contract PBM is ERC1155, Ownable, Pausable, IPBM {
+/// @title A payment PBM relies on an external smart contract to manage the underlying ERC-20 tokens.
+contract PaymentPBM is ERC1155, Ownable, Pausable, IPBM {
     // address of the token manager. Token manager is incharge of managing the wrapped ERC-20 tokens
     address public pbmTokenManager = address(0);
 
@@ -56,7 +56,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      */
     function createPBMTokenType(
         string memory companyName,
-        address spotAddress,
         uint256 spotAmount,
         string memory spotType,
         uint256 tokenExpiry,
@@ -66,7 +65,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     ) external override onlyOwner {
         PBMTokenManager(pbmTokenManager).createTokenType(
             companyName,
-            spotAddress,
             spotAmount,
             spotType,
             tokenExpiry,
@@ -100,7 +98,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
 
         //Transfer the spot token from the user to the contract to wrap it
-        address spotToken = getSpotAddress(tokenId);
+        spotToken = getSpotAddress(tokenId);
         ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
 
         // mint the token if the contract - wrapping the xsgd
@@ -142,7 +140,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
 
             // Get spotToken address based on tokenId
-            address spotToken = getSpotAddress(tokenId);
+            spotToken = getSpotAddress(tokenId);
 
             // Transfer spot tokens from user to contract to wrap it
             ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
@@ -274,7 +272,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
         PBMTokenManager(pbmTokenManager).revokePBM(tokenId, msg.sender);
 
-        address spotToken = getSpotAddress(tokenId);
+        spotToken = getSpotAddress(tokenId);
         // transfering underlying ERC20 tokens
         ERC20Helper.safeTransfer(spotToken, msg.sender, valueOfTokens);
 
