@@ -52,7 +52,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - contract must not be expired
      * - `tokenExpiry` must be less than contract expiry
      * - `amount` should not be 0
-     * - `spotType` should be either "XSGD" or "DSGD"
+     * - `spotType` Such as "XSGD" or "XUSD"
      */
     function createPBMTokenType(
         string memory companyName,
@@ -248,17 +248,17 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      *   @notice approval must be given to allow the simple swapcontract to pull money from the PBM smart contract
      *    to initiate a swap.
      */
-    function _swapIfNeeded(uint256 tokenId, uint256 amount) internal returns (uint256) {
-        if (
-            keccak256(abi.encodePacked((PBMTokenManager(pbmTokenManager).getSpotType(tokenId)))) ==
-            keccak256(abi.encodePacked("DSGD"))
-        ) {
-            ERC20(dsgdToken).increaseAllowance(swapContract, amount);
-            uint256 xsgdAmount = ISwap(swapContract).swapDSGDtoXSGD(amount);
-            return xsgdAmount;
-        }
-        return amount;
-    }   
+    // function _swapIfNeeded(uint256 tokenId, uint256 amount) internal returns (uint256) {
+    //     if (
+    //         keccak256(abi.encodePacked((PBMTokenManager(pbmTokenManager).getSpotType(tokenId)))) ==
+    //         keccak256(abi.encodePacked("DSGD"))
+    //     ) {
+    //         ERC20(dsgdToken).increaseAllowance(swapContract, amount);
+    //         uint256 xsgdAmount = ISwap(swapContract).swapDSGDtoXSGD(amount);
+    //         return xsgdAmount;
+    //     }
+    //     return amount;
+    // }   
 
     /**
      * @dev See {IPBM-revokePBM}.

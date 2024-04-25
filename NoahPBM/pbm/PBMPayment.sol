@@ -13,7 +13,7 @@ import "./IPBM.sol";
 import "./IPBMAddressList.sol";
 
 /// @title A payment PBM relies on an external smart contract to manage the underlying ERC-20 tokens.
-contract PaymentPBM is ERC1155, Ownable, Pausable, IPBM {
+contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
     // address of the token manager. Token manager is incharge of managing the wrapped ERC-20 tokens
     address public pbmTokenManager = address(0);
 
@@ -56,6 +56,7 @@ contract PaymentPBM is ERC1155, Ownable, Pausable, IPBM {
      */
     function createPBMTokenType(
         string memory companyName,
+        address spotAddress,
         uint256 spotAmount,
         string memory spotType,
         uint256 tokenExpiry,
@@ -65,6 +66,7 @@ contract PaymentPBM is ERC1155, Ownable, Pausable, IPBM {
     ) external override onlyOwner {
         PBMTokenManager(pbmTokenManager).createTokenType(
             companyName,
+            spotAddress,
             spotAmount,
             spotType,
             tokenExpiry,
@@ -74,6 +76,7 @@ contract PaymentPBM is ERC1155, Ownable, Pausable, IPBM {
             contractExpiry
         );
     }
+
 
     /**
      * @dev See {IPBM-mint}.
@@ -100,6 +103,9 @@ contract PaymentPBM is ERC1155, Ownable, Pausable, IPBM {
         //Transfer the spot token from the user to the contract to wrap it
         spotToken = getSpotAddress(tokenId);
         ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
+
+        // TODO: Move the spot token to NoahPaymentManager
+        // Alternatively, can skip this step, and just mint unbacked tokens
 
         // mint the token if the contract - wrapping the xsgd
         PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
@@ -176,13 +182,16 @@ contract PaymentPBM is ERC1155, Ownable, Pausable, IPBM {
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
             uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
 
-            // burn and transfer underlying ERC-20
+            // Burn PBM ERC1155 Tokens
             _burn(from, id, amount);
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
+
             // swap dsgd to xsgd if token id wraps dsgd
             valueOfTokens = _swapIfNeeded(id, valueOfTokens);
 
-            ERC20Helper.safeTransfer(xsgdToken, to, valueOfTokens);
+            // TODO Call NoahPaymentManager instead to transfer erc20 tokens.
+            // ERC20Helper.safeTransfer(xsgdToken, to, valueOfTokens);
+
             emit MerchantPayment(from, to, serialise(id), serialise(amount), xsgdToken, valueOfTokens);
 
         } else {

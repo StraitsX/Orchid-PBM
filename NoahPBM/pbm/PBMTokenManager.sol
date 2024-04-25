@@ -66,6 +66,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
 
         string memory tokenName = string(abi.encodePacked(companyName, spotAmount.toString()));
         tokenTypes[tokenTypeCount].name = tokenName;
+        tokenTypes[tokenTypeCount].amount = spotAddress;
         tokenTypes[tokenTypeCount].amount = spotAmount;
         tokenTypes[tokenTypeCount].spotType = spotType;
         tokenTypes[tokenTypeCount].expiry = tokenExpiry;
