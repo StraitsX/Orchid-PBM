@@ -32,7 +32,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
 
     function initialise(
         uint256 _expiry,
-        address _pbmAddressList,
+        address _pbmAddressList
     ) external override onlyOwner {
         require(!initialised, "PBM: Already initialised");
         require(Address.isContract(_pbmAddressList), "Invalid pbm address list");
