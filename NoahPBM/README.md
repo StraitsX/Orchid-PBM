@@ -19,3 +19,26 @@ If upgradeability is required on a PBM, the recommended approach is to use [Open
 UUPS is not required unless we want to upgrade the proxy itself on a regular basis. We want to keep things simple and just use a TransparentProxy at the expense of being able to upgrade the proxy contract itself. 
 
 Proxy contracts are copied from th [Openzeppelin Github](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.1/contracts/proxy/transparent/TransparentUpgradeableProxy.sol) repo for ease of deployment and acts as a snaphot.
+
+
+# Development notes
+
+This repository uses nix to standardize the deployment environment. You may
+visit https://nixos.org/download to download nix before running any scripts.
+
+nix environment can be initialized with `nix develop` which would start a nix
+shell. Run `npm install` to install the relevant nodejs packages required to run
+the scripts in this repository.
+
+# Running tests
+`npx hardhat clean` `npx hardhat compile` `npx hardhat test`
+`npx hardhat test test/myfile.js`
+
+# Deploying
+hardhat.config.js is configured for the following networks:
+`npx hardhat deploy --network polygon` 
+`npx hardhat deploy --network holesky`
+
+To deploy a specific file, use the tags param. Tags are defined at the end of
+each deployment file, e.g.
+`npx hardhat deploy --network holesky --tags pbm --reset`
