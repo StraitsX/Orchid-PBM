@@ -315,8 +315,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      *
      */
     function getSpotAddress(uint256 tokenId) public view override returns (address) {
-        string memory spotType = PBMTokenManager(pbmTokenManager).getSpotType(tokenId);
-        return keccak256(abi.encodePacked(spotType)) == keccak256(abi.encodePacked("XSGD")) ? xsgdToken : dsgdToken;
+        return PBMTokenManager(pbmTokenManager).getSpotAddress(tokenId);
     }
 
     /**
