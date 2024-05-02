@@ -58,15 +58,16 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
         require(Address.isContract(spotAddress), "Invalid ERC20 token");
 
         require(spotAmount != 0, "Spot amount is 0");
+        
         require(
-            keccak256(bytes(spotType)) == keccak256(bytes("DSGD")) ||
+            keccak256(bytes(spotType)) == keccak256(bytes("XUSD")) ||
                 keccak256(bytes(spotType)) == keccak256(bytes("XSGD")),
-            "SpotType must be DSGD or XSGD"
+            "SpotType must be XUSD or XSGD"
         );
 
         string memory tokenName = string(abi.encodePacked(companyName, spotAmount.toString()));
         tokenTypes[tokenTypeCount].name = tokenName;
-        tokenTypes[tokenTypeCount].amount = spotAddress;
+        tokenTypes[tokenTypeCount].spotAddress = spotAddress;
         tokenTypes[tokenTypeCount].amount = spotAmount;
         tokenTypes[tokenTypeCount].spotType = spotType;
         tokenTypes[tokenTypeCount].expiry = tokenExpiry;
@@ -75,7 +76,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
         tokenTypes[tokenTypeCount].uri = tokenURI;
         tokenTypes[tokenTypeCount].postExpiryURI = postExpiryURI;
 
-        emit NewPBMTypeCreated(tokenTypeCount, tokenName, spotAmount, spotType, tokenExpiry, creator);
+        emit NewPBMTypeCreated(tokenTypeCount, tokenName, spotAddress, spotAmount, spotType, tokenExpiry, creator);
         tokenTypeCount += 1;
     }
 
@@ -240,6 +241,18 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
             "PBM: Invalid Token Id(s)"
         );
         return tokenTypes[tokenId].amount;
+    }
+
+    /**
+     * @dev See {IPBMTokenManager-getSpotAddress}.
+     *
+     */
+    function getSpotAddress(uint256 tokenId) external view override returns (address) {
+        require(
+            tokenTypes[tokenId].amount != 0,
+            "PBM: Invalid Token Id(s)"
+        );
+        return tokenTypes[tokenId].spotAddress;
     }
 
     function getSpotType(uint256 tokenId) external view override returns (string memory) {

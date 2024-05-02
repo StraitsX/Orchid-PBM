@@ -24,9 +24,14 @@ interface IPBMTokenManager {
     /// @return Returns the underlying ERC20 amount
     function getTokenValue(uint256 tokenId) external view returns (uint256);
 
+    /// @notice gets the spot address of the underlying ERC20 token of the PBM tokenid
+    /// @param tokenId The id for the PBM in query
+    /// @return Returns the spot token smart contract address
+    function getSpotAddress(uint256 tokenId) external view returns (address);
+    
     /// @notice gets the spot type of underlying ERC20 tokens each of the the PBM type holds
     /// @param tokenId The id for the PBM in query
-    /// @return Returns the spot type, could only be either "XSGD" or "DSGD"
+    /// @return Returns the spot type, e.g. XSGD/XUSD 
     function getSpotType(uint256 tokenId) external view returns (string memory);
 
     /// @notice gets the count of the PBM type in supply
@@ -51,8 +56,9 @@ interface IPBMTokenManager {
 
     /// @notice Creates a PBM token type, with all its necessary details
     /// @param companyName The name of the company/agency issuing this PBM type
+    /// @param spotAddress The smart contract address for the underlying ERC-20 token.
     /// @param spotAmount The number of ERC-20 tokens that is used as the underlying currency for PBM
-    /// @param spotType The type of underlying ERC-20 token, can only be "DSGD" or "XSGD"
+    /// @param spotType The type of underlying ERC-20 token. e.g. XSGD/XUSD 
     /// @param tokenExpiry The expiry date (in epoch) of th PBM type
     /// @param creator The address of the account that creates the PBM type
     /// @param tokenURI the URI containting the metadata (opensea standard for ERC1155) for the  PBM type
@@ -60,6 +66,7 @@ interface IPBMTokenManager {
     /// @param contractExpiry the expiry time (in epoch) for the overall PBM contract
     function createTokenType(
         string memory companyName,
+        address spotAddress,
         uint256 spotAmount,
         string memory spotType,
         uint256 tokenExpiry,
@@ -88,12 +95,14 @@ interface IPBMTokenManager {
     /// @param tokenId The account from which the tokens were sent, i.e. the balance decreased
     /// @param tokenName The account to which the tokens were sent, i.e. the balance increased
     /// @param amount The amount of tokens that were transferred
-    /// @param spotType The type of underlying ERC-20 token, can only be "DSGD" or "XSGD"
+    /// @param spotType The type of underlying ERC-20 token. e.g. XSGD/XUSD 
+    /// @param spotAddress The smart contract address for the ERC-20 token
     /// @param expiry The time (in epoch) when the PBM type will expire
     /// @param creator The creator of the this PBM type
     event NewPBMTypeCreated(
         uint256 tokenId,
         string tokenName,
+        address spotAddress,
         uint256 amount,
         string spotType,
         uint256 expiry,

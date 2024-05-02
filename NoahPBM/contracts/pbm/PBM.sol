@@ -181,11 +181,10 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             // burn and transfer underlying ERC-20
             _burn(from, id, amount);
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
-            // swap dsgd to xsgd if token id wraps dsgd
-            valueOfTokens = _swapIfNeeded(id, valueOfTokens);
 
-            ERC20Helper.safeTransfer(xsgdToken, to, valueOfTokens);
-            emit MerchantPayment(from, to, serialise(id), serialise(amount), xsgdToken, valueOfTokens);
+            address spotTokenAddr = getSpotAddress(id);
+            ERC20Helper.safeTransfer(spotTokenAddr, to, valueOfTokens);
+            emit MerchantPayment(from, to, serialise(id), serialise(amount), spotTokenAddr, valueOfTokens);
 
         } else {
             _safeTransferFrom(from, to, id, amount, data);
@@ -200,8 +199,9 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      *
      * - contract must not be paused
      * - tokens must not be expired
-     * - `tokenIds` should all be  valid ids that has already been created
+     * - `tokenIds` should all be valid ids that has already been created
      * - `tokenIds` and `amounts` list need to have the same number of values
+     * - `tokenIds` must have the same underlying erc20 token address to allow combination of different pbm types for merchant payment.
      * - caller should have the PBMs that are being transferred (or)
      *          caller should have the approval to spend the PBMs on behalf of the owner (`from` addresss)
      */
@@ -217,19 +217,24 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
         if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
             uint256 sumOfTokens = 0;
+            
+            // we assume all of the pbm token ids has the same underlying ERC20 token
+            // override this function to implement swap to combine underlying ERC20 token if necessary.
+            address baseERC20token = getSpotAddress(ids[0]);
+
             for (uint256 i = 0; i < ids.length; i++) {
                 uint256 tokenId = ids[i];
                 uint256 amount = amounts[i];
                 uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
-                valueOfTokens = _swapIfNeeded(tokenId, valueOfTokens);
                 sumOfTokens += valueOfTokens;
             }
-
+            
             _burnBatch(from, ids, amounts);
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(ids, amounts);
-            ERC20Helper.safeTransfer(xsgdToken, to, sumOfTokens);
 
-            emit MerchantPayment(from, to, ids, amounts, xsgdToken, sumOfTokens);
+            ERC20Helper.safeTransfer(baseERC20token, to, sumOfTokens);
+
+            emit MerchantPayment(from, to, ids, amounts, baseERC20token, sumOfTokens);
 
         } else {
             _safeBatchTransferFrom(from, to, ids, amounts, data);
@@ -243,22 +248,6 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         );
         require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
     }
-
-    /**
-     *   @notice approval must be given to allow the simple swapcontract to pull money from the PBM smart contract
-     *    to initiate a swap.
-     */
-    // function _swapIfNeeded(uint256 tokenId, uint256 amount) internal returns (uint256) {
-    //     if (
-    //         keccak256(abi.encodePacked((PBMTokenManager(pbmTokenManager).getSpotType(tokenId)))) ==
-    //         keccak256(abi.encodePacked("DSGD"))
-    //     ) {
-    //         ERC20(dsgdToken).increaseAllowance(swapContract, amount);
-    //         uint256 xsgdAmount = ISwap(swapContract).swapDSGDtoXSGD(amount);
-    //         return xsgdAmount;
-    //     }
-    //     return amount;
-    // }   
 
     /**
      * @dev See {IPBM-revokePBM}.
@@ -308,8 +297,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      *
      */
     function getSpotAddress(uint256 tokenId) public view override returns (address) {
-        string memory spotType = PBMTokenManager(pbmTokenManager).getSpotType(tokenId);
-        return keccak256(abi.encodePacked(spotType)) == keccak256(abi.encodePacked("XSGD")) ? xsgdToken : dsgdToken;
+        return PBMTokenManager(pbmTokenManager).getSpotAddress(tokenId);
     }
 
     /**

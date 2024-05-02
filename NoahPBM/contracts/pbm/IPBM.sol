@@ -68,8 +68,9 @@ interface IPBM {
     /// @param data To record any data associated with the transaction, can be left blank if none
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) external;
 
-    /// @notice Transfers the PBM(NFT)(s) from one wallet to another.
-    /// If the receving wallet is a whitelisted merchant wallet address, the PBM(NFT)(s) will be burnt and the underlying ERC-20 tokens will be transferred to the merchant wallet instead.
+    /// @notice Transfers the PBM(NFT)(s) from one wallet to another. All PBM token id must have the same underlying token to be combined.
+    /// If the receving wallet is a whitelisted merchant wallet address, the PBM(NFT)(s) will be combined, burnt and 
+    /// the underlying ERC-20 tokens will be transferred to the merchant wallet instead.
     /// @param from The account from which the PBM ( NFT )(s) is moving from
     /// @param to The account which is receiving the PBM ( NFT )(s)
     /// @param ids The identifiers of the different PBM token type
