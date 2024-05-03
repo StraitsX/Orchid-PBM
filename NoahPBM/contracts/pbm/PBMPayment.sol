@@ -77,7 +77,6 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         );
     }
 
-
     /**
      * @dev See {IPBM-mint}.
      *     
@@ -98,16 +97,13 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      */
     function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused {
         require(!IPBMAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
-        uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
 
-        //Transfer the spot token from the user to the contract to wrap it
-        spotToken = getSpotAddress(tokenId);
-        ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
+        // TODO: 
+        // [1] Call NoahPaymentManager funding when mint is being called
+        // [2] Alternatively, can skip this step, and just mint unbacked tokens
+        // Most likely will choose option [2]
 
-        // TODO: Move the spot token to NoahPaymentManager
-        // Alternatively, can skip this step, and just mint unbacked tokens
-
-        // mint the token if the contract - wrapping the xsgd
+        // Mint the PBM ERC1155
         PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
         _mint(receiver, tokenId, amount, "");
     }
@@ -143,13 +139,10 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
             uint256 tokenId = tokenIds[i];
             uint256 amount = amounts[i];
 
-            uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
-
-            // Get spotToken address based on tokenId
-            spotToken = getSpotAddress(tokenId);
-
-            // Transfer spot tokens from user to contract to wrap it
-            ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
+            // TODO: 
+            // [1] Call NoahPaymentManager funding when mint is being called
+            // [2] Alternatively, can skip this step, and just mint unbacked tokens, but Mint function must be converted into an owner only function
+            // Most likely will choose option [2]. Refer to mintUnbackedPBM func
 
             // Increase balance supply
             PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
@@ -157,6 +150,16 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
 
         _mintBatch(receiver, tokenIds, amounts, "");
     }
+
+    /**
+     * This function is used to mint partially PBM that is not fully backed by an underlying token. 
+     * Only owner can do this, since the existence of this function represents the ability to initiate 
+     * payments on NoahPBM
+     */
+    function mintUnbackedPBM() external onlyOwner {
+
+    }
+
 
     /**
      * @dev See {IPBM-safeTransferFrom}.
