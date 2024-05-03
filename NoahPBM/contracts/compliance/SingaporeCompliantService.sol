@@ -5,6 +5,7 @@ import "./ICompliantService.sol";
 import "./IPBMMerchantAddressList.sol";
 
 /// @title A list of Singapore specific payments ruleset checks should be done here.
+/// Campaign PBM owner should implement this in their PBM 
 contract SingaporeCompliantService is ICompliantService {
 
     uint256 public MAX_TOTAL_TOKEN_VALUE = 20000; // Maximum payment amount

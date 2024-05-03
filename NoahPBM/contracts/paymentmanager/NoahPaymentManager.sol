@@ -72,7 +72,7 @@ contract NoahPaymentManager is INoahPaymentStateMachine, INoahPBMTreasury {
     /// @notice called by campaign PBM to initiate a payment request to a merchant wallet.
     /// Token used can be anytype of token that is accepted by the merchant. Tokens will be lost
     /// if sending a token that is not accepted by the merchant.
-    function createPayment(address erc20TokenToUse) public{
+    function createPayment(address erc20TokenToUse, address merchantAddress) public{
       // emit PaymentCreatedEvent
     }
 
