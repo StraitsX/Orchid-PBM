@@ -6,8 +6,14 @@ pragma solidity ^0.8.0;
 /// Lifecycle consist of PaymentCreated, PaymentCompleted, PaymentRefunded, PaymentCancelled
 interface INoahPaymentStateMachine {
     
-    /// @notice Initiates the start of the payment life cycle.
-    /// metadata usage:
+    /// @notice Initiates the start of the payment life cycle to be later acknowledged by a Noah Oracle
+    /// @param campaignPBM PBM contract that requested for payment to be created
+    /// @param from Wallet requesting this payment
+    /// @param to Merchant wallet payment destination 
+    /// @param ERC20Token Smart Contract address
+    /// @param ERC20TokenValue Value of ERC20 token to be given. Amount = Value x Decimal Places
+    /// @param paymentUniqueId Required to ensure oracle fallback mechanism for retrying on another chain.
+    /// @param metadata usage:
     /// 1. Specify discount code for discount type PBM, or Product type PBM to pass on to acquirer 
     /// 2. Indicate FX rates for POST payment swap settlement. 
     /// ie: Get a USDC<>XSGD quote from STX, pay in USDC and indicate quote ref here
@@ -21,6 +27,18 @@ interface INoahPaymentStateMachine {
         string paymentUniqueId,
         string metadata
     ); 
+
+    // Future works. Uncomment this for PBM issuer that doesn't require a 2 step payment completion service, and as a result
+    // doesnt require a fallbakc mechanism
+    // The exclusion of paymentUniqueId prevents the oracle from retrying on another chain or web2 fallback for instance.
+    // event PaymentDirectCreated(
+    //     address campaignPBM,
+    //     address from,
+    //     address to,
+    //     address ERC20Token,
+    //     uint256 ERC20TokenValue,
+    //     string metadata
+    // ); 
 
     /// @notice Emitted when a payment is successfully done and acknowledged by acquirer.
     event PaymentCompleted(

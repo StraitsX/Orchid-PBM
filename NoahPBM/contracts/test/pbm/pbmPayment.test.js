@@ -76,4 +76,25 @@ describe('PBMPaymentTest', async () => {
     it('PBM should be able to combine various PBM types in accordance to combination logic', async () => {});
 
   });
+
+  describe('Noah PBM Core Test', async () => {
+    
+    it('Should ensure that only campaign PBM can spend its own money', async () => {});
+    
+    // required to ensure admin roles are not hijacked
+    it('Should ensure that only Noah PBM can only be init once', async () => {});
+
+    it('Should ensure payments can only be created if enough funding', async () => {});
+
+    it('Should ensure ERC20 balance and treasury balance are NOT changed after payment Created', async () => {});
+    it('Should ensure ERC20 balance and treasury balance are NOT changed after payment Cancelled', async () => {});
+
+    it('Should ensure ERC20 balance and treasury balance are updated after payment COMPLETED', async () => {});
+    it('Should ensure ERC20 balance and treasury balance are updated after payment Refunded', async () => {});
+
+
+  });
+
+
 });
+
