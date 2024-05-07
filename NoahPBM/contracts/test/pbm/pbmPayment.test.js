@@ -79,11 +79,12 @@ describe('PBMPaymentTest', async () => {
 
   describe('Noah PBM Core Test', async () => {
     
+    it('Should ensure ', async () => {});
+
     it('Should ensure that only campaign PBM can spend its own money', async () => {});
     
     // required to ensure admin roles are not hijacked
     it('Should ensure that only Noah PBM can only be init once', async () => {});
-
     it('Should ensure payments can only be created if enough funding', async () => {});
 
     it('Should ensure ERC20 balance and treasury balance are NOT changed after payment Created', async () => {});
@@ -95,13 +96,32 @@ describe('PBMPaymentTest', async () => {
     it('Should ensure ERC20 balance and treasury balance are updated after payment Refunded', async () => {});
 
 
+    describe('Treasury Balance Test', async () => {
+
+      it('Should ensure all treasury related functions are STRICTLY internal only functions', async () => {});
+
+      it('Should ensure Owner is able to recover erc20 tokens in this smart contract', async () => {});
+
+      it('Should ensure _increaseTrasuryBalance only increase main balance', async () => {});
+      it('Should ensure _markCompleteTreasuryBalanace only decrease pending balance', async () => {});
+      it('Should ensure _markPendingTreasuryBalanace moves from main to pending balance', async () => {});
+      it('Should ensure _revertPendingTreasuryBalanace moves from pending to main balance', async () => {});
+
+    });
+
+
     describe('Payment Created Test', async () => {
 
       it('Should ensure pbm balance is moved to pending balance upon PaymentCreated event', async () => {});
 
-
     });
 
+    describe('Payment Completed Test', async () => {
+
+      it('Should ensure erc20 token is disburse to destination', async () => {});
+      it('Should ensure internal pending balance is updated only', async () => {});
+
+    });
 
     describe('Payment Cancel Test', async () => {
 

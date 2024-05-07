@@ -14,7 +14,13 @@ interface INoahPBMTreasury {
     /// and credit it to treasury smart contract
     function depositForPBMAddress(address creditForPBM, address erc20token, uint256 value) external;
 
-    /// @notice allows the owner to rescue ERC20 tokens sent to this contract.
-    /// TODO: implement circle fi Rescuable contract instead
-    // function rescueFunds() external;
+    /// @notice Allows the owner to rescue ERC20 tokens sent to this contract.
+    /// @param erc20token smart contract address 
+    /// @param value amount of funds to be withdrawn
+    function recoverERC20Tokens(address erc20token, uint256 value) external;
+
+    /// @notice Allows the owner to rescue ALL ERC20 tokens sent to this contract.
+    /// @param erc20token smart contract address 
+    function recoverAllERC20Tokens(address erc20token) external;
+
 }

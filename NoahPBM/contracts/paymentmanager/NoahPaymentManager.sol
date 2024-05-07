@@ -4,8 +4,10 @@ pragma solidity ^0.8.0;
 import {INoahPaymentStateMachine} from "./INoahPaymentStateMachine.sol";
 import {INoahPBMTreasury} from "./INoahPBMTreasury.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../pbm/ERC20Helper.sol";
 
@@ -20,6 +22,7 @@ contract NoahPaymentManager is
     INoahPaymentStateMachine,
     INoahPBMTreasury
 {
+
     /////////////////// INoahPBMTreasury functions  //////////////////////////
 
     // Keeps track of the liability to each Campaign PBM Contract.
@@ -46,25 +49,54 @@ contract NoahPaymentManager is
     address public slot9Reserved = address(0);
     address public slot10Reserved = address(0);
 
-    function initialise() external {
-        require(!initialised, "Noah PBM: Already initialised");
-
+    constructor() {
         // Allows Owner to be role base access control manager
         _grantRole(DEFAULT_ADMIN_ROLE, owner());
+    }
 
+    function initialise() external {
+        require(!initialised, "Noah PBM: Already initialised");
         initialised = true;
     }
 
-    // A campaign PBM would call or rely on this function to pull money from a minter's wallet
-    // and credit it to a PBM Contract address
-    function depositForPBMAddress(address creditForPBM, address erc20token, uint256 value) external override whenNotPaused {
+    /// @notice A campaign PBM would call or rely on this function to pull money from a minter's wallet
+    /// and credit it to a PBM Contract address. Sender must authorised this smart contract to pull ERC20 tokens.
+    function depositForPBMAddress(
+        address creditForPBM,
+        address erc20token,
+        uint256 value
+    ) external override whenNotPaused {
+        require(Address.isContract(creditForPBM), "Invalid PBM contract address");
         require(Address.isContract(erc20token), "Invalid ERC20 token address");
+        require(value > 0, "token value must be more than 0");
 
-        // Take money from the sender 
-        ERC20Helper.safeTransferFrom(erc20token, _msgSender(), address(this), value);
+        // Take money from the sender.
+        ERC20Helper.safeTransferFrom(
+            erc20token,
+            _msgSender(),
+            address(this),
+            value
+        );
 
         // call increaseTrasuryBalance to credit this token to the rightful PBM contract owner
         _increaseTrasuryBalance(creditForPBM, erc20token, value);
+    }
+
+    /// See {INoahPBMTreasury}, Caller must be owner 
+    function recoverERC20Tokens(address erc20token, uint256 value) external override onlyOwner {
+        require(Address.isContract(erc20token), "Invalid ERC20 contract address");
+        require(value > 0, "token value must be more than 0");
+
+        ERC20 erc20 = ERC20(erc20token);
+        ERC20Helper.safeTransfer(address(erc20), owner(), value);
+    }
+
+    /// See {INoahPBMTreasury}, Caller must be owner 
+    function recoverAllERC20Tokens(address erc20token) external override onlyOwner {
+        require(Address.isContract(erc20token), "Invalid ERC20 contract address");
+
+        ERC20 erc20 = ERC20(erc20token);
+        ERC20Helper.safeTransfer(address(erc20), owner(), erc20.balanceOf(address(this)));
     }
 
     /// @notice Swap token on behalf of a campaign pbm contract.
@@ -75,20 +107,31 @@ contract NoahPaymentManager is
         address fromToken,
         address toToken
     ) public whenNotPaused {
+        // require(Address.isContract(pbmContract), "Invalid PBM contract address");
+
         // Call uniswap smart contract.
     }
 
-    function getPBMCampaignSpotToken(
+    function getPBMCampaignTokenBalance(
         address pbmAddress,
         address erc20token
-    ) external view returns (uint256 value) {}
+    ) external view returns (uint256 value) {
+        require(Address.isContract(pbmAddress), "Invalid PBM contract address");
+        require(Address.isContract(erc20token), "Invalid ERC20 contract address");
+
+        return pbmTokenBalance[pbmAddress][erc20token];
+    }
 
     function _increaseTrasuryBalance(
         address campaignPBM,
         address erc20token,
         uint256 value
     ) internal whenNotPaused {
-        // increment pbmTokenBalance
+        require(Address.isContract(campaignPBM), "Invalid PBM contract address");
+        require(Address.isContract(erc20token), "Invalid ERC20 contract address");
+        require(value > 0, "token value must be more than 0");
+
+        pbmTokenBalance[campaignPBM][erc20token] += value;
     }
 
     function _markCompleteTreasuryBalanace(
@@ -96,6 +139,10 @@ contract NoahPaymentManager is
         address erc20Token,
         uint256 erc20TokenValue
     ) internal whenNotPaused {
+        require(Address.isContract(campaignPBM), "Invalid PBM contract address");
+        require(Address.isContract(erc20Token), "Invalid ERC20 contract address");
+        require(erc20TokenValue > 0, "token value must be more than 0");
+
         pendingPBMTokenBalance[campaignPBM][erc20Token] -= erc20TokenValue;
     }
 
@@ -104,6 +151,10 @@ contract NoahPaymentManager is
         address erc20Token,
         uint256 erc20TokenValue
     ) internal whenNotPaused {
+        require(Address.isContract(campaignPBM), "Invalid PBM contract address");
+        require(Address.isContract(erc20Token), "Invalid ERC20 contract address");
+        require(erc20TokenValue > 0, "token value must be more than 0");
+
         // Move funds to pending balance ledger
         pbmTokenBalance[campaignPBM][erc20Token] -= erc20TokenValue;
         pendingPBMTokenBalance[campaignPBM][erc20Token] += erc20TokenValue;
@@ -114,6 +165,10 @@ contract NoahPaymentManager is
         address erc20Token,
         uint256 erc20TokenValue
     ) internal whenNotPaused {
+        require(Address.isContract(campaignPBM), "Invalid PBM contract address");
+        require(Address.isContract(erc20Token), "Invalid ERC20 contract address");
+        require(erc20TokenValue > 0, "token value must be more than 0");
+
         // Move funds back from pending balance ledger
         pbmTokenBalance[campaignPBM][erc20Token] += erc20TokenValue;
         pendingPBMTokenBalance[campaignPBM][erc20Token] -= erc20TokenValue;
@@ -121,7 +176,7 @@ contract NoahPaymentManager is
 
     /////////////////// INoahPaymentStateMachine functions  //////////////////////////
 
-    /// @notice called by campaign PBM to initiate a payment request to a merchant wallet.
+    /// @notice called by campaign PBM to attempt a payment request to a merchant wallet.
     /// Token used can be anytype of token that is accepted by the merchant. Tokens will be lost
     /// if sending a token that is not accepted by the merchant.
     function createPayment(
@@ -133,13 +188,21 @@ contract NoahPaymentManager is
         bytes memory metadata
     ) public whenNotPaused {
         address campaignPBM = _msgSender();
+        require(Address.isContract(campaignPBM), "Must be from a smart contract");
+        require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
+        require(erc20TokenValue > 0, "Token value should be more than 0");
+
+        require(bytes(paymentUniqueId).length != 0);
 
         // Ensure that only campaign PBM can spend its own money
         if (pbmTokenBalance[campaignPBM][erc20Token] > erc20TokenValue) {
+            _markPendingTreasuryBalanace(
+                campaignPBM,
+                erc20Token,
+                erc20TokenValue
+            );
 
-            _markPendingTreasuryBalanace(campaignPBM, erc20Token, erc20TokenValue);
-
-            // Inform oracle to make payments
+            // Inform Oracle to make payments
             emit PaymentCreated(
                 campaignPBM,
                 from,
@@ -165,26 +228,37 @@ contract NoahPaymentManager is
         bytes memory metadata
     ) public whenNotPaused {
         require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
+        require(Address.isContract(campaignPBM), "Must be a valid smart contract");
+        require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
+        require(erc20TokenValue > 0, "Token value should be more than 0");
+        require(bytes(paymentUniqueId).length != 0);
 
-        // Update internal balance sheet
-        _markCompleteTreasuryBalanace(campaignPBM, erc20Token, erc20TokenValue);
+        if (pendingPBMTokenBalance[campaignPBM][erc20Token] > erc20TokenValue) { 
+            // Update internal balance sheet
+            _markCompleteTreasuryBalanace(campaignPBM, erc20Token, erc20TokenValue);
 
-        // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
-        ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
+            // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
+            ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
 
-        emit PaymentCompleted(
-            campaignPBM,
-            from,
-            to,
-            erc20Token,
-            erc20TokenValue,
-            paymentUniqueId,
-            metadata
-        );
+            emit PaymentCompleted(
+                campaignPBM,
+                from,
+                to,
+                erc20Token,
+                erc20TokenValue,
+                paymentUniqueId,
+                metadata
+            );
+        }
+
     }
 
     /**
-     * @notice Called by Noah Oracle to void a payment
+     * @notice Called by Noah Oracle to void a payment. 
+     * Useful in the event when payment cant be processed such as 
+     * where acquirer is down, or an invalid paymentUniqueId is used.
+     * 
+     * Funds will be re-credited and a retry is allowed on the next block mined
      **/
     function cancelPayment(
         address campaignPBM,
@@ -195,10 +269,21 @@ contract NoahPaymentManager is
         string memory paymentUniqueId,
         bytes memory metadata
     ) public whenNotPaused {
-        // [TBD] inform campaign pbm to emit payment cancel. no money movement has occured.
+        require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
+        require(Address.isContract(campaignPBM), "Must be a valid smart contract");
+        require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
+        require(erc20TokenValue > 0, "Token value should be more than 0");
+        require(bytes(paymentUniqueId).length != 0);
+
+
+        // [TBD] inform campaign pbm to emit payment cancel. no money movement has occured
 
         // Ensure funds are re-credited back
-        _revertPendingTreasuryBalanace(campaignPBM, erc20Token, erc20TokenValue);
+        _revertPendingTreasuryBalanace(
+            campaignPBM,
+            erc20Token,
+            erc20TokenValue
+        );
 
         // Emit payment cancel for accounting purposes
         emit PaymentCancelled(
@@ -212,12 +297,11 @@ contract NoahPaymentManager is
         );
     }
 
-    // Called by noah servers to refund a payment. 
+    // Called by noah servers to refund a payment.
     // This should be similar to minting new pbm, except that its a refund type.
     function refundPayment() public whenNotPaused {
         // 1. Call increase balance
         //    merchant refunding a payment should call depositForPBMAddress
         // 2. Inform campaignPBM to emit a payment refund Event
-        
     }
 }
