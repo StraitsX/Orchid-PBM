@@ -246,6 +246,12 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         }
     }
 
+
+    function createPayment() {
+
+
+    }
+
     function _validateTransfer(address from, address to) internal {
         require(
             from == _msgSender() || isApprovedForAll(from, _msgSender()),

@@ -11,7 +11,8 @@ interface INoahPaymentStateMachine {
     /// @param from Wallet requesting this payment
     /// @param to Merchant wallet payment destination 
     /// @param ERC20Token Smart Contract address
-    /// @param ERC20TokenValue Value of ERC20 token to be given. Amount = Value x Decimal Places
+    /// @param ERC20TokenValue Value of ERC20 token to be given. 
+    /// Value refers to the real world value to be represenetd in Amount format. Amount refers to underlying integer x decimal representation 
     /// @param paymentUniqueId Required to ensure oracle fallback mechanism for retrying on another chain.
     /// @param metadata usage:
     /// 1. Specify discount code for discount type PBM, or Product type PBM to pass on to acquirer 
@@ -25,12 +26,15 @@ interface INoahPaymentStateMachine {
         address ERC20Token,
         uint256 ERC20TokenValue,
         string paymentUniqueId,
-        string metadata
+        bytes metadata
     ); 
 
-    // Future works. Uncomment this for PBM issuer that doesn't require a 2 step payment completion service, and as a result
-    // doesnt require a fallbakc mechanism
-    // The exclusion of paymentUniqueId prevents the oracle from retrying on another chain or web2 fallback for instance.
+    /**
+     *  Future works. Uncomment this for PBM issuer that doesn't require/need a 2 step payment completion service, and as a result
+     *  doesnt require a fallback mechanism. The exclusion of paymentUniqueId prevents 
+     *  the oracle from retrying on another chain or web2 fallback for instance.
+     *  This is for wallet issuers that are unable to sign raw transactions and can only rely on the ERC1155 safeTransfer mechanism.
+     */
     // event PaymentDirectCreated(
     //     address campaignPBM,
     //     address from,
@@ -48,7 +52,7 @@ interface INoahPaymentStateMachine {
         address ERC20Token,
         uint256 ERC20TokenValue,
         string paymentUniqueId,
-        string metadata
+        bytes metadata
     );
 
     /// @notice Emitted  when subscribers or acquirer is down, and we want to cancel the pbm payment process.
@@ -61,7 +65,7 @@ interface INoahPaymentStateMachine {
         address ERC20Token,
         uint256 ERC20TokenValue,
         string paymentUniqueId,
-        string metadata
+        bytes metadata
     );
 
     /// @notice Emitted  when merchant initiates a refund back to a user / wallet issuer.
@@ -72,6 +76,6 @@ interface INoahPaymentStateMachine {
         address ERC20Token,
         uint256 ERC20TokenValue,
         string paymentUniqueId,
-        string metadata
+        bytes metadata
     ); 
 }

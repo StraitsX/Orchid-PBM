@@ -92,8 +92,30 @@ describe('PBMPaymentTest', async () => {
     it('Should ensure ERC20 balance and treasury balance are updated after payment COMPLETED', async () => {});
     it('Should ensure ERC20 balance and treasury balance are updated after payment Refunded', async () => {});
 
+    it('Should ensure ERC20 balance and treasury balance are updated after payment Refunded', async () => {});
+
+
+    describe('Payment Created Test', async () => {
+
+      it('Should ensure pbm balance is moved to pending balance upon PaymentCreated event', async () => {});
+
+
+    });
+
+
+    describe('Payment Cancel Test', async () => {
+
+      it('Should ensure pbm pending balance is moved back to pbm balance upon PaymentCreated event', async () => {});
+
+
+    });
+    
+    
 
   });
+
+
+
 
 
 });
