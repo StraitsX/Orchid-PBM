@@ -1,8 +1,16 @@
-const { expect } = require('chai');
+const { assert, expect } = require('chai');
 const { ethers } = require('hardhat');
 const { deploy, initPBM, parseUnits } = require('./testHelper.js');
 
-describe('PBMPaymentTest', async () => {
+
+async function init() {
+  let xsgdToken = await deploy('Spot', 'XSGD', 'XSGD', 6);
+  let noahPaymentManager = await deploy('NoahPaymentManager');
+  return [xsgdToken, noahPaymentManager]
+}
+
+describe('PBM PaymentTest', async () => {
+  /** Initialise Wallet Addresses */
   const accounts = [];
 
   before(async () => {
@@ -11,75 +19,39 @@ describe('PBMPaymentTest', async () => {
     });
   });
 
-  async function init() {
-    // let xsgdToken = await deploy('Spot', 'XSGD', 'XSGD', 6);
-    let dsgdToken = await deploy('Spot', 'DSGD', 'DSGD', 2);
-    let bsgdToken = await deploy('Spot', 'BSGD', 'BSGD', 6);
-    let swapContract = await deploy(
-      'Swap',
-      dsgdToken.address,
-      xsgdToken.address,
-    );
-    let pbm = await deploy('PBM');
-    let addressList = await deploy('PBMAddressList');
-    let heroNFT = await deploy('HeroNFT');
-    await initPBM(
-      pbm,
-      xsgdToken.address,
-      dsgdToken.address,
-      swapContract.address,
-      addressList.address,
-      heroNFT.address,
-    );
-    return [
-      xsgdToken,
-      dsgdToken,
-      bsgdToken,
-      swapContract,
-      pbm,
-      addressList,
-      heroNFT,
-    ];
-  }
-
-  describe('PBM Payment Core Test', async () => {
-    let xsgdToken;
-    let dsgdToken;
-    let bsgdToken;
-    let swapContract;
-    let pbm;
-    let addressList;
-    let heroNFT;
-
-    beforeEach(async () => {
-      let [
-        _xsgdToken,
-        _dsgdToken,
-        _bsgdToken,
-        _swapContract,
-        _pbm,
-        _addressList,
-        _heroNFT,
-      ] = await init();
-      xsgdToken = _xsgdToken;
-      dsgdToken = _dsgdToken;
-      bsgdToken = _bsgdToken;
-      swapContract = _swapContract;
-      pbm = _pbm;
-      addressList = _addressList;
-      heroNFT = _heroNFT;
-    });
-
-    
-    it('Only owner should be able to mint unbacked PBM tokens', async () => {});
-    it('PBM should call swap on NoahPBM if inadequate payment currency', async () => {});
-    it('PBM should be able to combine various PBM types in accordance to combination logic', async () => {});
-
+  /** Initialise Smart contracts Required for tests. */
+  let xsgdToken;
+  let noahPaymentManager;
+  beforeEach(async () => {
+    [xsgdToken, noahPaymentManager] = await init();
   });
 
+  /** Verify Deployments first */
+  it('Should ensure initialisation done correctly', async () => {
+    assert(xsgdToken.address !== '');
+    assert(noahPaymentManager.address !== '');
+
+    assert.equal(await xsgdToken.name(), 'XSGD');
+    assert.equal(await xsgdToken.symbol(), 'XSGD');
+    assert.equal(await xsgdToken.decimals(), 6);
+
+    await xsgdToken.mint(accounts[0].address,parseUnits('10000', await xsgdToken.decimals()));
+    expect(await xsgdToken.balanceOf(accounts[0].address)).to.equals(10000000000)
+  });
+  
+
+  /** Noah Payment related tests */
   describe('Noah PBM Core Test', async () => {
+
     
     it('Should ensure ', async () => {});
+    
+    it('Should ensure crawler role is being defined', async () => {
+      expect(await noahPaymentManager.NOAH_CRAWLER_ROLE()).equals(
+        "0x1fd1b424520c6953ed4b151586253c6b4fe3183d39b856d80f513a00f543a978");
+
+    });
+
 
     it('Should ensure that only campaign PBM can spend its own money', async () => {});
     
@@ -135,6 +107,16 @@ describe('PBMPaymentTest', async () => {
   });
 
 
+
+  /** PBM Payment related & end to end tests */
+  describe('PBM Payment Core Test', async () => {
+    
+    it('Only owner should be able to mint unbacked PBM tokens', async () => {
+    });
+    it('PBM should call swap on NoahPBM if inadequate payment currency', async () => {});
+    it('PBM should be able to combine various PBM types in accordance to combination logic', async () => {});
+
+  });
 
 
 
