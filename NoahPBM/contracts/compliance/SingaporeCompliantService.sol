@@ -4,6 +4,26 @@ pragma solidity ^0.8.0;
 import "./ICompliantService.sol";
 import "./IPBMMerchantAddressList.sol";
 
+/**
+ * As of May 2024  https://www.mas.gov.sg/-/media/MAS/FAQ/Payment-Services-Act-Infographic 
+ * AML/CFT measures can be lifted for 
+ * E-wallets
+ * - holds less than 1K SGD
+ * - doesn't allow for cash withdrawals 
+ * - Requires ID for cash refunds above 100 SGD
+ * 
+ * Domestic Transfers 
+ * Users are allowed to only perform transactions that meet two of the following criteria:
+ * - Only for payment of goods or services 
+ * - Only permit for transactions < $20K SGD
+ * - Funded from an identifiable source 
+ * 
+ * Cross-Border transfers 
+ * Users are allowed to only perform transactions that meet both the following criteria:
+ * - Only for payment of goods or services 
+ * - Funded from an identifiable source
+ */
+
 /// @title A list of Singapore specific payments ruleset checks should be done here.
 /// Campaign PBM owner should implement this in their PBM 
 contract SingaporeCompliantService is ICompliantService {
