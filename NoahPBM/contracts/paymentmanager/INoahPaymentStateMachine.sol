@@ -29,21 +29,6 @@ interface INoahPaymentStateMachine {
         bytes metadata
     ); 
 
-    /**
-     *  Future works. Uncomment this for PBM issuer that doesn't require/need a 2 step payment completion service, and as a result
-     *  doesnt require a fallback mechanism. The exclusion of paymentUniqueId prevents 
-     *  the oracle from retrying on another chain or web2 fallback for instance.
-     *  This is for wallet issuers that are unable to sign raw transactions and can only rely on the ERC1155 safeTransfer mechanism.
-     */
-    // event PaymentDirectCreated(
-    //     address campaignPBM,
-    //     address from,
-    //     address to,
-    //     address ERC20Token,
-    //     uint256 ERC20TokenValue,
-    //     string metadata
-    // ); 
-
     /// @notice Emitted when a payment is successfully done and acknowledged by acquirer.
     event PaymentCompleted(
         address campaignPBM,
@@ -78,4 +63,20 @@ interface INoahPaymentStateMachine {
         string paymentUniqueId,
         bytes metadata
     ); 
+
+    /**
+     *  Future works. Uncomment this for PBM issuer that doesn't require/need a 2 step payment completion service, and as a result
+     *  doesnt require a fallback mechanism. The exclusion of paymentUniqueId prevents 
+     *  the oracle from retrying on another chain or web2 fallback for instance.
+     *  This is for wallet issuers that are unable to sign raw transactions and can only rely on the ERC1155 safeTransfer mechanism.
+     */
+    // event PaymentDirectCreated(
+    //     address campaignPBM,
+    //     address from,
+    //     address to,
+    //     address ERC20Token,
+    //     uint256 ERC20TokenValue,
+    //     string metadata
+    // ); 
+
 }
