@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "../pbm/ERC20Helper.sol";
 import "./NoahPaymentManager.sol";
 
-/// @title This is used for Noah Oracle Testing of events
+/// @title This smart contract is solely used for Noah Oracle Testing of events
 contract MockNoahPaymentManager is INoahPaymentStateMachine {
     function createPayment(
         address from,
