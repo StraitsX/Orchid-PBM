@@ -132,6 +132,21 @@ contract NoahPaymentManager is
         require(value > 0, "token value must be more than 0");
 
         pbmTokenBalance[campaignPBM][erc20token] += value;
+        emit TreasuryBalanceIncrease(campaignPBM, erc20token, value);
+    }
+
+    function _decreaseTrasuryBalance(
+        address campaignPBM,
+        address erc20token,
+        uint256 value
+    ) internal whenNotPaused {
+        require(Address.isContract(campaignPBM), "Invalid PBM contract address");
+        require(Address.isContract(erc20token), "Invalid ERC20 contract address");
+        require(value > 0, "token value must be more than 0");
+
+        pbmTokenBalance[campaignPBM][erc20token] -= value;
+        emit TreasuryBalanceDecrease(campaignPBM, erc20token, value);
+
     }
 
     function _markCompleteTreasuryBalanace(
@@ -144,6 +159,8 @@ contract NoahPaymentManager is
         require(erc20TokenValue > 0, "token value must be more than 0");
 
         pendingPBMTokenBalance[campaignPBM][erc20Token] -= erc20TokenValue;
+        emit TreasuryPendingBalanceDecrease(campaignPBM, erc20Token, erc20TokenValue);
+
     }
 
     function _markPendingTreasuryBalanace(
@@ -157,7 +174,10 @@ contract NoahPaymentManager is
 
         // Move funds to pending balance ledger
         pbmTokenBalance[campaignPBM][erc20Token] -= erc20TokenValue;
+        emit TreasuryBalanceDecrease(campaignPBM, erc20Token, erc20TokenValue);
+
         pendingPBMTokenBalance[campaignPBM][erc20Token] += erc20TokenValue;
+        emit TreasuryPendingBalanceIncrease(campaignPBM, erc20Token, erc20TokenValue);
     }
 
     function _revertPendingTreasuryBalanace(
@@ -171,7 +191,10 @@ contract NoahPaymentManager is
 
         // Move funds back from pending balance ledger
         pbmTokenBalance[campaignPBM][erc20Token] += erc20TokenValue;
+        emit TreasuryBalanceIncrease(campaignPBM, erc20Token, erc20TokenValue);
+
         pendingPBMTokenBalance[campaignPBM][erc20Token] -= erc20TokenValue;
+        emit TreasuryPendingBalanceDecrease(campaignPBM, erc20Token, erc20TokenValue);
     }
 
     /////////////////// INoahPaymentStateMachine functions  //////////////////////////
@@ -203,7 +226,7 @@ contract NoahPaymentManager is
             );
 
             // Inform Oracle to make payments
-            emit PaymentCreated(
+            emit MerchantPaymentCreated(
                 campaignPBM,
                 from,
                 to,
@@ -240,7 +263,7 @@ contract NoahPaymentManager is
             // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
             ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
 
-            emit PaymentCompleted(
+            emit MerchantPaymentCompleted(
                 campaignPBM,
                 from,
                 to,
@@ -286,7 +309,7 @@ contract NoahPaymentManager is
         );
 
         // Emit payment cancel for accounting purposes
-        emit PaymentCancelled(
+        emit MerchantPaymentCancelled(
             campaignPBM,
             from,
             to,
@@ -303,5 +326,40 @@ contract NoahPaymentManager is
         // 1. Call increase balance
         //    merchant refunding a payment should call depositForPBMAddress
         // 2. Inform campaignPBM to emit a payment refund Event
+    }
+
+    /**
+     * @dev see {INoahPaymentStateMachine-PaymentDirectCreated}
+     */
+    function createDirectPayment(
+        address from,
+        address to,
+        address erc20Token,
+        uint256 erc20TokenValue,
+        bytes memory metadata
+    ) public whenNotPaused {
+        address campaignPBM = _msgSender();
+        require(Address.isContract(campaignPBM), "Must be from a smart contract");
+        require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
+        require(erc20TokenValue > 0, "Token value should be more than 0");
+
+        // Ensure that only campaign PBM can spend its own money
+        if (pbmTokenBalance[campaignPBM][erc20Token] > erc20TokenValue) {
+            _markPendingTreasuryBalanace(
+                campaignPBM,
+                erc20Token,
+                erc20TokenValue
+            );
+
+            emit MerchantPaymentDirect(
+                campaignPBM,
+                from,
+                to,
+                erc20Token,
+                erc20TokenValue,
+                metadata
+            );
+            
+        }
     }
 }
