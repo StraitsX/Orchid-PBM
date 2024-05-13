@@ -6,12 +6,12 @@ const { deploy, initPBM, parseUnits } = require('./testHelper.js');
 async function init() {
   let xsgdToken = await deploy('Spot', 'XSGD', 'XSGD', 6);
   let noahPaymentManager = await deploy('NoahPaymentManager');
-  let pbm = await deploy('PBM');
+  let pbm = await deploy('PBMPayment');
 
   return [xsgdToken, noahPaymentManager, pbm]
 }
 
-describe('PBM PaymentTest', async () => {
+describe('Noah Payment Manager Test', async () => {
   /** Initialise Wallet Addresses */
   const accounts = [];
 
@@ -38,6 +38,8 @@ describe('PBM PaymentTest', async () => {
   it('Should ensure initialisation done correctly', async () => {
     assert(xsgdToken.address !== '');
     assert(noahPaymentManager.address !== '');
+    assert(pbm.address !== '');
+
 
     assert.equal(await xsgdToken.name(), 'XSGD');
     assert.equal(await xsgdToken.symbol(), 'XSGD');
@@ -49,7 +51,7 @@ describe('PBM PaymentTest', async () => {
   });
   
 
-  /** Noah Payment related tests */
+  /** Noah Payment related tests*/
   describe('Noah PBM Core Test', async () => {
 
     
@@ -141,19 +143,7 @@ describe('PBM PaymentTest', async () => {
 
   });
 
-
-
-  /** PBM Payment related & end to end tests */
-  describe('PBM Payment Core Test', async () => {
-    
-    it('Only owner should be able to mint unbacked PBM tokens', async () => {
-    });
-    it('PBM should call swap on NoahPBM if inadequate payment currency', async () => {});
-    it('PBM should be able to combine various PBM types in accordance to combination logic', async () => {});
-
-  });
-
-
+ 
 
 });
 
