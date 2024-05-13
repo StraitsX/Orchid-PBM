@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./ERC20Helper.sol";
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
-import "./IPBMAddressList.sol";
+import "../compliance/IPBMMerchantAddressList.sol";
 
 /// @title This PBM smart contract manages the underlying ERC20 token directly by itself.
 contract PBM is ERC1155, Ownable, Pausable, IPBM {
@@ -99,7 +99,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
      * - receiver should not be blacklisted
      */
     function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused {
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
+        require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
         uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
 
         //Transfer the spot token from the user to the contract to wrap it
@@ -135,7 +135,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         uint256[] memory amounts,
         address receiver
     ) external override whenNotPaused {
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
+        require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
         require(tokenIds.length == amounts.length, "Unequal ids and amounts supplied");
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
@@ -178,7 +178,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     ) public override(ERC1155, IPBM) whenNotPaused {
         _validateTransfer(from, to);
 
-        if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
+        if (IPBMMerchantAddressList(pbmAddressList).isMerchant(to)) {
             uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
 
             // burn and transfer underlying ERC-20
@@ -218,7 +218,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         _validateTransfer(from, to);
         require(ids.length == amounts.length, "Unequal ids and amounts supplied");
 
-        if (IPBMAddressList(pbmAddressList).isMerchant(to)) {
+        if (IPBMMerchantAddressList(pbmAddressList).isMerchant(to)) {
             uint256 sumOfTokens = 0;
             
             // we assume all of the pbm token ids has the same underlying ERC20 token
@@ -249,7 +249,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             from == _msgSender() || isApprovedForAll(from, _msgSender()),
             "ERC1155: caller is not token owner nor approved"
         );
-        require(!IPBMAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
+        require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
     }
 
     /**
