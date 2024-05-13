@@ -6,13 +6,6 @@ pragma solidity ^0.8.0;
 /// The PBM acts as wrapper around the ERC-20 tokens and implements appropriate business logic
 interface IPBM {
     
-    /// @notice Sets up basic information for the campaign PBM
-    /// @param _expiry Global contract wide expiry ( in epoch ) 
-    /// @param _pbmAddressList address of the PBMAddressList smartcontract for determining merchant targets.
-    function initialise(
-        uint256 _expiry,
-        address _pbmAddressList
-    ) external;
 
     /// @notice Creates a new PBM token type with the data provided
     /// @param companyName Name of the company issuing the PBM

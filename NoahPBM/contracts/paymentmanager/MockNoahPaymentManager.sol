@@ -22,7 +22,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         string memory paymentUniqueId,
         bytes memory metadata
     ) public {
-        emit PaymentCreated(
+        emit MerchantPaymentCreated(
             address(0),
             from,
             to,
@@ -45,7 +45,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         string memory paymentUniqueId,
         bytes memory metadata
     ) public {
-        emit PaymentCompleted(
+        emit MerchantPaymentCompleted(
             campaignPBM,
             from,
             to,
@@ -73,7 +73,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         bytes memory metadata
     ) public {
         // Emit payment cancel for accounting purposes
-        emit PaymentCancelled(
+        emit MerchantPaymentCancelled(
             campaignPBM,
             from,
             to,

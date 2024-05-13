@@ -30,10 +30,13 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
         pbmTokenManager = address(new PBMTokenManager());
     }
 
+    /// @notice Sets up basic information for the campaign PBM
+    /// @param _expiry Global contract wide expiry ( in epoch ) 
+    /// @param _pbmAddressList address of the PBMAddressList smartcontract for determining merchant targets.
     function initialise(
         uint256 _expiry,
         address _pbmAddressList
-    ) external override onlyOwner {
+    ) external onlyOwner {
         require(!initialised, "PBM: Already initialised");
         require(Address.isContract(_pbmAddressList), "Invalid pbm address list");
 

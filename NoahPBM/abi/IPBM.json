@@ -201,24 +201,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_expiry",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_pbmAddressList",
-        "type": "address"
-      }
-    ],
-    "name": "initialise",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
       },
