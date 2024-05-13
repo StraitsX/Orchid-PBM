@@ -299,7 +299,7 @@ contract NoahPaymentManager is
         require(bytes(paymentUniqueId).length != 0);
 
 
-        // [TBD] inform campaign pbm to emit payment cancel. no money movement has occured
+        // [TODO] inform campaign pbm to emit payment cancel. no money movement has occured
 
         // Ensure funds are re-credited back
         _revertPendingTreasuryBalanace(
@@ -345,11 +345,16 @@ contract NoahPaymentManager is
 
         // Ensure that only campaign PBM can spend its own money
         if (pbmTokenBalance[campaignPBM][erc20Token] > erc20TokenValue) {
-            _markPendingTreasuryBalanace(
+            
+            // Subtract from main balance directly to be sent out immediately.
+            _decreaseTrasuryBalance(
                 campaignPBM,
                 erc20Token,
                 erc20TokenValue
             );
+            
+            // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
+            ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
 
             emit MerchantPaymentDirect(
                 campaignPBM,
