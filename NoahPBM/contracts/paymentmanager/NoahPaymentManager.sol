@@ -25,7 +25,7 @@ contract NoahPaymentManager is
 
     /////////////////// INoahPBMTreasury functions  //////////////////////////
 
-    // Keeps track of the liability to each Campaign PBM Contract.
+    // Keeps track of the liability to each Campaign PBM Contract. Campain PBM is responsible for accounting.
     // pbmContract address => {ERC20Token1 => Amt, ERC20Token2 => Amt}
     mapping(address => mapping(address => uint256)) internal pbmTokenBalance;
     // Keeps track of pending balances

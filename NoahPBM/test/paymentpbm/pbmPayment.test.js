@@ -73,7 +73,12 @@ describe('PBM PaymentTest', async () => {
     describe('PBM Minting Test', async () => {
 
       it('Only owner should be able to mint unbacked PBM tokens', async () => {
+
+        // non owner cannot mint unbacked pbm
       });
+
+      it('PBM should take money from minter to mint PBM', async () => {});
+
 
       it('PBM displays the correct token information', async () => {});
       it('PBM displays the correct token balance details', async () => {});
@@ -86,9 +91,14 @@ describe('PBM PaymentTest', async () => {
     // Payment test
       // only merchant can be paid to
       // direct payment 
-        // balance is correct
+        // balance on noah is correct
+        // able to combine product pbm with normal pbm to noah by metadata passthrough code to oracle.
       // indirect payment
-        // balance is correct
+        // balance on noah is correct
+
+      // unbacked pbm 
+        // should work and stop once noahpayment manager runs out of funds.
+        
       // events tests - correct events are emitted
      
     // P2P Transfer test 

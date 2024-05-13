@@ -88,6 +88,19 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
+     * @dev This function is used to mint PBM that is not fully backed by an underlying token. 
+     * Only owner can do this, since the existence of this function represents the ability to initiate 
+     * payments on NoahPBM
+     */
+    function mintUnbackedPBM(uint256 tokenId, uint256 amount, address receiver) external onlyOwner {
+        require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
+
+
+        PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
+        _mint(receiver, tokenId, amount, "");
+    }
+
+    /**
      * @dev See {IPBM-mint}.
      *     
      * IMPT: Before minting, the caller should approve the contract address to spend ERC-20 tokens on behalf of the caller.
@@ -161,14 +174,6 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         _mintBatch(receiver, tokenIds, amounts, "");
     }
 
-    /**
-     * @dev This function is used to mint PBM that is not fully backed by an underlying token. 
-     * Only owner can do this, since the existence of this function represents the ability to initiate 
-     * payments on NoahPBM
-     */
-    function mintUnbackedPBM() external onlyOwner {
-        // TODO 
-    }
 
     /**
      * @dev Creates a payment request via NoahpaymentManager to 
@@ -207,6 +212,20 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         } else {
             _safeTransferFrom(from, to, id, amount, data);
         }
+
+    }
+
+    /**
+     * @dev Call this function to combine different PBM types token ids to create a payment. 
+     */
+    function createBatchPayment(
+        address from,
+        address to,
+        uint256[] memory id,
+        uint256[] memory amount,
+        string memory paymentUniqueId,
+        bytes memory data
+    )  {
 
     }
 
