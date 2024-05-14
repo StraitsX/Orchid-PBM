@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "./ERC20Helper.sol";
+import "./ERC20Helper.sol"; // todo remove this
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "../compliance/IPBMMerchantAddressList.sol";
@@ -194,39 +194,81 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         uint256 amount,
         string memory paymentUniqueId,
         bytes memory data
-    ) public {
-          if (IPBMMerchantAddressList(pbmAddressList).isMerchant(to)) {
-            uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
+    ) external whenNotPaused {
+        _validateTransfer(from, to);
+        require(IPBMMerchantAddressList(pbmAddressList).isMerchant(to), "Payments can only be made to a merchant address.");
+        
+        uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
 
-            // Burn PBM ERC1155 Tokens
-            _burn(from, id, amount);
-            PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
+        // Burn PBM ERC1155 Tokens
+        _burn(from, id, amount);
+        PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
 
-            // Initiate payment of ERC20 tokens
-            address spotToken = getSpotAddress(id);
-            NoahPaymentManager(noahPaymentManager).createPayment(from, to, spotToken, valueOfTokens, paymentUniqueId, data);
+        // Initiate payment of ERC20 tokens
+        address spotToken = getSpotAddress(id);
+        NoahPaymentManager(noahPaymentManager).createPayment(from, to, spotToken, valueOfTokens, paymentUniqueId, data);
 
+        emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, valueOfTokens);
+    }
 
-            emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, valueOfTokens);
+    /**
+     * @dev Creates a payment request via NoahpaymentManager to initiate an ERC20 token transfer to merchant.
+     * Call this function to combine different PBM types token ids to create a payment. 
+     */
+    function createBatchPayment(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        string memory paymentUniqueId,
+        bytes memory data
+    ) external whenNotPaused {
+        
+        _validateTransfer(from, to);
+        require(IPBMMerchantAddressList(pbmAddressList).isMerchant(to), "Payments can only be made to a merchant address.");
+        require(ids.length == amounts.length, "Unequal ids and amounts supplied");
+
+        if (IPBMMerchantAddressList(pbmAddressList).isMerchant(to)) {
+            uint256 sumOfTokens = 0;
+
+            // ensure underlying spot token are fungible.
+            address commonTokenAddress = address(0);   
+
+            for (uint256 i = 0; i < ids.length; i++) {
+                uint256 tokenId = ids[i];
+                address underlyingSpotToken = getSpotAddress(tokenId);
+                
+                if (i == 0) {
+                    commonTokenAddress = underlyingSpotToken;
+                }
+                
+                require(commonTokenAddress == underlyingSpotToken, 
+                    "Batched tokens must all share the same underlying spot token type. Swap underlying if required first");
+
+                uint256 amount = amounts[i];
+                uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
+                sumOfTokens += valueOfTokens;
+            }
+
+            _burnBatch(from, ids, amounts);
+            PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(ids, amounts);
+            NoahPaymentManager(noahPaymentManager).createPayment(from, to, commonTokenAddress, sumOfTokens, paymentUniqueId, data);
+
+            emit MerchantPayment(from, to, ids, amounts, commonTokenAddress, sumOfTokens);
 
         } else {
-            _safeTransferFrom(from, to, id, amount, data);
+            _safeBatchTransferFrom(from, to, ids, amounts, data);
         }
 
     }
 
     /**
-     * @dev Call this function to combine different PBM types token ids to create a payment. 
+     * Called by noah payment manager to revert the payment process.
      */
-    function createBatchPayment(
-        address from,
-        address to,
-        uint256[] memory id,
-        uint256[] memory amount,
-        string memory paymentUniqueId,
-        bytes memory data
-    )  {
-
+    function revertPayment() external {
+        // undo these 2:
+        // _burn(from, id, amount);
+        // PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
     }
 
     /**
@@ -315,8 +357,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
 
             _burnBatch(from, ids, amounts);
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(ids, amounts);
-            
-            ERC20Helper.safeTransfer(commonTokenAddress, to, sumOfTokens);
+            NoahPaymentManager(noahPaymentManager).createDirectPayment(from, to, commonTokenAddress, sumOfTokens, data);
 
             emit MerchantPayment(from, to, ids, amounts, commonTokenAddress, sumOfTokens);
 

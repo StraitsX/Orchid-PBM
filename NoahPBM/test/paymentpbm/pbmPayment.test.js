@@ -90,12 +90,19 @@ describe('PBM PaymentTest', async () => {
 
     // Payment test
       // only merchant can be paid to
+      
       // direct payment 
+        // only token holder can spend their own pbm 
         // balance on noah is correct
-        // able to combine product pbm with normal pbm to noah by metadata passthrough code to oracle.
-      // indirect payment
-        // balance on noah is correct
+        // able to batch combine product pbm with normal pbm to noah with metadata passthrough code to oracle.
+        // batched payment can only work if its having a common spot token
 
+      // 2 step payment
+        // only token holder can spend their own pbm 
+        // balance on noah is correct
+        // able to batch combine product pbm with normal pbm to noah with metadata passthrough code to oracle.
+        // batched payment can only work if its having a common spot token
+        
       // unbacked pbm 
         // should work and stop once noahpayment manager runs out of funds.
         

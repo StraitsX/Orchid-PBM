@@ -298,8 +298,8 @@ contract NoahPaymentManager is
         require(erc20TokenValue > 0, "Token value should be more than 0");
         require(bytes(paymentUniqueId).length != 0);
 
-
         // [TODO] inform campaign pbm to emit payment cancel. no money movement has occured
+        // [TODO] inform campaign pbm to refund PBM back to user. 
 
         // Ensure funds are re-credited back
         _revertPendingTreasuryBalanace(
