@@ -115,6 +115,12 @@ describe('Noah Payment Manager Test', async () => {
       it('Should ensure _markCompleteTreasuryBalanace only decrease pending balance', async () => {});
       it('Should ensure _markPendingTreasuryBalanace moves from main to pending balance', async () => {});
       it('Should ensure _revertPendingTreasuryBalanace moves from pending to main balance', async () => {});
+      
+      it('Should ensure deposit for pbm works', async () => {});
+      it('Should ensure withdrawal for pbm works', async () => {});
+      it('Should ensure withdrawal cannot exceed pbm owned amount for pbm works', async () => {});
+
+
 
     });
 
