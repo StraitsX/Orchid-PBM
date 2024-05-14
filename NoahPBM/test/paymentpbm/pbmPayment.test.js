@@ -112,7 +112,7 @@ describe('PBM PaymentTest', async () => {
       // p2p transfer works 
 
     // Tear down tests
-      // Revoke
+      // Revoke from noah pbm test
       // Recovery of erc20 token tests
 
 
