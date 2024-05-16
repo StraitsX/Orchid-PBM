@@ -91,4 +91,9 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         //    merchant refunding a payment should call depositForPBMAddress
         // 2. Inform campaignPBM to emit a payment refund Event
     }
+
+    // mock function that does nothing
+    function addMerchantAddresses(address[] memory addresses, string memory metadata) public {
+    }
+
 }

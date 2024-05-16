@@ -104,7 +104,6 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      mumbai: MUMBAI_SCAN_API_KEY,
       polygon: POLYGON_SCAN_API_KEY,
       sepolia: process.env.SEPOLIA_SCAN_API_KEY,
       holesky: process.env.ETHER_SCAN_API_KEY,
@@ -142,4 +141,3 @@ module.exports = {
     },
   },
 };
-
