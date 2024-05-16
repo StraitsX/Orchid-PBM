@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "./ERC20Helper.sol"; // todo remove this
+import "./ERC20Helper.sol";
 import "./PBMTokenManager.sol";
 import "./IPBM.sol";
 import "../compliance/IPBMMerchantAddressList.sol";
@@ -105,7 +105,8 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      *       This can be done by calling the `approve` or `increaseMinterAllowance` functions of the ERC-20 contract and specifying `_spender` to be the PBM contract address. 
              Ref : https://eips.ethereum.org/EIPS/eip-20
 
-       WARNING: Any contracts that externally call these mint() and batchMint() functions should implement some sort of reentrancy guard procedure (such as OpenZeppelin's ReentrancyGuard).
+     *  WARNING: 
+     *  Any contracts that externally call these mint() and batchMint() functions should implement some sort of reentrancy guard procedure (such as OpenZeppelin's ReentrancyGuard).
      *
      * Requirements:
      *
@@ -118,11 +119,16 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      */
     function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused {
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
+        uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
+        
+        //Transfer the spot token from the user to this contract to wrap it
+        address spotToken = getSpotAddress(tokenId);
+        ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
 
-        // TODO: 
-        // [1] Call NoahPaymentManager funding when mint is being called
-        // [2] Alternatively, can skip this step, and just mint unbacked tokens
-        // Most likely will choose option [2]
+        // Instruct noahpayment manager to pull money from this PBM smart contract and custody it. 
+        ERC20 erc20 = ERC20(spotToken);
+        erc20.approve(noahPaymentManager, valueOfNewTokens);
+        NoahPaymentManager(noahPaymentManager).depositForPBMAddress(address(this), spotToken, valueOfNewTokens);
 
         // Mint the PBM ERC1155
         PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
@@ -159,11 +165,18 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 tokenId = tokenIds[i];
             uint256 amount = amounts[i];
+            uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
 
-            // TODO: 
-            // [1] Call NoahPaymentManager funding when mint is being called
-            // [2] Alternatively, can skip this step, and just mint unbacked tokens, but Mint function must be converted into an owner only function
-            // Most likely will choose option [2]. Refer to mintUnbackedPBM func
+            // Get spotToken address based on tokenId
+            address spotToken = getSpotAddress(tokenId);
+
+            //Transfer the spot token from the user to this contract to wrap it
+            ERC20Helper.safeTransferFrom(spotToken, msg.sender, address(this), valueOfNewTokens);
+
+            // Instruct noahpayment manager to pull money from this PBM smart contract and custody it. 
+            ERC20 erc20 = ERC20(spotToken);
+            erc20.approve(noahPaymentManager, valueOfNewTokens);
+            NoahPaymentManager(noahPaymentManager).depositForPBMAddress(address(this), spotToken, valueOfNewTokens);
 
             // Increase balance supply
             PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
@@ -380,16 +393,21 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      * - `tokenId` should be a valid ids that has already been created
      * - caller must be the creator of the tokenType
      * - token must be expired
+     * 
+     * Note that the refund target is the PBM original creator. 
+     * Hence anyone who minted the tokenId PBM and is not the original 
+     * creator would not be refunded upon token revoked
      */
     function revokePBM(uint256 tokenId) external override whenNotPaused {
         uint256 valueOfTokens = PBMTokenManager(pbmTokenManager).getPBMRevokeValue(tokenId);
 
+        // Revoke + Verify msg.sender is the creator of the PBM 
         PBMTokenManager(pbmTokenManager).revokePBM(tokenId, msg.sender);
 
         address spotToken = getSpotAddress(tokenId);
         
-        // transfering ERC20 tokens 
-        NoahPaymentManager(noahPaymentManager).withdrawFromPBMAddress(address(this), owner(), spotToken, valueOfTokens);
+        // transfering ERC20 tokens back to the creator
+        NoahPaymentManager(noahPaymentManager).withdrawFromPBMAddress(address(this), msg.sender, spotToken, valueOfTokens);
 
         emit PBMrevokeWithdraw(msg.sender, tokenId, spotToken, valueOfTokens);
     }
