@@ -132,19 +132,80 @@ describe('PBMPayment Test', async () => {
   
         // Perform transfer
         await pbm.safeTransferFrom(owner.address, merchant3.address, 0, 1, '0x');
-  
+
         // Check balances after transfer
         const MerchantAfterSpotBalance = await xsgdToken.balanceOf(
           merchant3.address,
         );
-
+        
+        // merchant received money
         expect(MerchantAfterSpotBalance).to.be.equal(parseUnits('1', 6));
         const ownerAfterBalance = await pbm.balanceOf(owner.address, 0);
         expect(ownerAfterBalance).to.be.equal(0);
+
+        // ensure noah disburse the money
+        expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
       });
 
-      it('', async () => { });
-      it('', async () => { });
+      it('transfer of PBM should fail if token holder does not have pbm', async () => { 
+        expect(
+          pbm.safeTransferFrom(nonMerchant.address, merchant3.address, 0, 1, '0x')
+        ).to.be.revertedWith('ERC1155: caller is not token owner nor approved');
+      });
+
+      it('Should allow the combination of different PBM types with metadata being emitted', async () => { 
+        await createTokenType(pbm, '1XSGD', '1', xsgdToken, owner); // token id 1
+        await createTokenType(pbm, '2-discountXSGD', '2', xsgdToken, owner); // token id 2
+        await createTokenType(pbm, '10XSGD', '10', xsgdToken, owner); // token id 3
+        await mintPBM(pbm, xsgdToken, 1, 1, owner.address, '1');
+        await mintPBM(pbm, xsgdToken, 2, 1, owner.address, '2');
+        await mintPBM(pbm, xsgdToken, 3, 1, owner.address, '10');
+    
+
+        metadataString = "metadata:{somedata: 'hi', somedata2: 'hi2'}";
+        encodedMetadata = ethers.utils.hexlify(
+          ethers.utils.toUtf8Bytes(metadataString));
+
+
+        // await pbm.safeBatchTransferFrom(
+        //   owner.address,
+        //   merchant1.address,
+        //   [0, 1], //ids 
+        //   [1, 1], //amt
+        //   encodedMetadata,
+        // );
+
+        console.log(encodedMetadata);
+        await expect(
+          await pbm.safeBatchTransferFrom(
+            owner.address,
+            merchant1.address,
+            [0, 1], //ids 
+            [1, 1], //amt
+            encodedMetadata,
+          )
+        ).to.emit(noahPaymentManager, "MerchantPaymentDirect").withArgs(
+          pbm.address, owner.address, merchant1.address, xsgdToken.address, 
+          '2000000','0x6d657461646174613a7b736f6d65646174613a20276869272c20736f6d6564617461323a2027686932277d'
+        );
+
+        
+        // listen to noahPaymentManager contract for the MerchantPaymentDirect event
+        let filter = noahPaymentManager.filters.MerchantPaymentDirect();
+        let events = await noahPaymentManager.queryFilter(filter);
+        console.log(events);
+
+        // expect(events.length).to.equal(1);
+        // expect(events[0].event).to.equal('NewPBMTypeCreated');
+
+        decodedMetadata = ethers.utils.toUtf8String(ethers.utils.arrayify(encodedMetadata));
+        expect(decodedMetadata).to.equal(metadataString);
+
+
+        
+      });
+
+
     });
 
     describe('PBM Direct Payment Test', async () => {
@@ -159,11 +220,11 @@ describe('PBMPayment Test', async () => {
 
 
     // Payment test
-    // only merchant can be paid to
+    // only merchant can be paid to [done]
 
     // direct payment 
-    // only token holder can spend their own pbm 
-    // balance on noah is correct
+    // only token holder can spend their own pbm [done]
+    // balance on noah is correct [done]
     // able to batch combine product pbm with normal pbm to noah with metadata passthrough code to oracle.
     // batched payment can only work if its having a common spot token
 
