@@ -243,7 +243,7 @@ contract NoahPaymentManager is
         require(bytes(paymentUniqueId).length != 0);
 
         // Ensure that only campaign PBM can spend its own money
-        if (pbmTokenBalance[campaignPBM][erc20Token] > erc20TokenValue) {
+        if (pbmTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) {
             _markPendingTreasuryBalanace(
                 campaignPBM,
                 erc20Token,
@@ -281,7 +281,7 @@ contract NoahPaymentManager is
         require(erc20TokenValue > 0, "Token value should be more than 0");
         require(bytes(paymentUniqueId).length != 0);
 
-        if (pendingPBMTokenBalance[campaignPBM][erc20Token] > erc20TokenValue) { 
+        if (pendingPBMTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) { 
             // Update internal balance sheet
             _markCompleteTreasuryBalanace(campaignPBM, erc20Token, erc20TokenValue);
 
@@ -369,8 +369,8 @@ contract NoahPaymentManager is
         require(erc20TokenValue > 0, "Token value should be more than 0");
 
         // Ensure that only campaign PBM can spend its own money
-        if (pbmTokenBalance[campaignPBM][erc20Token] > erc20TokenValue) {
-            
+        if (pbmTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) {
+
             // Subtract from main balance directly to be sent out immediately.
             _decreaseTrasuryBalance(
                 campaignPBM,

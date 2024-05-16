@@ -14,7 +14,7 @@ async function init() {
   return [xsgdToken, bsgdToken, noahPaymentManager, pbm, addressList]
 }
 
-describe('PBM PaymentTest', async () => {
+describe('PBMPayment Test', async () => {
   /** Initialise Wallet Addresses */
   const accounts = [];
 
@@ -64,7 +64,7 @@ describe('PBM PaymentTest', async () => {
 
 
   /** PBM Payment related & end to end tests */
-  describe('PBM Payment Core Test', async () => {
+  describe('PBM Payment Mint and Token Details Test', async () => {
 
     it('Should have been initialised properly', async () => {
       assert(await pbm.pbmAddressList() != '');
@@ -73,12 +73,14 @@ describe('PBM PaymentTest', async () => {
       assert(await pbm.contractExpiry() != 0);
     });
 
-    describe('PBM Minting Test', async () => {
+    describe('PBM Token Details Test', async () => { 
+      it('PBM displays the correct token information', async () => {
+        await createTokenType(pbm, 'Test-1XSGD', '1', xsgdToken, accounts[0]);
 
-      it('throws an error when minting non existing token type', async () => {
-        await expect(pbm.mint(0, 1, accounts[0].address)).to.be.revertedWith(
-          'PBM: Invalid Token Id(s)',
-        );
+        tokenDetails = await pbm.getTokenDetails(0);
+        expect(tokenDetails[0]).to.equals('Test-1XSGD1000000');
+        expect(tokenDetails[1]).to.equals('1000000');
+        expect(tokenDetails[3]).to.equals(accounts[0].address);
       });
 
       it('Create token type with invalid spot type should revert with error', async () => {
@@ -86,7 +88,6 @@ describe('PBM PaymentTest', async () => {
           createTokenType(pbm, 'Test-1BSGD', '1', bsgdToken, accounts[0]),
         ).to.be.revertedWith('SpotType must be XUSD or XSGD');
       });
-
 
       it('Create token type successfully', async () => {
         const pbmTokenManagerAddress = await pbm.pbmTokenManager();
@@ -111,7 +112,22 @@ describe('PBM PaymentTest', async () => {
         assert.equal(tokenDetails['3'], accounts[0].address.toString());
       });
 
-      
+      it('Non owner update metadata uri would revert with error', async () => {
+        await createTokenType(pbm, 'Test-1XSGD', '1', xsgdToken, accounts[0]);
+        let metadataUri = await pbm.uri(0);
+        expect(metadataUri).to.equal('beforeExpiryURI')
+        await expect(pbm.connect(accounts[1]).updateTokenURI(0, 'updatedURI')).to.be.revertedWith("Ownable: caller is not the owner");
+      });
+
+      it('Owner update metadata uri successfully', async () => {
+        await createTokenType(pbm, 'Test-1XSGD', '1', xsgdToken, accounts[0]);
+        let metadataUri = await pbm.uri(0);
+        expect(metadataUri).to.equal('beforeExpiryURI')
+        await pbm.updateTokenURI(0, 'updatedURI');
+        expect(await pbm.uri(0)).to.equal('updatedURI');
+      });
+
+            
       it('Update token expiry successfully', async () => {
         await createTokenType(pbm, 'Test-1XSGD', '1', xsgdToken, accounts[0]);
         let tokenDetails = await pbm.getTokenDetails(0);
@@ -121,6 +137,17 @@ describe('PBM PaymentTest', async () => {
         expect(afterDetails['2'].toString()).to.equal(originalExpiry+100);
       });
 
+
+    });
+
+
+    describe('PBM Minting Test', async () => {
+
+      it('throws an error when minting non existing token type', async () => {
+        await expect(pbm.mint(0, 1, accounts[0].address)).to.be.revertedWith(
+          'PBM: Invalid Token Id(s)',
+        );
+      });
 
       it('Only owner should be able to mint unbacked PBM tokens', async () => {
         await createTokenType(pbm, 'Test-1XSGD', '1', xsgdToken, accounts[0]);
@@ -135,22 +162,6 @@ describe('PBM PaymentTest', async () => {
           'Ownable: caller is not the owner'
         );
 
-      });
-
-
-      it('Non owner update metadata uri would revert with error', async () => {
-        await createTokenType(pbm, 'Test-1XSGD', '1', xsgdToken, accounts[0]);
-        let metadataUri = await pbm.uri(0);
-        expect(metadataUri).to.equal('beforeExpiryURI')
-        await expect(pbm.connect(accounts[1]).updateTokenURI(0, 'updatedURI')).to.be.revertedWith("Ownable: caller is not the owner");
-      });
-
-      it('Owner update metadata uri successfully', async () => {
-        await createTokenType(pbm, 'Test-1XSGD', '1', xsgdToken, accounts[0]);
-        let metadataUri = await pbm.uri(0);
-        expect(metadataUri).to.equal('beforeExpiryURI')
-        await pbm.updateTokenURI(0, 'updatedURI');
-        expect(await pbm.uri(0)).to.equal('updatedURI');
       });
 
       it('Minting a PBM token before approving ERC20 spending should revert with error', async () => {
@@ -179,44 +190,17 @@ describe('PBM PaymentTest', async () => {
         assert.equal(minterXSGDBalance.toString(), '9999000000');
       });
       
-      it('PBM displays the correct token information', async () => { });
-      it('PBM displays the correct token balance details', async () => { });
 
       it('PBM ', async () => { });
       it('PBM ', async () => { });
 
     });
 
-    // Payment test
-    // only merchant can be paid to
-
-    // direct payment 
-    // only token holder can spend their own pbm 
-    // balance on noah is correct
-    // able to batch combine product pbm with normal pbm to noah with metadata passthrough code to oracle.
-    // batched payment can only work if its having a common spot token
-
-    // 2 step payment
-    // only token holder can spend their own pbm 
-    // balance on noah is correct
-    // able to batch combine product pbm with normal pbm to noah with metadata passthrough code to oracle.
-    // batched payment can only work if its having a common spot token
-
-    // unbacked pbm 
-    // should work and stop once noahpayment manager runs out of funds.
-
-    // events tests - correct events are emitted
-
-    // P2P Transfer test 
-    // p2p transfer works 
-
     // Tear down tests
     // Revoke from noah pbm test
     // Recovery of erc20 token tests
 
-
-    // Expiry date tests
-
+    it('PBM expiry should work as intended', async () => { });
     it('PBM should call swap on NoahPBM if inadequate payment currency', async () => { });
     it('PBM should be able to combine various PBM types in accordance to combination logic', async () => { });
 
