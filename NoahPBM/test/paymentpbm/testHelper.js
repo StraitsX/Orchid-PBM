@@ -38,6 +38,7 @@ async function createTokenType(pbm, name, spotValue, spot, owner) {
 
   await pbm.createPBMTokenType(
     name,
+    spot.address,
     parseUnits(spotValue, await spot.decimals()),
     spot.symbol(),
     targetEpoch,
