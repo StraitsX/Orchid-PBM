@@ -86,8 +86,9 @@ contract NoahPaymentManager is
      * Call this function to withdraw money that is allocated to a PBM to the owner's address.
      * This is similar to recovery functions, but specific to a particular campaign PBM
      */
-    function withdrawForPBMAddress(
+    function withdrawFromPBMAddress(
         address withdrawFromPBM, 
+        address to,
         address erc20token, 
         uint256 value
     ) external override {
@@ -96,9 +97,13 @@ contract NoahPaymentManager is
         require(value > 0, "token value must be more than 0");
         require(pbmTokenBalance[withdrawFromPBM][erc20token] > value, "Cannot withdraw more than what a campaignPBM possess");
 
-        // Take money from the PBM and give it to the owner
-        ERC20Helper.safeTransfer(erc20token, owner(), value);
-        // call increaseTrasuryBalance to credit this token to the rightful PBM contract owner
+        require(
+            withdrawFromPBM == _msgSender() || _msgSender() == owner(),
+            "Caller must either be from the campaign PBM itself, or the Owner of NoahPaymentManager"
+        );
+
+        // Take money from the PBM allocation and give it to the destination address.
+        ERC20Helper.safeTransfer(erc20token, to, value);
         _decreaseTrasuryBalance(withdrawFromPBM, erc20token, value);
     }
 

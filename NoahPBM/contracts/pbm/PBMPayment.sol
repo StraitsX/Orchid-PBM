@@ -94,8 +94,6 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      */
     function mintUnbackedPBM(uint256 tokenId, uint256 amount, address receiver) external onlyOwner {
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
-
-
         PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(tokenId), serialise(amount));
         _mint(receiver, tokenId, amount, "");
     }
@@ -378,7 +376,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      * @dev See {IPBM-revokePBM}.
      *
      * Requirements:
-     *
+     *`
      * - `tokenId` should be a valid ids that has already been created
      * - caller must be the creator of the tokenType
      * - token must be expired
@@ -390,8 +388,8 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
 
         address spotToken = getSpotAddress(tokenId);
         
-        // transfering underlying ERC20 tokens
-        ERC20Helper.safeTransfer(spotToken, msg.sender, valueOfTokens);
+        // transfering ERC20 tokens 
+        NoahPaymentManager(noahPaymentManager).withdrawFromPBMAddress(address(this), owner(), spotToken, valueOfTokens);
 
         emit PBMrevokeWithdraw(msg.sender, tokenId, spotToken, valueOfTokens);
     }
@@ -440,17 +438,19 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
     // - caller must be the owner
     function recoverAllERC20(address _token) public onlyOwner {
         ERC20 erc20 = ERC20(_token);
-        ERC20Helper.safeTransfer(address(erc20), owner(), erc20.balanceOf(address(this)));
+        NoahPaymentManager(noahPaymentManager).withdrawFromPBMAddress(address(this), owner(), address(erc20), erc20.balanceOf(address(this)));
+
     }
 
-    // @dev recoverERC20 is a function to recover specific amount of a ERC20 token from the PBM contract
+    // @dev recoverERC20 is a function to recover specific amount of a 
+    // ERC20 token from the NoahPaymentManager contract
     // @param _token ERC20 token address
     // @param amount amount of ERC20 token to recover
     // requirements:
     // - caller must be the owner
     function recoverERC20(address _token, uint256 amount) public onlyOwner {
         ERC20 erc20 = ERC20(_token);
-        ERC20Helper.safeTransfer(address(erc20), owner(), amount);
+        NoahPaymentManager(noahPaymentManager).withdrawFromPBMAddress(address(this), owner(), address(erc20), amount);
     }
 
     // @dev see { PBMTokenManager - updateTokenExpiry}

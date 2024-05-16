@@ -15,7 +15,7 @@ interface INoahPBMTreasury {
     function depositForPBMAddress(address creditForPBM, address erc20token, uint256 value) external;
 
     /// @notice Call this function to allow the owner to withdraw money on behalf of the PBM
-    function withdrawForPBMAddress(address withdrawFromPBM, address erc20token, uint256 value) external;
+    function withdrawFromPBMAddress(address withdrawFromPBM, address to, address erc20token, uint256 value) external;
 
     /// @notice Allows the owner to rescue ERC20 tokens sent to this contract.
     /// @param erc20token smart contract address 
