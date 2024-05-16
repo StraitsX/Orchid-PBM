@@ -20,6 +20,9 @@ UUPS is not required unless we want to upgrade the proxy itself on a regular bas
 
 Proxy contracts are copied from th [Openzeppelin Github](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.1/contracts/proxy/transparent/TransparentUpgradeableProxy.sol) repo for ease of deployment and acts as a snaphot.
 
+# NoahPaymentManager
+Noah PBM defines a payment manager smart contract that helps seperates the logic of making payments from the PBM business logic itself. 
+The NoahpaymentManager is to be used inconjunction with an oracle service to subscribe to various payment events 
 
 # Development notes
 
