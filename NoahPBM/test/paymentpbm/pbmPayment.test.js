@@ -160,9 +160,23 @@ describe('PBM PaymentTest', async () => {
         );
       });
 
-      it('PBM should take money from minter to mint PBM', async () => {
+      it('Minting a XSGD PBM token successfully and deduct from minter', async () => {
+        await createTokenType(pbm, 'Test-1XSGD', '1', xsgdToken, accounts[0]);
+        
+        await xsgdToken.increaseAllowance(
+          pbm.address,
+          parseUnits('1', await xsgdToken.decimals()),
+        );
+        await pbm.mint(0, 1, accounts[0].address);
+        let balance = await pbm.balanceOf(accounts[0].address, 0);
+        let XSGDBalance = await xsgdToken.balanceOf(pbm.address);
+        let noahXSGDBalance = await xsgdToken.balanceOf(noahPaymentManager.address);
+        let minterXSGDBalance = await xsgdToken.balanceOf(accounts[0].address);
 
-
+        assert.equal(balance.toString(), '1');
+        assert.equal(XSGDBalance.toString(), '0');
+        assert.equal(noahXSGDBalance.toString(), '1000000');
+        assert.equal(minterXSGDBalance.toString(), '9999000000');
       });
       
       it('PBM displays the correct token information', async () => { });
