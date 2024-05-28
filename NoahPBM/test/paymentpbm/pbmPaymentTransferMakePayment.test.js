@@ -186,7 +186,7 @@ describe('PBMPayment Test', async () => {
           )
         ).to.emit(noahPaymentManager, "MerchantPaymentDirect").withArgs(
           pbm.address, owner.address, merchant1.address, xsgdToken.address, 
-          '2000000','0x6d657461646174613a7b736f6d65646174613a20276869272c20736f6d6564617461323a2027686932277d'
+          '2000000', encodedMetadata
         );
 
         
