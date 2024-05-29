@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {INoahPaymentStateMachine} from "./INoahPaymentStateMachine.sol";
-import {INoahPBMTreasury} from "./INoahPBMTreasury.sol";
+import { INoahPaymentStateMachine } from "./INoahPaymentStateMachine.sol";
+import { INoahPBMTreasury } from "./INoahPBMTreasury.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -22,15 +22,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         string memory paymentUniqueId,
         bytes memory metadata
     ) public {
-        emit MerchantPaymentCreated(
-            address(0),
-            from,
-            to,
-            erc20Token,
-            erc20TokenValue,
-            paymentUniqueId,
-            metadata
-        );
+        emit MerchantPaymentCreated(address(0), from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     /**
@@ -45,15 +37,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         string memory paymentUniqueId,
         bytes memory metadata
     ) public {
-        emit MerchantPaymentCompleted(
-            campaignPBM,
-            from,
-            to,
-            erc20Token,
-            erc20TokenValue,
-            paymentUniqueId,
-            metadata
-        );
+        emit MerchantPaymentCompleted(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     /**
@@ -73,15 +57,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         bytes memory metadata
     ) public {
         // Emit payment cancel for accounting purposes
-        emit MerchantPaymentCancelled(
-            campaignPBM,
-            from,
-            to,
-            erc20Token,
-            erc20TokenValue,
-            paymentUniqueId,
-            metadata
-        );
+        emit MerchantPaymentCancelled(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     // Called by noah servers to refund a payment.
@@ -93,7 +69,5 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
     }
 
     // mock function that does nothing
-    function addMerchantAddresses(address[] memory addresses, string memory metadata) public {
-    }
-
+    function addMerchantAddresses(address[] memory addresses, string memory metadata) public {}
 }
