@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 /// @title PBM Compliance Ruleset Interface
 /// @notice All compliance checks specific to a sector should implement this interface.
 interface ICompliantService {
-    
     /// Checks if a non-KYC payment is allowed
     /// In Singapore, a payment from a sender is allowed if it fulfills 2 out of 3 of the following requirements:
     /// 1. Payment amount is < 20,000 SGD per transaction
