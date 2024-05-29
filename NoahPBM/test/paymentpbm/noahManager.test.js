@@ -107,29 +107,48 @@ describe("Noah Payment Manager Test", () => {
       ).to.be.revertedWith("Must be from a smart contract");
     });
 
-    it("Should ensure payments can only be created if enough funding", async () => {
+    it("Should ensure payments can only be created if enough funding for ali use case", async () => {
       const merchant = accounts[3];
+      const aliOmnibus = accounts[4];
+      await xsgdToken.mint(aliOmnibus.address, parseUnits("10000", await xsgdToken.decimals()));
 
       await addressList.addMerchantAddresses([merchant.address], "");
-      await xsgdToken
-        .connect(accounts[0])
-        .increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
-      await pbm.mint(0, 500, accounts[0].address);
-      await pbm.connect(accounts[0]).setApprovalForAll(pbm.address, true);
+      await xsgdToken.connect(aliOmnibus).increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
+      await pbm.connect(aliOmnibus).mint(0, 500, aliOmnibus.address);
 
       await expect(
-        pbm.connect(accounts[0]).createPayment(pbm.address, merchant.address, 0, 1000, "unique_payment_id", "0x")
+        pbm.connect(aliOmnibus).createPayment(aliOmnibus.address, merchant.address, 0, 1000, "unique_payment_id", "0x")
       ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
-    it("Should ensure ERC20 balance and treasury balance are NOT changed after payment Created", async () => {
+    it("Should ensure payments can only be created if enough funding for grab use case", async () => {
       const merchant = accounts[3];
+      const grabMasterWallet = accounts[4];
+      const grabUserWallet = accounts[5];
+      await xsgdToken.mint(grabMasterWallet.address, parseUnits("10000", await xsgdToken.decimals()));
 
       await addressList.addMerchantAddresses([merchant.address], "");
       await xsgdToken
-        .connect(accounts[0])
+        .connect(grabMasterWallet)
         .increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
-      await pbm.mint(0, 500, accounts[0].address);
+      await pbm.connect(grabMasterWallet).mint(0, 500, grabUserWallet.address);
+      await pbm.connect(grabUserWallet).setApprovalForAll(grabMasterWallet.address, true);
+
+      await expect(
+        pbm
+          .connect(grabMasterWallet)
+          .createPayment(grabUserWallet.address, merchant.address, 0, 1000, "unique_payment_id", "0x")
+      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    });
+
+    it("Should ensure ERC20 balance and treasury balance are NOT changed after payment Created for ali use case", async () => {
+      const merchant = accounts[3];
+      const aliOmnibus = accounts[4];
+      await xsgdToken.mint(aliOmnibus.address, parseUnits("10000", await xsgdToken.decimals()));
+
+      await addressList.addMerchantAddresses([merchant.address], "");
+      await xsgdToken.connect(aliOmnibus).increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
+      await pbm.connect(aliOmnibus).mint(0, 500, aliOmnibus.address);
 
       expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(
         parseUnits("500", await xsgdToken.decimals())
@@ -138,8 +157,9 @@ describe("Noah Payment Manager Test", () => {
         parseUnits("500", await xsgdToken.decimals())
       );
 
-      await pbm.connect(accounts[0]).setApprovalForAll(pbm.address, true);
-      await pbm.connect(accounts[0]).createPayment(pbm.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+      await pbm
+        .connect(aliOmnibus)
+        .createPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
       expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(
         parseUnits("500", await xsgdToken.decimals())
@@ -149,14 +169,15 @@ describe("Noah Payment Manager Test", () => {
       );
     });
 
-    it("Should ensure ERC20 balance and treasury balance are updated after payment COMPLETED", async () => {
+    it("Should ensure ERC20 balance and treasury balance are updated after payment COMPLETED for ali use case", async () => {
       const merchant = accounts[3];
+      const aliOmnibus = accounts[4];
+      const noahCrawler = accounts[5];
+      await xsgdToken.mint(aliOmnibus.address, parseUnits("10000", await xsgdToken.decimals()));
 
       await addressList.addMerchantAddresses([merchant.address], "");
-      await xsgdToken
-        .connect(accounts[0])
-        .increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
-      await pbm.mint(0, 500, accounts[0].address);
+      await xsgdToken.connect(aliOmnibus).increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
+      await pbm.connect(aliOmnibus).mint(0, 500, aliOmnibus.address);
 
       expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(
         parseUnits("500", await xsgdToken.decimals())
@@ -165,17 +186,18 @@ describe("Noah Payment Manager Test", () => {
         parseUnits("500", await xsgdToken.decimals())
       );
 
-      await pbm.connect(accounts[0]).setApprovalForAll(pbm.address, true);
-      await pbm.connect(accounts[0]).createPayment(pbm.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+      await pbm
+        .connect(aliOmnibus)
+        .createPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
       await noahPaymentManager
         .connect(accounts[0])
-        .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), accounts[4].address);
+        .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), noahCrawler.address);
       await noahPaymentManager
-        .connect(accounts[4])
+        .connect(noahCrawler)
         .completePayment(
           pbm.address,
-          accounts[0].address,
+          aliOmnibus.address,
           merchant.address,
           xsgdToken.address,
           parseUnits("500", await xsgdToken.decimals()),
