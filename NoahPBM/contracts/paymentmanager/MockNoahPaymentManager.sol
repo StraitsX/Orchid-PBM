@@ -62,10 +62,19 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
 
     // Called by noah servers to refund a payment.
     // This should be similar to minting new pbm, except that its a refund type.
-    function refundPayment() public {
+    function refundPayment(
+        address campaignPBM,
+        address from,
+        address to,
+        address erc20Token,
+        uint256 erc20TokenValue,
+        string memory paymentUniqueId,
+        bytes memory metadata
+    ) public {
         // 1. Call increase balance
         //    merchant refunding a payment should call depositForPBMAddress
         // 2. Inform campaignPBM to emit a payment refund Event
+        emit MerchantPaymentRefunded(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     // mock function that does nothing
