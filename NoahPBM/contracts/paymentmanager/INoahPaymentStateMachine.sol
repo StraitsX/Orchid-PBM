@@ -84,6 +84,7 @@ interface INoahPaymentStateMachine {
         address ERC20Token,
         uint256 ERC20TokenValue,
         string paymentUniqueId,
+        string refundUniqueId,
         bytes metadata
     );
 

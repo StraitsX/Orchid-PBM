@@ -69,12 +69,13 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         address erc20Token,
         uint256 erc20TokenValue,
         string memory paymentUniqueId,
+        string memory refundUniqueId,
         bytes memory metadata
     ) public {
         // 1. Call increase balance
         //    merchant refunding a payment should call depositForPBMAddress
         // 2. Inform campaignPBM to emit a payment refund Event
-        emit MerchantPaymentRefunded(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
+        emit MerchantPaymentRefunded(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, refundUniqueId, metadata);
     }
 
     // mock function that does nothing
