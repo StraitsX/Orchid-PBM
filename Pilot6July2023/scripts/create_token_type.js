@@ -2,6 +2,7 @@ const { ethers, getNamedAccounts, deployments } = require('hardhat');
 async function main() {
   const { deployer } = await getNamedAccounts();
   const deployerSigner = ethers.provider.getSigner(deployer);
+  const gasPrice = ethers.utils.parseUnits('15', 'gwei');
 
   const pbmDeployment = await deployments.get('PBM');
   const pbm = (await ethers.getContractFactory('PBM'))
@@ -9,18 +10,18 @@ async function main() {
     .connect(deployerSigner);
 
   // mainnet xsgd and dsgd
-  const xsgdAddress = '0xDC3326e71D45186F113a2F448984CA0e8D201995';
-  const dsgdAddress = '0x057B501fD1daF8FB0E232C7003AaFe5500e4efc0';
+  const xsgdAddress = '0xd769410dc8772695A7f55a304d2125320A65c2a5';
+  const dsgdAddress = '0x4B68D02791986Ce280072C558dc56a25b8A1E079';
 
-  const expiryDate = 1704038400; // 2024-01-01T00:00:00+08:00
+  const expiryDate = 1893369600; // 2029-12-31T00:00:00+08:00
 
   // mint 1000000 $SGD worth of DSGD to deployer
   const dsgd = (await ethers.getContractFactory('Spot'))
     .attach(dsgdAddress)
     .connect(deployerSigner);
-  // const dsgdAmount = ethers.utils.parseUnits('1000000', await dsgd.decimals());
+  const dsgdAmount = ethers.utils.parseUnits('1000000000', await dsgd.decimals());
 
-  // await dsgd.mint(deployer, dsgdAmount);
+  await dsgd.mint(deployer, dsgdAmount, { gasPrice: gasPrice});
 
   // mint 1000000 $SGD worth of XSGD to deployer
   const xsgd = (await ethers.getContractFactory('Spot'))
@@ -39,6 +40,7 @@ async function main() {
     deployer,
     'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/1XSGD.json',
     'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/expired1XSGD.json',
+      { gasPrice: gasPrice },
   );
   console.log('PBM Token type 0 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
@@ -52,6 +54,7 @@ async function main() {
     deployer,
     'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/2XSGD.json',
     'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/expired2XSGD.json',
+      {gasPrice: gasPrice},
   );
   console.log('PBM Token type 1 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
@@ -65,6 +68,7 @@ async function main() {
     deployer,
     'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/5XSGD.json',
     'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/expired5XSGD.json',
+        {gasPrice: gasPrice},
   );
   console.log('PBM Token type 2 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version
@@ -81,6 +85,7 @@ async function main() {
       deployer,
       'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/0.1XSGD.json',
       'https://gateway.pinata.cloud/ipfs/QmSkkqUnUKhqmiYi7ShFPRXasbcETKVpnvXaBANad5Hvrx/expired0.1XSGD.json',
+      {gasPrice: gasPrice},
   );
   console.log('PBM Token type 3 created');
   await new Promise((r) => setTimeout(r, 5000)); // UNCOMMENT to prevent rpc rate limiting if you are on free version

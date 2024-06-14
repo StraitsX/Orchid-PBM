@@ -2,6 +2,7 @@ const { ethers, getNamedAccounts, deployments } = require('hardhat');
 async function main() {
   const { deployer } = await getNamedAccounts();
   const deployerSigner = ethers.provider.getSigner(deployer);
+  const gasPrice = ethers.utils.parseUnits('15', 'gwei');
 
   // const pbmDeployment = await deployments.get('PBM');
 
@@ -11,21 +12,21 @@ async function main() {
     .connect(deployerSigner);
 
   // mainnet xsgd and dsgd
-  const xsgdAddress = '0xDC3326e71D45186F113a2F448984CA0e8D201995';
-  const dsgdAddress = '0x057B501fD1daF8FB0E232C7003AaFe5500e4efc0';
+  const xsgdAddress = '0xd769410dc8772695A7f55a304d2125320A65c2a5';
+  const dsgdAddress = '0x4B68D02791986Ce280072C558dc56a25b8A1E079';
 
   const XSGD = await ethers.getContractFactory('Spot');
   const xsgd = await XSGD.attach(xsgdAddress).connect(deployerSigner);
 
   // increase allowance for PBM
-  await xsgd.increaseAllowance(pbm.address, ethers.utils.parseUnits('2', await xsgd.decimals()));
+  await xsgd.increaseAllowance(pbm.address, ethers.utils.parseUnits('1000000', await xsgd.decimals()), {gasPrice: gasPrice});
 
   const DSGD = await ethers.getContractFactory('Spot');
   const dsgd = await DSGD.attach(dsgdAddress).connect(deployerSigner);
   // increase allowance for PBM
-  // await dsgd.increaseAllowance(pbm.address, ethers.utils.parseUnits('45780', await dsgd.decimals()));
+  await dsgd.increaseAllowance(pbm.address, ethers.utils.parseUnits('1000000', await dsgd.decimals()), {gasPrice: gasPrice});
 
-  const swapAddr = '0x287E63eE76855a0eaFc5cDf3e0950253916c8aE6'
+  const swapAddr = '0xc863d9c8e9e05118c08278160a90E047c1E91A11'
   // const swapDeployment = await deployments.get('Swap');
   const swap = (await ethers.getContractFactory('Swap'))
     .attach(swapAddr)
@@ -39,11 +40,11 @@ async function main() {
   // await xsgd.mint(swap.address, ethers.utils.parseUnits('1000000', 6))
   // await xsgd.mint(victorAddr, ethers.utils.parseUnits('1000000', 6))
 
-  const mintTo = [test1, test2];
+  const mintTo = [deployer];
   for (let i = 0; i < mintTo.length; i++) {
-    const mintTxn = await pbm.batchMint([3], [10], mintTo[i]);
+    const mintTxn = await pbm.batchMint([0,1,2,3], [20000,10000,20000,100000], mintTo[i]);
     const receipt = await mintTxn.wait()
-    console.log(`minted PBM token 3 to address ${mintTo[i]}`);
+    console.log(`minted PBM token 0,1,2,3 to address ${mintTo[i]}`);
     console.log(`txn hash ${receipt.transactionHash}`);
     await new Promise((r) => setTimeout(r, 5000));
   }

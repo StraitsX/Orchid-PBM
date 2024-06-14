@@ -9,9 +9,9 @@ async function main() {
     deployerSigner,
   );
 
-  const pbmAddr = '0xD2D74e2136D60A3c0D252C6dE4102a82f2511DEF';
+  const pbmAddr = '0x5D95B020AA8DA9315C9D59593c83A762C9A5A402';
   // whitelist PBM to be minter
-  await heroNFT.addWhitelisted(pbmAddr);
+  await heroNFT.addWhitelisted(pbmAddr, {gasPrice: ethers.utils.parseUnits('15', 'gwei')});
 
   console.log(`Whitelisted PBM: ${pbmAddr} to be minter`);
 }
