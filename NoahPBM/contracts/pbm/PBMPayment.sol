@@ -386,7 +386,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
 
     function _validateTransfer(address from, address to) internal {
         require(
-            from == _msgSender() || isApprovedForAll(_msgSender(), from),
+            from == _msgSender() || isApprovedForAll(from, _msgSender()),
             "ERC1155: caller is not token owner nor approved"
         );
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");
