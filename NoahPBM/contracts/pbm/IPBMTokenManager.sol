@@ -28,10 +28,10 @@ interface IPBMTokenManager {
     /// @param tokenId The id for the PBM in query
     /// @return Returns the spot token smart contract address
     function getSpotAddress(uint256 tokenId) external view returns (address);
-
+    
     /// @notice gets the spot type of underlying ERC20 tokens each of the the PBM type holds
     /// @param tokenId The id for the PBM in query
-    /// @return Returns the spot type, e.g. XSGD/XUSD
+    /// @return Returns the spot type, e.g. XSGD/XUSD 
     function getSpotType(uint256 tokenId) external view returns (string memory);
 
     /// @notice gets the count of the PBM type in supply
@@ -58,7 +58,7 @@ interface IPBMTokenManager {
     /// @param companyName The name of the company/agency issuing this PBM type
     /// @param spotAddress The smart contract address for the underlying ERC-20 token.
     /// @param spotAmount The number of ERC-20 tokens that is used as the underlying currency for PBM
-    /// @param spotType The type of underlying ERC-20 token. e.g. XSGD/XUSD
+    /// @param spotType The type of underlying ERC-20 token. e.g. XSGD/XUSD 
     /// @param tokenExpiry The expiry date (in epoch) of th PBM type
     /// @param creator The address of the account that creates the PBM type
     /// @param tokenURI the URI containting the metadata (opensea standard for ERC1155) for the  PBM type
@@ -95,7 +95,7 @@ interface IPBMTokenManager {
     /// @param tokenId The account from which the tokens were sent, i.e. the balance decreased
     /// @param tokenName The account to which the tokens were sent, i.e. the balance increased
     /// @param amount The amount of tokens that were transferred
-    /// @param spotType The type of underlying ERC-20 token. e.g. XSGD/XUSD
+    /// @param spotType The type of underlying ERC-20 token. e.g. XSGD/XUSD 
     /// @param spotAddress The smart contract address for the ERC-20 token
     /// @param expiry The time (in epoch) when the PBM type will expire
     /// @param creator The creator of the this PBM type

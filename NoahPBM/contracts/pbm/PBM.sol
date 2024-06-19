@@ -31,9 +31,12 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /// @notice Sets up basic information for the campaign PBM
-    /// @param _expiry Global contract wide expiry ( in epoch )
+    /// @param _expiry Global contract wide expiry ( in epoch ) 
     /// @param _pbmAddressList address of the PBMAddressList smartcontract for determining merchant targets.
-    function initialise(uint256 _expiry, address _pbmAddressList) external onlyOwner {
+    function initialise(
+        uint256 _expiry,
+        address _pbmAddressList
+    ) external onlyOwner {
         require(!initialised, "PBM: Already initialised");
         require(Address.isContract(_pbmAddressList), "Invalid pbm address list");
 
@@ -185,6 +188,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
             address spotTokenAddr = getSpotAddress(id);
             ERC20Helper.safeTransfer(spotTokenAddr, to, valueOfTokens);
             emit MerchantPayment(from, to, serialise(id), serialise(amount), spotTokenAddr, valueOfTokens);
+
         } else {
             _safeTransferFrom(from, to, id, amount, data);
         }
@@ -216,7 +220,7 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
 
         if (IPBMMerchantAddressList(pbmAddressList).isMerchant(to)) {
             uint256 sumOfTokens = 0;
-
+            
             // we assume all of the pbm token ids has the same underlying ERC20 token
             // override this function to implement swap to combine underlying ERC20 token if necessary.
             address baseERC20token = getSpotAddress(ids[0]);
@@ -227,13 +231,14 @@ contract PBM is ERC1155, Ownable, Pausable, IPBM {
                 uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
                 sumOfTokens += valueOfTokens;
             }
-
+            
             _burnBatch(from, ids, amounts);
             PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(ids, amounts);
 
             ERC20Helper.safeTransfer(baseERC20token, to, sumOfTokens);
 
             emit MerchantPayment(from, to, ids, amounts, baseERC20token, sumOfTokens);
+
         } else {
             _safeBatchTransferFrom(from, to, ids, amounts, data);
         }
