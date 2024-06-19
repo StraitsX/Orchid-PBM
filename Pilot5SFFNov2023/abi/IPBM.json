@@ -3,13 +3,44 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "from",
         "type": "address"
       },
       {
         "indexed": false,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "ERC20Token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ERC20TokenValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "MerchantCashback",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "to",
         "type": "address"
@@ -40,37 +71,6 @@
       }
     ],
     "name": "MerchantPayment",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "PBMTokenId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "ERC20Token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "ERC20TokenValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "PBMrevokeWithdraw",
     "type": "event"
   },
   {
@@ -123,13 +123,46 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "burnFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "string",
         "name": "companyName",
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "discountType",
+        "type": "string"
+      },
+      {
         "internalType": "uint256",
-        "name": "spotAmount",
+        "name": "discountValue",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "discountCap",
         "type": "uint256"
       },
       {
@@ -174,6 +207,21 @@
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
@@ -208,9 +256,32 @@
         "internalType": "address",
         "name": "_pbmAddressList",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_merchantHelper",
+        "type": "address"
       }
     ],
     "name": "initialise",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "spotAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "load",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
