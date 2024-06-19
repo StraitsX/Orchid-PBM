@@ -117,7 +117,7 @@ describe("Noah Payment Manager Test", () => {
       await pbm.connect(aliOmnibus).mint(0, 500, aliOmnibus.address);
 
       await expect(
-        pbm.connect(aliOmnibus).createPayment(aliOmnibus.address, merchant.address, 0, 1000, "unique_payment_id", "0x")
+        pbm.connect(aliOmnibus).requestPayment(aliOmnibus.address, merchant.address, 0, 1000, "unique_payment_id", "0x")
       ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
@@ -137,7 +137,7 @@ describe("Noah Payment Manager Test", () => {
       await expect(
         pbm
           .connect(grabMasterWallet)
-          .createPayment(grabUserWallet.address, merchant.address, 0, 1000, "unique_payment_id", "0x")
+          .requestPayment(grabUserWallet.address, merchant.address, 0, 1000, "unique_payment_id", "0x")
       ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
@@ -159,7 +159,7 @@ describe("Noah Payment Manager Test", () => {
 
       await pbm
         .connect(aliOmnibus)
-        .createPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+        .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
       expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(
         parseUnits("500", await xsgdToken.decimals())
@@ -188,7 +188,7 @@ describe("Noah Payment Manager Test", () => {
 
       await pbm
         .connect(aliOmnibus)
-        .createPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+        .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
       await noahPaymentManager
         .connect(accounts[0])
