@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const { ethers } = require('hardhat');
 
 async function deploy(name, ...params) {
   const Contract = await ethers.getContractFactory(name);
@@ -13,14 +13,21 @@ const parseUnits = (value, decimals) => {
   return ethers.utils.parseUnits(value, decimals);
 };
 
-async function initPBM(pbm, xsgdTokenAdd, dsgdTokenAdd, swapContractAdd, addressListAdd, heroNFTAdd) {
+async function initPBM(
+  pbm,
+  xsgdTokenAdd,
+  dsgdTokenAdd,
+  swapContractAdd,
+  addressListAdd,
+  heroNFTAdd,
+) {
   await pbm.initialise(
     xsgdTokenAdd,
     dsgdTokenAdd,
     swapContractAdd,
     Math.round(new Date().getTime() / 1000 + 86400 * 30),
     addressListAdd,
-    heroNFTAdd
+    heroNFTAdd,
   );
 }
 
@@ -36,18 +43,21 @@ async function createTokenType(pbm, name, spotValue, spot, owner) {
     spot.symbol(),
     targetEpoch,
     owner.address,
-    "beforeExpiryURI",
-    "postExpiryURI"
+    'beforeExpiryURI',
+    'postExpiryURI',
   );
 }
 
 async function mintPBM(pbm, spot, tokenId, amount, to, spotValue) {
-  await spot.increaseAllowance(pbm.address, parseUnits(spotValue, await spot.decimals()) * amount);
+  await spot.increaseAllowance(
+    pbm.address,
+    parseUnits(spotValue, await spot.decimals()) * amount,
+  );
   await pbm.mint(tokenId, amount, to);
 }
 
 async function whilteListMerchant(addressList, addresses) {
-  await addressList.addMerchantAddresses(addresses, "");
+  await addressList.addMerchantAddresses(addresses, '');
 }
 
 async function addMerchantAsHero(addressList, addresses, tokenIds) {

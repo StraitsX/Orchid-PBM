@@ -6,7 +6,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   //   args: [],
   //   log: true,
   // });
-  await deploy("PBM", {
+  await deploy('PBM', {
     from: deployer,
     args: [],
     log: true,
@@ -23,11 +23,11 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   //   log: true,
   // });
 
-  const xsgdAddress = "0xDC3326e71D45186F113a2F448984CA0e8D201995";
-  const dsgdAddress = "0x057B501fD1daF8FB0E232C7003AaFe5500e4efc0";
+  const xsgdAddress = '0xDC3326e71D45186F113a2F448984CA0e8D201995';
+  const dsgdAddress = '0x057B501fD1daF8FB0E232C7003AaFe5500e4efc0';
 
   // Mumbai XSGD address = "0x16e28369bc318636abbf6cb1035da77ffbf4a3bc"
-  await deploy("Swap", {
+  await deploy('Swap', {
     from: deployer,
     args: [dsgdAddress, xsgdAddress],
     log: true,

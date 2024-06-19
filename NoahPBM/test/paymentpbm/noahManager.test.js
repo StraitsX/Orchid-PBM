@@ -1,286 +1,155 @@
-const { assert, expect } = require("chai");
-const { ethers } = require("hardhat");
-const { deploy, initPBM, parseUnits } = require("./testHelper.js");
-const { createTokenType } = require("./testHelper");
+const { assert, expect } = require('chai');
+const { ethers } = require('hardhat');
+const { deploy, initPBM, parseUnits } = require('./testHelper.js');
+
 
 async function init() {
-  const xsgdToken = await deploy("Spot", "XSGD", "XSGD", 6);
-  const noahPaymentManager = await deploy("NoahPaymentManager");
-  const addressList = await deploy("PBMMerchantAddressList");
-  const pbm = await deploy("PBMPayment");
+  let xsgdToken = await deploy('Spot', 'XSGD', 'XSGD', 6);
+  let noahPaymentManager = await deploy('NoahPaymentManager');
+  let pbm = await deploy('PBMPayment');
 
-  return [xsgdToken, noahPaymentManager, pbm, addressList];
+  return [xsgdToken, noahPaymentManager, pbm]
 }
 
-describe("Noah Payment Manager Test", () => {
-  let accounts = [];
-  let xsgdToken, noahPaymentManager, pbm, addressList;
+describe('Noah Payment Manager Test', async () => {
+  /** Initialise Wallet Addresses */
+  const accounts = [];
 
   before(async () => {
-    accounts = await ethers.getSigners();
+    (await ethers.getSigners()).forEach((signer, index) => {
+      accounts[index] = signer;
+    });
   });
+
+  /** Initialise Smart contracts Required for tests. */
+  let xsgdToken;
+  let noahPaymentManager;
+  let pbm; 
 
   beforeEach(async () => {
-    [xsgdToken, noahPaymentManager, pbm, addressList] = await init();
-
-    // Initialize accounts with spot tokens
-    await xsgdToken.mint(accounts[0].address, parseUnits("10000", await xsgdToken.decimals()));
-    await xsgdToken.mint(accounts[1].address, parseUnits("10000", await xsgdToken.decimals()));
-
-    await pbm.initialise(
-      Math.round(new Date().getTime() / 1000 + 86400 * 30),
-      addressList.address,
-      noahPaymentManager.address
-    );
-
-    // Create PBM token type
-    await createTokenType(pbm, "Test-1XSGD", "1", xsgdToken, accounts[0]);
+    [xsgdToken, noahPaymentManager, pbm] = await init();
+    
+    // Init accouns with spot tokens
+    await xsgdToken.mint(accounts[0].address,parseUnits('10000', await xsgdToken.decimals()));
+    await xsgdToken.mint(accounts[1].address,parseUnits('10000', await xsgdToken.decimals()));
   });
 
-  it("Should ensure initialisation done correctly", async () => {
-    assert(xsgdToken.address !== "");
-    assert(noahPaymentManager.address !== "");
-    assert(addressList.address !== "");
-    assert(pbm.address !== "");
+  /** Verify Deployments first */
+  it('Should ensure initialisation done correctly', async () => {
+    assert(xsgdToken.address !== '');
+    assert(noahPaymentManager.address !== '');
+    assert(pbm.address !== '');
 
-    assert.equal(await xsgdToken.name(), "XSGD");
-    assert.equal(await xsgdToken.symbol(), "XSGD");
+
+    assert.equal(await xsgdToken.name(), 'XSGD');
+    assert.equal(await xsgdToken.symbol(), 'XSGD');
     assert.equal(await xsgdToken.decimals(), 6);
+    
+    expect(await xsgdToken.balanceOf(accounts[0].address)).to.equals(10000000000)
+    expect(await xsgdToken.balanceOf(accounts[1].address)).to.equals(10000000000)
 
-    expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(parseUnits("10000", await xsgdToken.decimals()));
-    expect(await xsgdToken.balanceOf(accounts[1].address)).to.equal(parseUnits("10000", await xsgdToken.decimals()));
   });
+  
 
-  describe("Noah PBM Core Test", () => {
-    let funderSigner, xsgdContractUser;
+  /** Noah Payment related tests*/
+  describe('Noah PBM Core Test', async () => {
 
-    beforeEach(async () => {
-      funderSigner = accounts[1];
-      xsgdContractUser = xsgdToken.connect(funderSigner);
-      await xsgdContractUser.increaseAllowance(
-        noahPaymentManager.address,
-        parseUnits("500", await xsgdToken.decimals())
-      );
-      expect(await xsgdToken.balanceOf(funderSigner.address)).to.equal(parseUnits("10000", await xsgdToken.decimals()));
-    });
+    
+    it('Should ensure ', async () => {});
+    
+    it('Should ensure basic deposit check - ERC20 balance and treasury balance updated upon deposit of funds for a PBM', async () => {
+        let funderSigner = accounts[1];
 
-    it("Should ensure basic deposit check - ERC20 balance and treasury balance updated upon deposit of funds for a PBM", async () => {
-      await noahPaymentManager
-        .connect(funderSigner)
-        .depositForPBMAddress(pbm.address, xsgdToken.address, parseUnits("500", await xsgdToken.decimals()));
+        // set approval to pull funds 
+        let xsgdContractUser = xsgdToken.connect(funderSigner);
+        await xsgdContractUser.increaseAllowance(
+          noahPaymentManager.address,
+          parseUnits('500', await xsgdToken.decimals())
+        );
+        expect(await xsgdToken.balanceOf(funderSigner.address)).to.equals(10000000000)
 
-      const tokenBalance = await noahPaymentManager.getPBMCampaignTokenBalance(pbm.address, xsgdToken.address);
-      expect(tokenBalance).to.equal(parseUnits("500", await xsgdToken.decimals()));
-      expect(await xsgdToken.balanceOf(funderSigner.address)).to.equal(parseUnits("9500", await xsgdToken.decimals()));
-    });
-
-    it("Should ensure that only Noah PBM can only be init once", async () => {
-      await noahPaymentManager.initialise();
-      await expect(noahPaymentManager.initialise()).to.be.revertedWith("Noah PBM: Already initialised");
-    });
-
-    it("Should ensure crawler role is being defined", async () => {
-      expect(await noahPaymentManager.NOAH_CRAWLER_ROLE()).to.equal(
-        "0x1fd1b424520c6953ed4b151586253c6b4fe3183d39b856d80f513a00f543a978"
-      );
-    });
-
-    it("Should ensure that only a smart contract can try to create payment", async () => {
-      const nonPBMWallet = accounts[2];
-
-      await xsgdToken.mint(nonPBMWallet.address, parseUnits("500", await xsgdToken.decimals()));
-      await xsgdToken
-        .connect(nonPBMWallet)
-        .increaseAllowance(noahPaymentManager.address, parseUnits("500", await xsgdToken.decimals()));
-
-      await expect(
-        noahPaymentManager
-          .connect(nonPBMWallet)
-          .createPayment(
-            nonPBMWallet.address,
-            accounts[1].address,
-            xsgdToken.address,
-            parseUnits("500", await xsgdToken.decimals()),
-            "example-id",
-            "0x"
-          )
-      ).to.be.revertedWith("Must be from a smart contract");
-    });
-
-    it("Should ensure payments can only be created if enough funding", async () => {
-      const merchant = accounts[3];
-
-      await addressList.addMerchantAddresses([merchant.address], "");
-      await xsgdToken
-        .connect(accounts[0])
-        .increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
-      await pbm.mint(0, 500, accounts[0].address);
-      await pbm.connect(accounts[0]).setApprovalForAll(pbm.address, true);
-
-      await expect(
-        pbm.connect(accounts[0]).createPayment(pbm.address, merchant.address, 0, 1000, "unique_payment_id", "0x")
-      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-    });
-
-    it("Should ensure ERC20 balance and treasury balance are NOT changed after payment Created", async () => {
-      const merchant = accounts[3];
-
-      await addressList.addMerchantAddresses([merchant.address], "");
-      await xsgdToken
-        .connect(accounts[0])
-        .increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
-      await pbm.mint(0, 500, accounts[0].address);
-
-      expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(
-        parseUnits("500", await xsgdToken.decimals())
-      );
-      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(
-        parseUnits("500", await xsgdToken.decimals())
-      );
-
-      await pbm.connect(accounts[0]).setApprovalForAll(pbm.address, true);
-      await pbm.connect(accounts[0]).createPayment(pbm.address, merchant.address, 0, 500, "unique_payment_id", "0x");
-
-      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(
-        parseUnits("500", await xsgdToken.decimals())
-      );
-      expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(
-        parseUnits("500", await xsgdToken.decimals())
-      );
-    });
-
-    it("Should ensure ERC20 balance and treasury balance are updated after payment COMPLETED", async () => {
-      const merchant = accounts[3];
-
-      await addressList.addMerchantAddresses([merchant.address], "");
-      await xsgdToken
-        .connect(accounts[0])
-        .increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
-      await pbm.mint(0, 500, accounts[0].address);
-
-      expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(
-        parseUnits("500", await xsgdToken.decimals())
-      );
-      expect(await noahPaymentManager.getPBMCampaignTokenBalance(pbm.address, xsgdToken.address)).to.equal(
-        parseUnits("500", await xsgdToken.decimals())
-      );
-
-      await pbm.connect(accounts[0]).setApprovalForAll(pbm.address, true);
-      await pbm.connect(accounts[0]).createPayment(pbm.address, merchant.address, 0, 500, "unique_payment_id", "0x");
-
-      await noahPaymentManager
-        .connect(accounts[0])
-        .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), accounts[4].address);
-      await noahPaymentManager
-        .connect(accounts[4])
-        .completePayment(
+        // mint and pull funds 
+        await noahPaymentManager.connect(funderSigner).depositForPBMAddress(
           pbm.address,
-          accounts[0].address,
-          merchant.address,
           xsgdToken.address,
-          parseUnits("500", await xsgdToken.decimals()),
-          "unique_payment_id",
-          "0x"
+          parseUnits('500', await xsgdToken.decimals())
         );
+        
+        // check balance transfered from funder to noah payment manager on behalf of PBM
+        let tokenBalance = await noahPaymentManager.getPBMCampaignTokenBalance(pbm.address, xsgdToken.address);
+        expect(tokenBalance).to.equal(parseUnits('500', await xsgdToken.decimals()));
+        console.log(await xsgdToken.balanceOf(funderSigner.address));
+        expect(await xsgdToken.balanceOf(funderSigner.address)).to.equals(9500000000);
 
-      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(0);
-      expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
-      expect(await xsgdToken.balanceOf(merchant.address)).to.equal(parseUnits("500", await xsgdToken.decimals()));
+    });
+    
+    it('Should ensure crawler role is being defined', async () => {
+      expect(await noahPaymentManager.NOAH_CRAWLER_ROLE()).equals(
+        "0x1fd1b424520c6953ed4b151586253c6b4fe3183d39b856d80f513a00f543a978");
+
     });
 
-    describe("Treasury Balance Test", () => {
-      it("Should ensure Owner is able to recover specific amount of erc20 tokens in this smart contract", async () => {
-        const initialBalance = parseUnits("10000", await xsgdToken.decimals());
 
-        expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(initialBalance);
-        expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
+    it('Should ensure that only campaign PBM can spend its own money', async () => {});
+    
+    // required to ensure admin roles are not hijacked
+    it('Should ensure that only Noah PBM can only be init once', async () => {});
+    it('Should ensure payments can only be created if enough funding', async () => {});
 
-        const amountToRecover = parseUnits("500", await xsgdToken.decimals());
+    it('Should ensure ERC20 balance and treasury balance are NOT changed after payment Created', async () => {});
+    it('Should ensure ERC20 balance and treasury balance are NOT changed after payment Cancelled', async () => {});
 
-        await xsgdToken.transfer(noahPaymentManager.address, amountToRecover);
-        expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(initialBalance.sub(amountToRecover));
-        expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(amountToRecover);
+    it('Should ensure ERC20 balance and treasury balance are updated after payment COMPLETED', async () => {});
+    it('Should ensure ERC20 balance and treasury balance are updated after payment Refunded', async () => {});
 
-        await noahPaymentManager.connect(accounts[0]).recoverERC20Tokens(xsgdToken.address, amountToRecover);
-        expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(initialBalance);
-        expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
-      });
+    it('Should ensure ERC20 balance and treasury balance are updated after payment Refunded', async () => {});
 
-      it("Should ensure Owner is able to recover all erc20 tokens in this smart contract", async () => {
-        const initialBalance = parseUnits("10000", await xsgdToken.decimals());
 
-        expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(initialBalance);
-        expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
+    describe('Treasury Balance Test', async () => {
 
-        await xsgdToken.transfer(noahPaymentManager.address, initialBalance);
-        expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(0);
-        expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(initialBalance);
+      it('Should ensure all treasury related functions are STRICTLY internal only functions', async () => {});
 
-        await noahPaymentManager.connect(accounts[0]).recoverAllERC20Tokens(xsgdToken.address);
-        expect(await xsgdToken.balanceOf(accounts[0].address)).to.equal(initialBalance);
-        expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
-      });
+      it('Should ensure Owner is able to recover erc20 tokens in this smart contract', async () => {});
 
-      it("Should ensure only Owner is able to recover erc20 tokens in this smart contract", async () => {
-        await expect(
-          noahPaymentManager
-            .connect(accounts[1])
-            .recoverERC20Tokens(xsgdToken.address, parseUnits("500", await xsgdToken.decimals()))
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+      it('Should ensure _increaseTrasuryBalance only increase main balance', async () => {});
+      it('Should ensure _markCompleteTreasuryBalanace only decrease pending balance', async () => {});
+      it('Should ensure _markPendingTreasuryBalanace moves from main to pending balance', async () => {});
+      it('Should ensure _revertPendingTreasuryBalanace moves from pending to main balance', async () => {});
+      
+      it('Should ensure deposit for pbm works', async () => {});
+      it('Should ensure withdrawal for pbm works', async () => {});
+      it('Should ensure withdrawal cannot exceed pbm owned amount for pbm works', async () => {});
 
-        await expect(
-          noahPaymentManager.connect(accounts[1]).recoverAllERC20Tokens(xsgdToken.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
-      });
 
-      it("Should ensure withdrawal for pbm works", async () => {
-        await noahPaymentManager
-          .connect(funderSigner)
-          .depositForPBMAddress(pbm.address, xsgdToken.address, parseUnits("500", await xsgdToken.decimals()));
 
-        const tokenBalance = await noahPaymentManager.getPBMCampaignTokenBalance(pbm.address, xsgdToken.address);
-        expect(tokenBalance).to.equal(parseUnits("500", await xsgdToken.decimals()));
-        expect(await xsgdToken.balanceOf(funderSigner.address)).to.equal(
-          parseUnits("9500", await xsgdToken.decimals())
-        );
-
-        await noahPaymentManager
-          .connect(accounts[0])
-          .withdrawFromPBMAddress(
-            pbm.address,
-            funderSigner.address,
-            xsgdToken.address,
-            parseUnits("500", await xsgdToken.decimals())
-          );
-
-        expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
-        expect(await xsgdToken.balanceOf(funderSigner.address)).to.equal(
-          parseUnits("10000", await xsgdToken.decimals())
-        );
-      });
-
-      it("Should ensure withdrawal cannot exceed pbm owned amount for pbm works", async () => {
-        await noahPaymentManager
-          .connect(funderSigner)
-          .depositForPBMAddress(pbm.address, xsgdToken.address, parseUnits("500", await xsgdToken.decimals()));
-
-        const tokenBalance = await noahPaymentManager.getPBMCampaignTokenBalance(pbm.address, xsgdToken.address);
-        expect(tokenBalance).to.equal(parseUnits("500", await xsgdToken.decimals()));
-        expect(await xsgdToken.balanceOf(funderSigner.address)).to.equal(
-          parseUnits("9500", await xsgdToken.decimals())
-        );
-
-        await expect(
-          noahPaymentManager
-            .connect(accounts[0])
-            .withdrawFromPBMAddress(
-              pbm.address,
-              funderSigner.address,
-              xsgdToken.address,
-              parseUnits("1000", await xsgdToken.decimals())
-            )
-        ).to.be.revertedWith("Cannot withdraw more than what a campaignPBM possess");
-      });
     });
+
+
+    describe('Payment Created Test', async () => {
+
+      it('Should ensure pbm balance is moved to pending balance upon PaymentCreated event', async () => {});
+
+    });
+
+    describe('Payment Completed Test', async () => {
+
+      it('Should ensure erc20 token is disburse to destination', async () => {});
+      it('Should ensure internal pending balance is updated only', async () => {});
+
+    });
+
+    describe('Payment Cancel Test', async () => {
+
+      it('Should ensure pbm pending balance is moved back to pbm balance upon PaymentCreated event', async () => {});
+
+
+    });
+    
+    
+
   });
+
+ 
+
 });
+

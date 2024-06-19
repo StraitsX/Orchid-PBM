@@ -58,7 +58,7 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
         require(Address.isContract(spotAddress), "Invalid ERC20 token");
 
         require(spotAmount != 0, "Spot amount is 0");
-
+        
         require(
             keccak256(bytes(spotType)) == keccak256(bytes("XUSD")) ||
                 keccak256(bytes(spotType)) == keccak256(bytes("XSGD")),
@@ -248,12 +248,18 @@ contract PBMTokenManager is Ownable, IPBMTokenManager, NoDelegateCall {
      *
      */
     function getSpotAddress(uint256 tokenId) external view override returns (address) {
-        require(tokenTypes[tokenId].amount != 0, "PBM: Invalid Token Id(s)");
+        require(
+            tokenTypes[tokenId].amount != 0,
+            "PBM: Invalid Token Id(s)"
+        );
         return tokenTypes[tokenId].spotAddress;
     }
 
     function getSpotType(uint256 tokenId) external view override returns (string memory) {
-        require(tokenTypes[tokenId].amount != 0, "PBM: Invalid Token Id(s)");
+        require(
+            tokenTypes[tokenId].amount != 0,
+            "PBM: Invalid Token Id(s)"
+        );
         return tokenTypes[tokenId].spotType;
     }
 
