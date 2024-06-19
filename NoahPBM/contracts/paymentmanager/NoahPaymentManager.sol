@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {INoahPaymentStateMachine} from "./INoahPaymentStateMachine.sol";
-import {INoahPBMTreasury} from "./INoahPBMTreasury.sol";
+import { INoahPaymentStateMachine } from "./INoahPaymentStateMachine.sol";
+import { INoahPBMTreasury } from "./INoahPBMTreasury.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -15,14 +15,7 @@ import "../pbm/ERC20Helper.sol";
  * TODO TEST Cases listing:
  */
 
-contract NoahPaymentManager is
-    Ownable,
-    Pausable,
-    AccessControl,
-    INoahPaymentStateMachine,
-    INoahPBMTreasury
-{
-
+contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentStateMachine, INoahPBMTreasury {
     /////////////////// INoahPBMTreasury functions  //////////////////////////
 
     // Keeps track of the liability to each Campaign PBM Contract. Campain PBM is responsible for accounting.
@@ -71,15 +64,10 @@ contract NoahPaymentManager is
         require(value > 0, "token value must be more than 0");
 
         // Take money from the sender.
-        ERC20Helper.safeTransferFrom(
-            erc20token,
-            _msgSender(),
-            address(this),
-            value
-        );
+        ERC20Helper.safeTransferFrom(erc20token, _msgSender(), address(this), value);
 
-        // call increaseTrasuryBalance to credit this token to the rightful PBM contract owner
-        _increaseTrasuryBalance(creditForPBM, erc20token, value);
+        // call increaseTreasuryBalance to credit this token to the rightful PBM contract owner
+        _increaseTreasuryBalance(creditForPBM, erc20token, value);
     }
 
     /**
@@ -87,15 +75,18 @@ contract NoahPaymentManager is
      * This is similar to recovery functions, but specific to a particular campaign PBM
      */
     function withdrawFromPBMAddress(
-        address withdrawFromPBM, 
+        address withdrawFromPBM,
         address to,
-        address erc20token, 
+        address erc20token,
         uint256 value
     ) external override {
         require(Address.isContract(withdrawFromPBM), "Invalid PBM contract address");
         require(Address.isContract(erc20token), "Invalid ERC20 token address");
         require(value > 0, "token value must be more than 0");
-        require(pbmTokenBalance[withdrawFromPBM][erc20token] > value, "Cannot withdraw more than what a campaignPBM possess");
+        require(
+            pbmTokenBalance[withdrawFromPBM][erc20token] >= value,
+            "Cannot withdraw more than what a campaignPBM possess"
+        );
 
         require(
             withdrawFromPBM == _msgSender() || _msgSender() == owner(),
@@ -104,10 +95,10 @@ contract NoahPaymentManager is
 
         // Take money from the PBM allocation and give it to the destination address.
         ERC20Helper.safeTransfer(erc20token, to, value);
-        _decreaseTrasuryBalance(withdrawFromPBM, erc20token, value);
+        _decreaseTreasuryBalance(withdrawFromPBM, erc20token, value);
     }
 
-    /// See {INoahPBMTreasury}, Caller must be owner 
+    /// See {INoahPBMTreasury}, Caller must be owner
     function recoverERC20Tokens(address erc20token, uint256 value) external override onlyOwner {
         require(Address.isContract(erc20token), "Invalid ERC20 contract address");
         require(value > 0, "token value must be more than 0");
@@ -116,7 +107,7 @@ contract NoahPaymentManager is
         ERC20Helper.safeTransfer(address(erc20), owner(), value);
     }
 
-    /// See {INoahPBMTreasury}, Caller must be owner 
+    /// See {INoahPBMTreasury}, Caller must be owner
     function recoverAllERC20Tokens(address erc20token) external override onlyOwner {
         require(Address.isContract(erc20token), "Invalid ERC20 contract address");
 
@@ -127,31 +118,30 @@ contract NoahPaymentManager is
     /// @notice Swap token on behalf of a campaign pbm contract.
     /// A campaing PBM can swap USDC to XSGD per txn, or in bulk to
     /// increase the size of the XSGD holdings on this contract to meet payment obligations
-    function swap(
-        address pbmContract,
-        address fromToken,
-        address toToken
-    ) public whenNotPaused {
+    function swap(address pbmContract, address fromToken, address toToken) public whenNotPaused {
         // require(Address.isContract(pbmContract), "Invalid PBM contract address");
-
         // Call uniswap smart contract.
     }
 
-    function getPBMCampaignTokenBalance(
-        address pbmAddress,
-        address erc20token
-    ) external view returns (uint256 value) {
+    function getPBMCampaignTokenBalance(address pbmAddress, address erc20token) external view returns (uint256 value) {
         require(Address.isContract(pbmAddress), "Invalid PBM contract address");
         require(Address.isContract(erc20token), "Invalid ERC20 contract address");
 
         return pbmTokenBalance[pbmAddress][erc20token];
     }
 
-    function _increaseTrasuryBalance(
-        address campaignPBM,
-        address erc20token,
-        uint256 value
-    ) internal whenNotPaused {
+    /// @notice PBM campaign treasury balance = pbmTokenBalance + pendingPBMTokenBalance
+    function getPBMCampaignTreasuryBalance(
+        address pbmAddress,
+        address erc20token
+    ) external view returns (uint256 value) {
+        require(Address.isContract(pbmAddress), "Invalid PBM contract address");
+        require(Address.isContract(erc20token), "Invalid ERC20 contract address");
+
+        return pendingPBMTokenBalance[pbmAddress][erc20token] + pbmTokenBalance[pbmAddress][erc20token];
+    }
+
+    function _increaseTreasuryBalance(address campaignPBM, address erc20token, uint256 value) internal whenNotPaused {
         require(Address.isContract(campaignPBM), "Invalid PBM contract address");
         require(Address.isContract(erc20token), "Invalid ERC20 contract address");
         require(value > 0, "token value must be more than 0");
@@ -160,21 +150,16 @@ contract NoahPaymentManager is
         emit TreasuryBalanceIncrease(campaignPBM, erc20token, value);
     }
 
-    function _decreaseTrasuryBalance(
-        address campaignPBM,
-        address erc20token,
-        uint256 value
-    ) internal whenNotPaused {
+    function _decreaseTreasuryBalance(address campaignPBM, address erc20token, uint256 value) internal whenNotPaused {
         require(Address.isContract(campaignPBM), "Invalid PBM contract address");
         require(Address.isContract(erc20token), "Invalid ERC20 contract address");
         require(value > 0, "token value must be more than 0");
 
         pbmTokenBalance[campaignPBM][erc20token] -= value;
         emit TreasuryBalanceDecrease(campaignPBM, erc20token, value);
-
     }
 
-    function _markCompleteTreasuryBalanace(
+    function _markCompleteTreasuryBalance(
         address campaignPBM,
         address erc20Token,
         uint256 erc20TokenValue
@@ -185,10 +170,9 @@ contract NoahPaymentManager is
 
         pendingPBMTokenBalance[campaignPBM][erc20Token] -= erc20TokenValue;
         emit TreasuryPendingBalanceDecrease(campaignPBM, erc20Token, erc20TokenValue);
-
     }
 
-    function _markPendingTreasuryBalanace(
+    function _markPendingTreasuryBalance(
         address campaignPBM,
         address erc20Token,
         uint256 erc20TokenValue
@@ -205,7 +189,7 @@ contract NoahPaymentManager is
         emit TreasuryPendingBalanceIncrease(campaignPBM, erc20Token, erc20TokenValue);
     }
 
-    function _revertPendingTreasuryBalanace(
+    function _revertPendingTreasuryBalance(
         address campaignPBM,
         address erc20Token,
         uint256 erc20TokenValue
@@ -239,28 +223,15 @@ contract NoahPaymentManager is
         require(Address.isContract(campaignPBM), "Must be from a smart contract");
         require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
         require(erc20TokenValue > 0, "Token value should be more than 0");
+        // Ensure that only campaign PBM can spend its own money
+        require(pbmTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue, "ERC20: transfer amount exceeds balance");
 
         require(bytes(paymentUniqueId).length != 0);
 
-        // Ensure that only campaign PBM can spend its own money
-        if (pbmTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) {
-            _markPendingTreasuryBalanace(
-                campaignPBM,
-                erc20Token,
-                erc20TokenValue
-            );
+        _markPendingTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
 
-            // Inform Oracle to make payments
-            emit MerchantPaymentCreated(
-                campaignPBM,
-                from,
-                to,
-                erc20Token,
-                erc20TokenValue,
-                paymentUniqueId,
-                metadata
-            );
-        }
+        // Inform Oracle to make payments
+        emit MerchantPaymentCreated(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     /**
@@ -281,9 +252,9 @@ contract NoahPaymentManager is
         require(erc20TokenValue > 0, "Token value should be more than 0");
         require(bytes(paymentUniqueId).length != 0);
 
-        if (pendingPBMTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) { 
+        if (pendingPBMTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) {
             // Update internal balance sheet
-            _markCompleteTreasuryBalanace(campaignPBM, erc20Token, erc20TokenValue);
+            _markCompleteTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
 
             // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
             ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
@@ -298,14 +269,13 @@ contract NoahPaymentManager is
                 metadata
             );
         }
-
     }
 
     /**
-     * @notice Called by Noah Oracle to void a payment. 
-     * Useful in the event when payment cant be processed such as 
+     * @notice Called by Noah Oracle to void a payment.
+     * Useful in the event when payment cant be processed such as
      * where acquirer is down, or an invalid paymentUniqueId is used.
-     * 
+     *
      * Funds will be re-credited and a retry is allowed on the next block mined
      **/
     function cancelPayment(
@@ -324,25 +294,13 @@ contract NoahPaymentManager is
         require(bytes(paymentUniqueId).length != 0);
 
         // [TODO] inform campaign pbm to emit payment cancel. no money movement has occured
-        // [TODO] inform campaign pbm to refund PBM back to user. 
+        // [TODO] inform campaign pbm to refund PBM back to user.
 
         // Ensure funds are re-credited back
-        _revertPendingTreasuryBalanace(
-            campaignPBM,
-            erc20Token,
-            erc20TokenValue
-        );
+        _revertPendingTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
 
         // Emit payment cancel for accounting purposes
-        emit MerchantPaymentCancelled(
-            campaignPBM,
-            from,
-            to,
-            erc20Token,
-            erc20TokenValue,
-            paymentUniqueId,
-            metadata
-        );
+        emit MerchantPaymentCancelled(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     // Called by noah servers to refund a payment.
@@ -370,26 +328,13 @@ contract NoahPaymentManager is
 
         // Ensure that only campaign PBM can spend its own money
         if (pbmTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) {
-
             // Subtract from main balance directly to be sent out immediately.
-            _decreaseTrasuryBalance(
-                campaignPBM,
-                erc20Token,
-                erc20TokenValue
-            );
-            
+            _decreaseTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
+
             // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
             ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
 
-            emit MerchantPaymentDirect(
-                campaignPBM,
-                from,
-                to,
-                erc20Token,
-                erc20TokenValue,
-                metadata
-            );
-            
+            emit MerchantPaymentDirect(campaignPBM, from, to, erc20Token, erc20TokenValue, metadata);
         }
     }
 }

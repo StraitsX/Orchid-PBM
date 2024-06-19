@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {INoahPaymentStateMachine} from "./INoahPaymentStateMachine.sol";
-import {INoahPBMTreasury} from "./INoahPBMTreasury.sol";
+import { INoahPaymentStateMachine } from "./INoahPaymentStateMachine.sol";
+import { INoahPBMTreasury } from "./INoahPBMTreasury.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -22,15 +22,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         string memory paymentUniqueId,
         bytes memory metadata
     ) public {
-        emit MerchantPaymentCreated(
-            address(0),
-            from,
-            to,
-            erc20Token,
-            erc20TokenValue,
-            paymentUniqueId,
-            metadata
-        );
+        emit MerchantPaymentCreated(address(0), from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     /**
@@ -45,15 +37,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         string memory paymentUniqueId,
         bytes memory metadata
     ) public {
-        emit MerchantPaymentCompleted(
-            campaignPBM,
-            from,
-            to,
-            erc20Token,
-            erc20TokenValue,
-            paymentUniqueId,
-            metadata
-        );
+        emit MerchantPaymentCompleted(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     /**
@@ -73,27 +57,36 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         bytes memory metadata
     ) public {
         // Emit payment cancel for accounting purposes
-        emit MerchantPaymentCancelled(
+        emit MerchantPaymentCancelled(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
+    }
+
+    // Called by noah servers to refund a payment.
+    // This should be similar to minting new pbm, except that its a refund type.
+    function refundPayment(
+        address campaignPBM,
+        address from,
+        address to,
+        address erc20Token,
+        uint256 erc20TokenValue,
+        string memory paymentUniqueId,
+        string memory refundUniqueId,
+        bytes memory metadata
+    ) public {
+        // 1. Call increase balance
+        //    merchant refunding a payment should call depositForPBMAddress
+        // 2. Inform campaignPBM to emit a payment refund Event
+        emit MerchantPaymentRefunded(
             campaignPBM,
             from,
             to,
             erc20Token,
             erc20TokenValue,
             paymentUniqueId,
+            refundUniqueId,
             metadata
         );
     }
 
-    // Called by noah servers to refund a payment.
-    // This should be similar to minting new pbm, except that its a refund type.
-    function refundPayment() public {
-        // 1. Call increase balance
-        //    merchant refunding a payment should call depositForPBMAddress
-        // 2. Inform campaignPBM to emit a payment refund Event
-    }
-
     // mock function that does nothing
-    function addMerchantAddresses(address[] memory addresses, string memory metadata) public {
-    }
-
+    function addMerchantAddresses(address[] memory addresses, string memory metadata) public {}
 }
