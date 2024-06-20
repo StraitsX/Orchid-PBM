@@ -1,5 +1,6 @@
 require("dotenv").config({ debug: true });
 require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-ledger");
 require("hardhat-contract-sizer");
 require("hardhat-gas-reporter");
 require("hardhat-tracer");
@@ -53,6 +54,19 @@ module.exports = {
       deploy: ["deploy/"],
       tags: ["holesky"],
     },
+
+    holeskyLedger: {
+      ledgerAccounts: [
+        "0x992b27192082aa84334904c337309B9D219777CA",
+      ],
+
+      url: process.env.HOLESKY_NODE_HTTP_URL,
+      network_id: 17000,
+      saveDeployments: true,
+      deploy: ["deploy/"],
+      tags: ["holeskyLedger"],
+    },
+
     sepolia: {
       accounts: [
         Wallet.fromMnemonic(process.env.DEPLOYER_MNEMONIC).privateKey,
