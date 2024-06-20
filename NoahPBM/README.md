@@ -79,4 +79,8 @@ console.log(await ethers.getSigner());
 ```
 
 
-Deploying or signing a transaction from the signer public wallet address will result in the provider trying to connect to the Ledger wallet and find a derivation path for that address. By default, the derivation paths that are tried start [from m/44'/60'/0'/0'/0 and go way up to m/44'/60'/20'/0'/0](https://github.com/NomicFoundation/hardhat/blob/11f13e547d2b665c9335d7850dd928cf32ff60b1/packages/hardhat-ledger/src/provider.ts#L346). 
+Deploying or signing a transaction from the signer public wallet address will result in the provider trying to connect to the Ledger wallet and find a derivation path for that address. 
+
+By default, the derivation paths that are tried start [from m/44'/60'/0'/0'/0 and go way up to m/44'/60'/20'/0'/0](https://github.com/NomicFoundation/hardhat/blob/11f13e547d2b665c9335d7850dd928cf32ff60b1/packages/hardhat-ledger/src/provider.ts#L346). 
+
+Side note on how local providers are injected [can be found here](https://github.com/NomicFoundation/hardhat/blob/11f13e547d2b665c9335d7850dd928cf32ff60b1/packages/hardhat-core/src/internal/core/providers/accounts.ts#L19).
