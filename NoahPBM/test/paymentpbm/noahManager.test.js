@@ -285,6 +285,75 @@ describe("Noah Payment Manager Test", () => {
       expect(await xsgdToken.balanceOf(merchant.address)).to.equal(parseUnits("500", await xsgdToken.decimals()));
     });
 
+    it("Should ensure ERC20 balance and treasury balance are NOT changed after payment Created for grab use case. Grab master request payment for user", async () => {
+      const merchant = accounts[3];
+      const grabMasterWallet = accounts[4];
+      const grabUserWallet = accounts[5];
+      await xsgdToken.mint(grabMasterWallet.address, parseUnits("500", await xsgdToken.decimals()));
+
+      await addressList.addMerchantAddresses([merchant.address], "");
+      await xsgdToken
+        .connect(grabMasterWallet)
+        .increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
+      await pbm.connect(grabMasterWallet).mint(0, 500, grabUserWallet.address);
+      await pbm.connect(grabUserWallet).setApprovalForAll(grabMasterWallet.address, true);
+
+      expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(
+        parseUnits("500", await xsgdToken.decimals())
+      );
+      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(
+        parseUnits("500", await xsgdToken.decimals())
+      );
+
+      await pbm
+        .connect(grabMasterWallet)
+        .requestPayment(grabUserWallet.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+
+      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(
+        parseUnits("500", await xsgdToken.decimals())
+      );
+      expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(
+        parseUnits("500", await xsgdToken.decimals())
+      );
+    });
+
+    it("Should ensure ERC20 balance and treasury balance are updated after payment COMPLETED for grab use case", async () => {
+      const merchant = accounts[3];
+      const grabMasterWallet = accounts[4];
+      const grabUserWallet = accounts[5];
+      const noahCrawler = accounts[6];
+      await xsgdToken.mint(grabMasterWallet.address, parseUnits("500", await xsgdToken.decimals()));
+
+      await addressList.addMerchantAddresses([merchant.address], "");
+      await xsgdToken
+        .connect(grabMasterWallet)
+        .increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
+      await pbm.connect(grabMasterWallet).mint(0, 500, grabUserWallet.address);
+      await pbm.connect(grabUserWallet).setApprovalForAll(grabMasterWallet.address, true);
+
+      expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(
+        parseUnits("500", await xsgdToken.decimals())
+      );
+      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(
+        parseUnits("500", await xsgdToken.decimals())
+      );
+
+      await pbm
+        .connect(grabMasterWallet)
+        .requestPayment(grabUserWallet.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+
+      await noahPaymentManager
+        .connect(accounts[0])
+        .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), noahCrawler.address);
+      await noahPaymentManager
+        .connect(noahCrawler)
+        .completePayment(pbm.address, grabUserWallet.address, merchant.address, "unique_payment_id", "0x");
+
+      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(0);
+      expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
+      expect(await xsgdToken.balanceOf(merchant.address)).to.equal(parseUnits("500", await xsgdToken.decimals()));
+    });
+
     describe("Treasury Balance Test", () => {
       it("Should ensure Owner is able to recover specific amount of erc20 tokens in this smart contract", async () => {
         const initialBalance = parseUnits("10000", await xsgdToken.decimals());
