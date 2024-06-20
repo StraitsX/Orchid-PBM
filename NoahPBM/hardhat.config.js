@@ -105,7 +105,7 @@ module.exports = {
       network_id: 43113,
       saveDeployments: true,
       deploy: ["deploy/"],
-      tags: ["ruji"],
+      tags: ["fuji"],
     },
     avax: {
       accounts: [Wallet.fromMnemonic(process.env.DEPLOYER_MNEMONIC).privateKey],
@@ -121,6 +121,7 @@ module.exports = {
       polygon: POLYGON_SCAN_API_KEY,
       sepolia: process.env.SEPOLIA_SCAN_API_KEY,
       holesky: process.env.ETHER_SCAN_API_KEY,
+      fuji: "fuji",
     },
     customChains: [
       {
@@ -145,6 +146,15 @@ module.exports = {
         urls: {
           apiURL: "https://api-holesky.etherscan.io/api",
           browserURL: "https://holesky.etherscan.io/",
+        },
+      },
+      {
+        network: "fuji",
+        chainId: 43113,
+        urls: {
+          apiURL:
+              "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan",
+          browserURL: "https://c-chain.snowtrace.io",
         },
       },
     ],
