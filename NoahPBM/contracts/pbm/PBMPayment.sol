@@ -214,7 +214,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         NoahPaymentManager(noahPaymentManager).createPayment(from, to, spotToken, valueOfTokens, paymentUniqueId, data);
 
         // Burn PBM ERC1155 Tokens
-        _burn(_msgSender(), id, amount);
+        _burn(from, id, amount);
         PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
 
         emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, valueOfTokens);
