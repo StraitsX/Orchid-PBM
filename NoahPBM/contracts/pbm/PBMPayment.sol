@@ -193,7 +193,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      * chain if necessary
      * @param data metadata to include
      */
-    function createPayment(
+    function requestPayment(
         address from,
         address to,
         uint256 id,
@@ -224,7 +224,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      * @dev Creates a payment request via NoahpaymentManager to initiate an ERC20 token transfer to merchant.
      * Call this function to combine different PBM types token ids to create a payment.
      */
-    function createBatchPayment(
+    function requestBatchPayment(
         address from,
         address to,
         uint256[] memory ids,
@@ -386,7 +386,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
 
     function _validateTransfer(address from, address to) internal {
         require(
-            from == _msgSender() || isApprovedForAll(_msgSender(), from),
+            from == _msgSender() || isApprovedForAll(from, _msgSender()),
             "ERC1155: caller is not token owner nor approved"
         );
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(to), "PBM: 'to' address blacklisted");

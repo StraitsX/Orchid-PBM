@@ -251,24 +251,18 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
         require(erc20TokenValue > 0, "Token value should be more than 0");
         require(bytes(paymentUniqueId).length != 0);
+        require(
+            pendingPBMTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue,
+            "ERC20: transfer amount exceeds balance"
+        );
 
-        if (pendingPBMTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) {
-            // Update internal balance sheet
-            _markCompleteTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
+        // Update internal balance sheet
+        _markCompleteTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
 
-            // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
-            ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
+        // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
+        ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
 
-            emit MerchantPaymentCompleted(
-                campaignPBM,
-                from,
-                to,
-                erc20Token,
-                erc20TokenValue,
-                paymentUniqueId,
-                metadata
-            );
-        }
+        emit MerchantPaymentCompleted(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     /**
@@ -325,16 +319,15 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         require(Address.isContract(campaignPBM), "Must be from a smart contract");
         require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
         require(erc20TokenValue > 0, "Token value should be more than 0");
-
         // Ensure that only campaign PBM can spend its own money
-        if (pbmTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue) {
-            // Subtract from main balance directly to be sent out immediately.
-            _decreaseTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
+        require(pbmTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue, "ERC20: transfer amount exceeds balance");
 
-            // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
-            ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
+        // Subtract from main balance directly to be sent out immediately.
+        _decreaseTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
 
-            emit MerchantPaymentDirect(campaignPBM, from, to, erc20Token, erc20TokenValue, metadata);
-        }
+        // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
+        ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
+
+        emit MerchantPaymentDirect(campaignPBM, from, to, erc20Token, erc20TokenValue, metadata);
     }
 }
