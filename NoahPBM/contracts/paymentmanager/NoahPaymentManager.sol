@@ -270,30 +270,41 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         address campaignPBM,
         address from,
         address to,
-        address erc20Token,
-        uint256 erc20TokenValue,
         string memory paymentUniqueId,
         bytes memory metadata
     ) public whenNotPaused {
         require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
         require(Address.isContract(campaignPBM), "Must be a valid smart contract");
-        require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
-        require(erc20TokenValue > 0, "Token value should be more than 0");
         require(bytes(paymentUniqueId).length != 0);
+
+        // Retrieve the pending payment details
+        PendingPayment memory payment = pendingPaymentList[paymentUniqueId];
+        require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
+        require(payment.erc20TokenValue > 0, "Token value should be more than 0");
+
         require(
-            pendingPBMTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue,
+            pendingPBMTokenBalance[campaignPBM][payment.erc20Token] >= payment.erc20TokenValue,
             "ERC20: transfer amount exceeds balance"
         );
 
         // Update internal balance sheet
-        _markCompleteTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
+        _markCompleteTreasuryBalance(campaignPBM, payment.erc20Token, payment.erc20TokenValue);
 
         // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
-        ERC20Helper.safeTransfer(erc20Token, to, erc20TokenValue);
+        ERC20Helper.safeTransfer(payment.erc20Token, to, payment.erc20TokenValue);
+
+        emit MerchantPaymentCompleted(
+            campaignPBM,
+            from,
+            to,
+            payment.erc20Token,
+            payment.erc20TokenValue,
+            paymentUniqueId,
+            metadata
+        );
+
         // Set the pending payment value to 0 to mark paymentUniqueId as completed
         pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
-
-        emit MerchantPaymentCompleted(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
     }
 
     /**
@@ -324,8 +335,6 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
 
         // Ensure funds are re-credited back
         _revertPendingTreasuryBalance(campaignPBM, payment.erc20Token, payment.erc20TokenValue);
-        // Set the pending payment value to 0 to mark paymentUniqueId as refunded
-        pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
 
         // Emit payment cancel for accounting purposes
         emit MerchantPaymentCancelled(
@@ -337,6 +346,9 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
             paymentUniqueId,
             metadata
         );
+
+        // Set the pending payment value to 0 to mark paymentUniqueId as cancelled
+        pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
     }
 
     // Called by noah servers to refund a payment.
