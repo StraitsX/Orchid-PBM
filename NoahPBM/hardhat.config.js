@@ -122,6 +122,7 @@ module.exports = {
       sepolia: process.env.SEPOLIA_SCAN_API_KEY,
       holesky: process.env.ETHER_SCAN_API_KEY,
       fuji: "fuji",
+      avax: "avax",
     },
     customChains: [
       {
@@ -154,6 +155,15 @@ module.exports = {
         urls: {
           apiURL:
               "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan",
+          browserURL: "https://c-chain.snowtrace.io",
+        },
+      },
+      {
+        network: "avax",
+        chainId: 43114,
+        urls: {
+          apiURL:
+              "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
           browserURL: "https://c-chain.snowtrace.io",
         },
       },
