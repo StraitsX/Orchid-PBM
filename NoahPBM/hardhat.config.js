@@ -121,8 +121,8 @@ module.exports = {
       polygon: POLYGON_SCAN_API_KEY,
       sepolia: process.env.SEPOLIA_SCAN_API_KEY,
       holesky: process.env.ETHER_SCAN_API_KEY,
-      fuji: "fuji",
-      avax: "avax",
+      fuji: process.env.SNOW_SCAN_API_KEY,
+      avax: process.env.SNOW_SCAN_API_KEY,
     },
     customChains: [
       {
@@ -154,8 +154,8 @@ module.exports = {
         chainId: 43113,
         urls: {
           apiURL:
-              "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan",
-          browserURL: "https://c-chain.snowtrace.io",
+              "https://api-testnet.snowscan.xyz/api",
+          browserURL: "https://testnet.snowscan.xyz",
         },
       },
       {
@@ -163,8 +163,8 @@ module.exports = {
         chainId: 43114,
         urls: {
           apiURL:
-              "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
-          browserURL: "https://c-chain.snowtrace.io",
+              "https://api.snowscan.xyz/api",
+          browserURL: "https://snowscan.xyz/",
         },
       },
     ],
