@@ -284,7 +284,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
 
         require(
             pendingPBMTokenBalance[campaignPBM][payment.erc20Token] >= payment.erc20TokenValue,
-            "ERC20: transfer amount exceeds balance"
+            "ERC20: payment transfer amount exceeds available pending balance"
         );
 
         // Update internal balance sheet
@@ -292,6 +292,9 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
 
         // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
         ERC20Helper.safeTransfer(payment.erc20Token, to, payment.erc20TokenValue);
+
+        // Set the pending payment value to 0 to mark paymentUniqueId as completed
+        pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
 
         emit MerchantPaymentCompleted(
             campaignPBM,
@@ -302,9 +305,6 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
             paymentUniqueId,
             metadata
         );
-
-        // Set the pending payment value to 0 to mark paymentUniqueId as completed
-        pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
     }
 
     /**
@@ -333,6 +333,9 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         // [TODO] inform campaign pbm to emit payment cancel. no money movement has occured
         // [TODO] inform campaign pbm to refund PBM back to user.
 
+        // Set the pending payment value to 0 to mark paymentUniqueId as cancelled
+        pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
+
         // Ensure funds are re-credited back
         _revertPendingTreasuryBalance(campaignPBM, payment.erc20Token, payment.erc20TokenValue);
 
@@ -346,9 +349,6 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
             paymentUniqueId,
             metadata
         );
-
-        // Set the pending payment value to 0 to mark paymentUniqueId as cancelled
-        pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
     }
 
     // Called by noah servers to refund a payment.
