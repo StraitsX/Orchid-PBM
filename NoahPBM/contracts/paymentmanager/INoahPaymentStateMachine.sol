@@ -34,7 +34,7 @@ interface INoahPaymentStateMachine {
     /// Value refers to the real world value to be represenetd in Amount format.
     /// Amount refers to underlying integer x decimal representation
     ///
-    /// @param paymentUniqueId Required to ensure oracle fallback mechanism for retrying on another chain.
+    /// @param sourceReferenceID Required to ensure oracle fallback mechanism for retrying on another chain.
     /// This must be a globally unique identifier to allow the fallback payment on another chain by the oracle
     ///
     /// @param metadata usage:
@@ -48,7 +48,7 @@ interface INoahPaymentStateMachine {
         address to,
         address ERC20Token,
         uint256 ERC20TokenValue,
-        string paymentUniqueId,
+        string sourceReferenceID,
         bytes metadata
     );
 
@@ -59,7 +59,7 @@ interface INoahPaymentStateMachine {
         address to,
         address ERC20Token,
         uint256 ERC20TokenValue,
-        string paymentUniqueId,
+        string sourceReferenceID,
         bytes metadata
     );
 
@@ -72,7 +72,7 @@ interface INoahPaymentStateMachine {
         address to,
         address ERC20Token,
         uint256 ERC20TokenValue,
-        string paymentUniqueId,
+        string sourceReferenceID,
         bytes metadata
     );
 
@@ -83,7 +83,7 @@ interface INoahPaymentStateMachine {
         address to,
         address ERC20Token,
         uint256 ERC20TokenValue,
-        string paymentUniqueId,
+        string sourceReferenceID,
         string refundUniqueId,
         bytes metadata
     );
@@ -91,7 +91,7 @@ interface INoahPaymentStateMachine {
     /**
      *  @notice Direct stablecoin payment to merchant.
      *  This is for PBM issuer that doesn't require/need a 2 step payment completion service, and as a result
-     *  doesnt require a fallback mechanism. The exclusion of paymentUniqueId prevents
+     *  doesnt require a fallback mechanism. The exclusion of sourceReferenceID prevents
      *  the oracle from retrying on another chain or web2 fallback for instance.
      *  This is for wallet issuers that are unable to sign raw transactions and can only rely on the ERC1155 safeTransfer mechanism.
      */
