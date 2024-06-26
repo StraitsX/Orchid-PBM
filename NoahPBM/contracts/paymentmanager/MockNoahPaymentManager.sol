@@ -19,10 +19,10 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         address to,
         address erc20Token,
         uint256 erc20TokenValue,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         bytes memory metadata
     ) public {
-        emit MerchantPaymentCreated(address(0), from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
+        emit MerchantPaymentCreated(address(0), from, to, erc20Token, erc20TokenValue, sourceReferenceID, metadata);
     }
 
     /**
@@ -34,16 +34,16 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         address to,
         address erc20Token,
         uint256 erc20TokenValue,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         bytes memory metadata
     ) public {
-        emit MerchantPaymentCompleted(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
+        emit MerchantPaymentCompleted(campaignPBM, from, to, erc20Token, erc20TokenValue, sourceReferenceID, metadata);
     }
 
     /**
      * @notice Called by Noah Oracle to void a payment.
      * Useful in the event when payment cant be processed such as
-     * where acquirer is down, or an invalid paymentUniqueId is used.
+     * where acquirer is down, or an invalid sourceReferenceID is used.
      *
      * Funds will be re-credited and a retry is allowed on the next block mined
      **/
@@ -53,11 +53,11 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         address to,
         address erc20Token,
         uint256 erc20TokenValue,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         bytes memory metadata
     ) public {
         // Emit payment cancel for accounting purposes
-        emit MerchantPaymentCancelled(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
+        emit MerchantPaymentCancelled(campaignPBM, from, to, erc20Token, erc20TokenValue, sourceReferenceID, metadata);
     }
 
     // Called by noah servers to refund a payment.
@@ -68,7 +68,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
         address to,
         address erc20Token,
         uint256 erc20TokenValue,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         string memory refundUniqueId,
         bytes memory metadata
     ) public {
@@ -81,7 +81,7 @@ contract MockNoahPaymentManager is INoahPaymentStateMachine {
             to,
             erc20Token,
             erc20TokenValue,
-            paymentUniqueId,
+            sourceReferenceID,
             refundUniqueId,
             metadata
         );
