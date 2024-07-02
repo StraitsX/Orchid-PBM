@@ -151,9 +151,10 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         return pendingPBMTokenBalance[pbmAddress][erc20token] + pbmTokenBalance[pbmAddress][erc20token];
     }
 
-    /// @dev Returns the pending payment details of a paymentUniqueId
-    function getPendingPayment(string memory paymentUniqueId) public view returns (address, uint256) {
-        PendingPayment memory payment = pendingPaymentList[paymentUniqueId];
+    /// @dev Returns the pending payment details of a sourceReferenceID
+    // TODO: use hashed sourceReferenceID with from address as the key
+    function getPendingPayment(string memory sourceReferenceID) public view returns (address, uint256) {
+        PendingPayment memory payment = pendingPaymentList[sourceReferenceID];
         return (payment.erc20Token, payment.erc20TokenValue);
     }
 
@@ -222,16 +223,17 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         emit TreasuryPendingBalanceDecrease(campaignPBM, erc20Token, erc20TokenValue);
     }
 
+    // TODO: use hashed sourceReferenceID with from address as the key
     function _addToPendingPaymentList(
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         address erc20Token,
         uint256 erc20TokenValue
     ) internal {
-        require(bytes(paymentUniqueId).length != 0, "Payment unique ID cannot be empty");
+        require(bytes(sourceReferenceID).length != 0, "Payment unique ID cannot be empty");
         require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
         require(erc20TokenValue > 0, "token value must be more than 0");
 
-        pendingPaymentList[paymentUniqueId] = PendingPayment(erc20Token, erc20TokenValue);
+        pendingPaymentList[sourceReferenceID] = PendingPayment(erc20Token, erc20TokenValue);
     }
 
     /////////////////// INoahPaymentStateMachine functions  //////////////////////////
@@ -244,7 +246,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         address to,
         address erc20Token,
         uint256 erc20TokenValue,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         bytes memory metadata
     ) public whenNotPaused {
         address campaignPBM = _msgSender();
@@ -254,13 +256,15 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         // Ensure that only campaign PBM can spend its own money
         require(pbmTokenBalance[campaignPBM][erc20Token] >= erc20TokenValue, "ERC20: transfer amount exceeds balance");
 
-        require(bytes(paymentUniqueId).length != 0, "Payment unique ID cannot be empty");
+        require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
+        // TODO: check whether hashed sourceReferenceID and address exists already in pendingPaymentList
 
         _markPendingTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
-        _addToPendingPaymentList(paymentUniqueId, erc20Token, erc20TokenValue);
+        // TODO: use hashed sourceReferenceID with from address as the key
+        _addToPendingPaymentList(sourceReferenceID, erc20Token, erc20TokenValue);
 
         // Inform Oracle to make payments
-        emit MerchantPaymentCreated(campaignPBM, from, to, erc20Token, erc20TokenValue, paymentUniqueId, metadata);
+        emit MerchantPaymentCreated(campaignPBM, from, to, erc20Token, erc20TokenValue, sourceReferenceID, metadata);
     }
 
     /**
@@ -270,15 +274,16 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         address campaignPBM,
         address from,
         address to,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         bytes memory metadata
     ) public whenNotPaused {
         require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
         require(Address.isContract(campaignPBM), "Must be a valid smart contract");
-        require(bytes(paymentUniqueId).length != 0);
+        require(bytes(sourceReferenceID).length != 0);
 
         // Retrieve the pending payment details
-        PendingPayment memory payment = pendingPaymentList[paymentUniqueId];
+        // TODO: use hashed sourceReferenceID with from address as the key to retrieve payment details
+        PendingPayment memory payment = pendingPaymentList[sourceReferenceID];
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
         require(payment.erc20TokenValue > 0, "Token value should be more than 0");
 
@@ -293,8 +298,9 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
         ERC20Helper.safeTransfer(payment.erc20Token, to, payment.erc20TokenValue);
 
-        // Set the pending payment value to 0 to mark paymentUniqueId as completed
-        pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
+        // Set the pending payment value to 0 to mark sourceReferenceID as completed
+        // TODO: use hashed sourceReferenceID with from address as the key
+        pendingPaymentList[sourceReferenceID].erc20TokenValue = 0;
 
         emit MerchantPaymentCompleted(
             campaignPBM,
@@ -302,7 +308,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
             to,
             payment.erc20Token,
             payment.erc20TokenValue,
-            paymentUniqueId,
+            sourceReferenceID,
             metadata
         );
     }
@@ -310,7 +316,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
     /**
      * @notice Called by Noah Oracle to void a payment.
      * Useful in the event when payment cant be processed such as
-     * where acquirer is down, or an invalid paymentUniqueId is used.
+     * where acquirer is down, or an invalid sourceReferenceID is used.
      *
      * Funds will be re-credited and a retry is allowed on the next block mined
      **/
@@ -318,23 +324,25 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         address campaignPBM,
         address from,
         address to,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         bytes memory metadata
     ) public whenNotPaused {
         require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
         require(Address.isContract(campaignPBM), "Must be a valid smart contract");
-        require(bytes(paymentUniqueId).length != 0, "Payment unique ID cannot be empty");
+        require(bytes(sourceReferenceID).length != 0, "Payment unique ID cannot be empty");
 
         // Retrieve the pending payment details
-        PendingPayment memory payment = pendingPaymentList[paymentUniqueId];
+        // TODO: use hashed sourceReferenceID with from address as the key to retrieve payment details
+        PendingPayment memory payment = pendingPaymentList[sourceReferenceID];
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
         require(payment.erc20TokenValue > 0, "Token value should be more than 0");
 
         // [TODO] inform campaign pbm to emit payment cancel. no money movement has occured
         // [TODO] inform campaign pbm to refund PBM back to user.
 
-        // Set the pending payment value to 0 to mark paymentUniqueId as cancelled
-        pendingPaymentList[paymentUniqueId].erc20TokenValue = 0;
+        // Set the pending payment value to 0 to mark sourceReferenceID as cancelled
+        // TODO: use hashed sourceReferenceID with from address as the key
+        pendingPaymentList[sourceReferenceID].erc20TokenValue = 0;
 
         // Ensure funds are re-credited back
         _revertPendingTreasuryBalance(campaignPBM, payment.erc20Token, payment.erc20TokenValue);
@@ -346,7 +354,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
             to,
             payment.erc20Token,
             payment.erc20TokenValue,
-            paymentUniqueId,
+            sourceReferenceID,
             metadata
         );
     }

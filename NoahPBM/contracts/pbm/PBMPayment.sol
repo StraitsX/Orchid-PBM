@@ -188,7 +188,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      * @param to PBM payment address. Must be a merchant address.
      * @param id PBM Token Id
      * @param amount Number of PBM to send
-     * @param paymentUniqueId payment unique identifier.
+     * @param sourceReferenceID payment source unique identifier.
      * Must be guaranteed to be unique globally across all chains to allow oracle fallback to another
      * chain if necessary
      * @param data metadata to include
@@ -198,7 +198,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         address to,
         uint256 id,
         uint256 amount,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         bytes memory data
     ) external whenNotPaused {
         _validateTransfer(from, to);
@@ -211,7 +211,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
 
         // Initiate payment of ERC20 tokens
         address spotToken = getSpotAddress(id);
-        NoahPaymentManager(noahPaymentManager).createPayment(from, to, spotToken, valueOfTokens, paymentUniqueId, data);
+        NoahPaymentManager(noahPaymentManager).createPayment(from, to, spotToken, valueOfTokens, sourceReferenceID, data);
 
         // Burn PBM ERC1155 Tokens
         _burn(from, id, amount);
@@ -229,7 +229,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         address to,
         uint256[] memory ids,
         uint256[] memory amounts,
-        string memory paymentUniqueId,
+        string memory sourceReferenceID,
         bytes memory data
     ) external whenNotPaused {
         _validateTransfer(from, to);
@@ -270,7 +270,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
                 to,
                 commonTokenAddress,
                 sumOfTokens,
-                paymentUniqueId,
+                sourceReferenceID,
                 data
             );
 
