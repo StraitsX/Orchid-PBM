@@ -44,22 +44,22 @@ interface INoahPaymentStateMachine {
     /// 3. NFT metadata for airdrops
     event MerchantPaymentCreated(
         address indexed campaignPBM,
-        address from,
+        address indexed from,
         address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
-        string indexed sourceReferenceID,
+        string sourceReferenceID,
         bytes metadata
     );
 
     /// @notice Emitted when a payment is successfully done and acknowledged by acquirer.
     event MerchantPaymentCompleted(
         address indexed campaignPBM,
-        address from,
+        address indexed from,
         address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
-        string indexed sourceReferenceID,
+        string sourceReferenceID,
         bytes metadata
     );
 
@@ -68,11 +68,11 @@ interface INoahPaymentStateMachine {
     /// in order to update their users on a payment cancellation event.
     event MerchantPaymentCancelled(
         address indexed campaignPBM,
-        address from,
+        address indexed from,
         address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
-        string indexed sourceReferenceID,
+        string sourceReferenceID,
         bytes metadata
     );
 
@@ -80,11 +80,11 @@ interface INoahPaymentStateMachine {
     event MerchantPaymentRefunded(
         address indexed campaignPBM,
         address indexed from,
-        address to,
+        address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
         string sourceReferenceID,
-        string indexed refundUniqueId,
+        string refundUniqueId,
         bytes metadata
     );
 
