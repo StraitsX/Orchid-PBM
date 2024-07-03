@@ -31,7 +31,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
     }
 
     // Keeps track of erc20 token value of each paymentUniqueID
-    // paymentUniqueID is a keccak256 hash of campaignPBM address and sourceReferenceID
+    // paymentUniqueID is a keccak256 hash of from address and sourceReferenceID
     // paymentUniqueID => PendingPayment
     mapping(bytes32 => PendingPayment) internal pendingPaymentList;
 
@@ -153,9 +153,9 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
     }
 
     /// @dev Returns the pending payment details of a sourceReferenceID
-    function getPendingPayment(address campaignPBM, string memory sourceReferenceID) public view returns (address, uint256) {
+    function getPendingPayment(address from, string memory sourceReferenceID) public view returns (address, uint256) {
         // Generate the unique payment ID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(campaignPBM, sourceReferenceID);
+        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
         PendingPayment memory payment = pendingPaymentList[paymentUniqueID];
         return (payment.erc20Token, payment.erc20TokenValue);
     }
@@ -225,8 +225,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         emit TreasuryPendingBalanceDecrease(campaignPBM, erc20Token, erc20TokenValue);
     }
 
-    function _generatePaymentUniqueID(address campaignPBM, string memory sourceReferenceID) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(campaignPBM, sourceReferenceID));
+    function _generatePaymentUniqueID(address from, string memory sourceReferenceID) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(from, sourceReferenceID));
     }
 
     function _addToPendingPaymentList(bytes32 paymentUniqueID, address erc20Token, uint256 erc20TokenValue) internal {
@@ -262,8 +262,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
 
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
 
-        // Generate the unique payment ID from campaignPBM and sourceReferenceID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(campaignPBM, sourceReferenceID);
+        // Generate the unique payment ID from from address and sourceReferenceID
+        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
         // Check whether the uniquePaymentID already exists in pendingPaymentList
         require(pendingPaymentList[paymentUniqueID].erc20TokenValue == 0, "Payment request already exists");
 
@@ -288,8 +288,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         require(Address.isContract(campaignPBM), "Must be a valid smart contract");
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
 
-        // Generate the unique payment ID from campaignPBM and sourceReferenceID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(campaignPBM, sourceReferenceID);
+        // Generate the unique payment ID from from address and sourceReferenceID
+        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
 
         // Retrieve the pending payment details
         PendingPayment memory payment = pendingPaymentList[paymentUniqueID];
@@ -339,8 +339,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         require(Address.isContract(campaignPBM), "Must be a valid smart contract");
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
 
-        // Generate the unique payment ID from campaignPBM and sourceReferenceID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(campaignPBM, sourceReferenceID);
+        // Generate the unique payment ID from from address and sourceReferenceID
+        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
 
         // Retrieve the pending payment details
         PendingPayment memory payment = pendingPaymentList[paymentUniqueID];

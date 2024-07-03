@@ -154,7 +154,7 @@ describe("Noah Payment Manager Test", () => {
         .connect(aliOmnibus)
         .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
-      const pendingPayment = await noahPaymentManager.getPendingPayment(pbm.address, "unique_payment_id");
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(pendingPayment[0]).to.equal(xsgdToken.address);
       expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
     });
@@ -172,7 +172,7 @@ describe("Noah Payment Manager Test", () => {
           .connect(aliOmnibus)
           .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
-      const pendingPayment = await noahPaymentManager.getPendingPayment(pbm.address, "unique_payment_id");
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(pendingPayment[0]).to.equal(xsgdToken.address);
       expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
 
@@ -195,7 +195,7 @@ describe("Noah Payment Manager Test", () => {
         .connect(aliOmnibus)
         .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
-      const pendingPayment = await noahPaymentManager.getPendingPayment(pbm.address, "unique_payment_id");
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(pendingPayment[0]).to.equal(xsgdToken.address);
       expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
 
@@ -207,7 +207,7 @@ describe("Noah Payment Manager Test", () => {
         .connect(noahCrawler)
         .completePayment(pbm.address, aliOmnibus.address, merchant.address, "unique_payment_id", "0x");
       // Check if pending payment is removed
-      const completedPayment = await noahPaymentManager.getPendingPayment(pbm.address, "unique_payment_id");
+      const completedPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(completedPayment[0]).to.equal(xsgdToken.address);
       expect(completedPayment[1]).to.equal(0);
     });
@@ -227,7 +227,7 @@ describe("Noah Payment Manager Test", () => {
         .connect(aliOmnibus)
         .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
-      const pendingPayment = await noahPaymentManager.getPendingPayment(pbm.address, "unique_payment_id");
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(pendingPayment[0]).to.equal(xsgdToken.address);
       expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
 
@@ -240,7 +240,7 @@ describe("Noah Payment Manager Test", () => {
         .cancelPayment(pbm.address, aliOmnibus.address, merchant.address, "unique_payment_id", "0x");
 
       // Check if pending payment is removed
-      const cancelledPayment = await noahPaymentManager.getPendingPayment(pbm.address, "unique_payment_id");
+      const cancelledPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(cancelledPayment[0]).to.equal(xsgdToken.address);
       expect(cancelledPayment[1]).to.equal(0);
     });
