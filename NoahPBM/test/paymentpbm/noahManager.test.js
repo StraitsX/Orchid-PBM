@@ -154,9 +154,30 @@ describe("Noah Payment Manager Test", () => {
         .connect(aliOmnibus)
         .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
-      const pendingPayment = await noahPaymentManager.getPendingPayment("unique_payment_id");
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(pendingPayment[0]).to.equal(xsgdToken.address);
       expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
+    });
+
+    it("Should ensure payments can only be created if sourceReferenceID is unique for each pbmCampaign contract", async () => {
+      const merchant = accounts[3];
+      const aliOmnibus = accounts[4];
+      await xsgdToken.mint(aliOmnibus.address, parseUnits("10000", await xsgdToken.decimals()));
+
+      await addressList.addMerchantAddresses([merchant.address], "");
+      await xsgdToken.connect(aliOmnibus).increaseAllowance(pbm.address, parseUnits("1000", await xsgdToken.decimals()));
+      await pbm.connect(aliOmnibus).mint(0, 1000, aliOmnibus.address);
+
+      await pbm
+          .connect(aliOmnibus)
+          .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
+      expect(pendingPayment[0]).to.equal(xsgdToken.address);
+      expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
+
+      // Request payment with same sourceReferenceID should fail
+      await expect(pbm.connect(aliOmnibus).requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x")).to.be.revertedWith("Payment request already exists");
     });
 
     it("Should ensure a pending payment is removed from pendingPaymentList when completed a payment", async () => {
@@ -174,7 +195,7 @@ describe("Noah Payment Manager Test", () => {
         .connect(aliOmnibus)
         .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
-      const pendingPayment = await noahPaymentManager.getPendingPayment("unique_payment_id");
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(pendingPayment[0]).to.equal(xsgdToken.address);
       expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
 
@@ -186,7 +207,7 @@ describe("Noah Payment Manager Test", () => {
         .connect(noahCrawler)
         .completePayment(pbm.address, aliOmnibus.address, merchant.address, "unique_payment_id", "0x");
       // Check if pending payment is removed
-      const completedPayment = await noahPaymentManager.getPendingPayment("unique_payment_id");
+      const completedPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(completedPayment[0]).to.equal(xsgdToken.address);
       expect(completedPayment[1]).to.equal(0);
     });
@@ -206,7 +227,7 @@ describe("Noah Payment Manager Test", () => {
         .connect(aliOmnibus)
         .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
 
-      const pendingPayment = await noahPaymentManager.getPendingPayment("unique_payment_id");
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(pendingPayment[0]).to.equal(xsgdToken.address);
       expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
 
@@ -219,7 +240,7 @@ describe("Noah Payment Manager Test", () => {
         .cancelPayment(pbm.address, aliOmnibus.address, merchant.address, "unique_payment_id", "0x");
 
       // Check if pending payment is removed
-      const cancelledPayment = await noahPaymentManager.getPendingPayment("unique_payment_id");
+      const cancelledPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(cancelledPayment[0]).to.equal(xsgdToken.address);
       expect(cancelledPayment[1]).to.equal(0);
     });

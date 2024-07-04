@@ -43,9 +43,9 @@ interface INoahPaymentStateMachine {
     /// ie: Get a USDC<>XSGD quote from STX, pay in USDC and indicate quote ref here
     /// 3. NFT metadata for airdrops
     event MerchantPaymentCreated(
-        address campaignPBM,
-        address from,
-        address to,
+        address indexed campaignPBM,
+        address indexed from,
+        address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
         string sourceReferenceID,
@@ -54,9 +54,9 @@ interface INoahPaymentStateMachine {
 
     /// @notice Emitted when a payment is successfully done and acknowledged by acquirer.
     event MerchantPaymentCompleted(
-        address campaignPBM,
-        address from,
-        address to,
+        address indexed campaignPBM,
+        address indexed from,
+        address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
         string sourceReferenceID,
@@ -67,9 +67,9 @@ interface INoahPaymentStateMachine {
     /// Campaign PBM should be notified as well when this occurs. Wallet issuers should subscribe to this event
     /// in order to update their users on a payment cancellation event.
     event MerchantPaymentCancelled(
-        address campaignPBM,
-        address from,
-        address to,
+        address indexed campaignPBM,
+        address indexed from,
+        address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
         string sourceReferenceID,
@@ -78,9 +78,9 @@ interface INoahPaymentStateMachine {
 
     /// @notice Emitted  when merchant initiates a refund back to a user / wallet issuer.
     event MerchantPaymentRefunded(
-        address campaignPBM,
-        address from,
-        address to,
+        address indexed campaignPBM,
+        address indexed from,
+        address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
         string sourceReferenceID,
@@ -96,9 +96,9 @@ interface INoahPaymentStateMachine {
      *  This is for wallet issuers that are unable to sign raw transactions and can only rely on the ERC1155 safeTransfer mechanism.
      */
     event MerchantPaymentDirect(
-        address campaignPBM,
-        address from,
-        address to,
+        address indexed campaignPBM,
+        address indexed from,
+        address indexed to,
         address ERC20Token,
         uint256 ERC20TokenValue,
         bytes metadata
