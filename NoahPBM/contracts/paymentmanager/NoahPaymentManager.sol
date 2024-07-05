@@ -26,6 +26,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
 
     // Pending payment details struct
     struct PendingPayment {
+        address campaignPBM;
+        address to;
         address erc20Token;
         uint256 erc20TokenValue;
     }
@@ -229,12 +231,15 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         return keccak256(abi.encodePacked(from, sourceReferenceID));
     }
 
-    function _addToPendingPaymentList(bytes32 paymentUniqueID, address erc20Token, uint256 erc20TokenValue) internal {
+    function _addToPendingPaymentList(bytes32 paymentUniqueID, address campaignPBM, address to, address erc20Token, uint256 erc20TokenValue) internal {
         require(paymentUniqueID != bytes32(0), "Payment unique ID cannot be empty");
         require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
+        require(Address.isContract(campaignPBM), "Must be a valid smart contract");
         require(erc20TokenValue > 0, "token value must be more than 0");
 
         pendingPaymentList[paymentUniqueID] = PendingPayment({
+            campaignPBM: campaignPBM,
+            to: to,
             erc20Token: erc20Token,
             erc20TokenValue: erc20TokenValue
         });
@@ -268,7 +273,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         require(pendingPaymentList[paymentUniqueID].erc20TokenValue == 0, "Payment request already exists");
 
         _markPendingTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
-        _addToPendingPaymentList(paymentUniqueID, erc20Token, erc20TokenValue);
+        _addToPendingPaymentList(paymentUniqueID, campaignPBM, to, erc20Token, erc20TokenValue);
 
         // Inform Oracle to make payments
         emit MerchantPaymentCreated(campaignPBM, from, to, erc20Token, erc20TokenValue, sourceReferenceID, metadata);
@@ -278,42 +283,40 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
      * @notice Called by Noah oracle to complete a payment
      **/
     function completePayment(
-        address campaignPBM,
         address from,
-        address to,
         string memory sourceReferenceID,
         bytes memory metadata
     ) public whenNotPaused {
         require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
-        require(Address.isContract(campaignPBM), "Must be a valid smart contract");
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
 
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
-
         // Retrieve the pending payment details
         PendingPayment memory payment = pendingPaymentList[paymentUniqueID];
+
+        require(Address.isContract(payment.campaignPBM), "Must be a valid smart contract");
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
         require(payment.erc20TokenValue > 0, "Token value should be more than 0");
 
         require(
-            pendingPBMTokenBalance[campaignPBM][payment.erc20Token] >= payment.erc20TokenValue,
+            pendingPBMTokenBalance[payment.campaignPBM][payment.erc20Token] >= payment.erc20TokenValue,
             "ERC20: payment transfer amount exceeds available pending balance"
         );
 
         // Update internal balance sheet
-        _markCompleteTreasuryBalance(campaignPBM, payment.erc20Token, payment.erc20TokenValue);
+        _markCompleteTreasuryBalance(payment.campaignPBM, payment.erc20Token, payment.erc20TokenValue);
 
         // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
-        ERC20Helper.safeTransfer(payment.erc20Token, to, payment.erc20TokenValue);
+        ERC20Helper.safeTransfer(payment.erc20Token, payment.to, payment.erc20TokenValue);
 
         // Set the pending payment value to 0 to mark paymentUniqueID as completed
         pendingPaymentList[paymentUniqueID].erc20TokenValue = 0;
 
         emit MerchantPaymentCompleted(
-            campaignPBM,
+            payment.campaignPBM,
             from,
-            to,
+            payment.to,
             payment.erc20Token,
             payment.erc20TokenValue,
             sourceReferenceID,
@@ -329,38 +332,36 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
      * Funds will be re-credited and a retry is allowed on the next block mined
      **/
     function cancelPayment(
-        address campaignPBM,
         address from,
-        address to,
         string memory sourceReferenceID,
         bytes memory metadata
     ) public whenNotPaused {
-        require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
-        require(Address.isContract(campaignPBM), "Must be a valid smart contract");
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
-
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
-
         // Retrieve the pending payment details
         PendingPayment memory payment = pendingPaymentList[paymentUniqueID];
+
+        require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
+        require(Address.isContract(payment.campaignPBM), "Must be a valid smart contract");
+
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
         require(payment.erc20TokenValue > 0, "Token value should be more than 0");
 
         // [TODO] inform campaign pbm to emit payment cancel. no money movement has occured
         // [TODO] inform campaign pbm to refund PBM back to user.
 
+        // Ensure funds are re-credited back
+        _revertPendingTreasuryBalance(payment.campaignPBM, payment.erc20Token, payment.erc20TokenValue);
+
         // Set the pending payment value to 0 to mark paymentUniqueID as cancelled
         pendingPaymentList[paymentUniqueID].erc20TokenValue = 0;
 
-        // Ensure funds are re-credited back
-        _revertPendingTreasuryBalance(campaignPBM, payment.erc20Token, payment.erc20TokenValue);
-
         // Emit payment cancel for accounting purposes
         emit MerchantPaymentCancelled(
-            campaignPBM,
+            payment.campaignPBM,
             from,
-            to,
+            payment.to,
             payment.erc20Token,
             payment.erc20TokenValue,
             sourceReferenceID,
