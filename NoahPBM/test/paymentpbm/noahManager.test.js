@@ -205,7 +205,7 @@ describe("Noah Payment Manager Test", () => {
         .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), noahCrawler.address);
       await noahPaymentManager
         .connect(noahCrawler)
-        .completePayment(pbm.address, aliOmnibus.address, merchant.address, "unique_payment_id", "0x");
+        .completePayment(aliOmnibus.address, "unique_payment_id", "0x");
       // Check if pending payment is removed
       const completedPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(completedPayment[0]).to.equal(xsgdToken.address);
@@ -237,7 +237,7 @@ describe("Noah Payment Manager Test", () => {
         .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), noahCrawler.address);
       await noahPaymentManager
         .connect(noahCrawler)
-        .cancelPayment(pbm.address, aliOmnibus.address, merchant.address, "unique_payment_id", "0x");
+        .cancelPayment(aliOmnibus.address, "unique_payment_id", "0x");
 
       // Check if pending payment is removed
       const cancelledPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
@@ -299,7 +299,7 @@ describe("Noah Payment Manager Test", () => {
         .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), noahCrawler.address);
       await noahPaymentManager
         .connect(noahCrawler)
-        .completePayment(pbm.address, aliOmnibus.address, merchant.address, "unique_payment_id", "0x");
+        .completePayment(aliOmnibus.address, "unique_payment_id", "0x");
 
       expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(0);
       expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
@@ -368,7 +368,7 @@ describe("Noah Payment Manager Test", () => {
         .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), noahCrawler.address);
       await noahPaymentManager
         .connect(noahCrawler)
-        .completePayment(pbm.address, grabUserWallet.address, merchant.address, "unique_payment_id", "0x");
+        .completePayment(grabUserWallet.address, "unique_payment_id", "0x");
 
       expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(0);
       expect(await xsgdToken.balanceOf(noahPaymentManager.address)).to.equal(0);
