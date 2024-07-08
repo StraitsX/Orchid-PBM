@@ -3,13 +3,15 @@ async function main() {
     const { deployer } = await getNamedAccounts();
     const deployerSigner = ethers.provider.getSigner(deployer);
 
-    const pbmPaymentAddr = "0x8969Ef503B7570cF6A60CDb7C866f7341DE9F574";
+    const pbmPaymentAddr = "0x8bce8B6BAC1639f2AdB4496389FA2EfBf61BC454";
     const pbmPayment = (await ethers.getContractFactory("PBMPayment")).attach(pbmPaymentAddr).connect(deployerSigner);
 
 
     const companyName = "StraitsX"
-    // fuji testnet XSGD please change as needed
-    const spotAddress = "0xd769410dc8772695A7f55a304d2125320A65c2a5"
+    // fuji testnet XSGD 0xd769410dc8772695A7f55a304d2125320A65c2a5
+    // c chain XSGD 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E
+    // please change as needed
+    const spotAddress = "0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E"
     const spotAmount = 10000 // 0.01 XSGD
     const spotType = "XSGD"
     const tokenExpiry = 1767024000; // December 30, 2025 12:00:00 AM GMT+08:00

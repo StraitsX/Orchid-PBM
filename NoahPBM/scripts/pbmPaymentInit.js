@@ -3,15 +3,15 @@ async function main() {
   const { deployer } = await getNamedAccounts();
   const deployerSigner = ethers.provider.getSigner(deployer);
 
-  const pbmPaymentAddr = "0x8969Ef503B7570cF6A60CDb7C866f7341DE9F574";
+  const pbmPaymentAddr = "0x8bce8B6BAC1639f2AdB4496389FA2EfBf61BC454";
   const pbmPayment = (await ethers.getContractFactory("PBMPayment")).attach(pbmPaymentAddr).connect(deployerSigner);
 
   console.log("PBMPayment address", pbmPaymentAddr);
 
-  const addressListAddr = "0xD0569E9fdD9AD6D81fb7712aC065b466D7c61128";
+  const addressListAddr = "0x3376F9a146bE74E5f1540A200911a7767913Fbf1";
   console.log("PBMMerchantAddressList address", addressListAddr);
 
-  const noahPaymentManagerAddr = "0x49aD808009a42CEFaAeCCfB3BB680ADa33698219";
+  const noahPaymentManagerAddr = "0xEF19e8D2FDcD42a043807027f609d8EE105817eA";
 
   const expiryDate = 1767110400; // December 31, 2025 12:00:00 AM GMT+08:00
 
