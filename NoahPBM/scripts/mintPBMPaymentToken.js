@@ -14,13 +14,14 @@ async function main() {
   const xsgd = await XSGD.attach(spotAddress).connect(deployerSigner);
 
   // increase allowance for PBM
-  await xsgd.increaseAllowance(pbmPayment.address, ethers.utils.parseUnits("1", await xsgd.decimals()));
+  await xsgd.increaseAllowance(pbmPayment.address, ethers.utils.parseUnits("10", await xsgd.decimals()));
+  console.log(`increased allowance for PBM to 10 XSGD`);
 
   const tokenID = 0;
   // PBM token id 0 -> 0.01 xsgd
-  const amount = 100;
+  const amount = 1000;
 
-  const receiver = deployer;
+  const receiver = "0x77018cbA4eD6706028B679c47A44290d47f6B7D2";
 
   // approve PBM
   await pbmPayment.mint(tokenID, amount, receiver);
