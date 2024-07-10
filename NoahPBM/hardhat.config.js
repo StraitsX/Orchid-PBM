@@ -8,11 +8,6 @@ require("hardhat-abi-exporter");
 require("hardhat-deploy");
 const { Wallet } = require("ethers");
 
-const DEPLOYER_MNEMONIC = process.env.DEPLOYER_MNEMONIC;
-const POLYGON_RPC_URL = process.env.POLYGON_MAINNET_NODE_HTTP_URL;
-const POLYGON_SCAN_API_KEY = process.env.POLYGON_SCAN_API_KEY;
-const MUMBAI_SCAN_API_KEY = process.env.MUMBAI_SCAN_API_KEY;
-
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
@@ -79,8 +74,8 @@ module.exports = {
       tags: ["sepolia"],
     },
     polygon: {
-      accounts: [Wallet.fromMnemonic(DEPLOYER_MNEMONIC).privateKey],
-      url: POLYGON_RPC_URL,
+      accounts: [Wallet.fromMnemonic(process.env.DEPLOYER_MNEMONIC).privateKey],
+      url: process.env.POLYGON_MAINNET_NODE_HTTP_URL,
       network_id: 137,
       confirmations: 2,
       timeoutBlocks: 200,
@@ -115,10 +110,18 @@ module.exports = {
       deploy: ["deploy/"],
       tags: ["avax"],
     },
+    straitsxSubnet: {
+      accounts: [Wallet.fromMnemonic(process.env.DEPLOYER_MNEMONIC).privateKey],
+      url: process.env.STRAITSX_SUBNET_HTTP_URL,
+      network_id: 5566,
+      saveDeployments: true,
+      deploy: ["deploy/"],
+      tags: ["straitsxSubnet"],
+    }
   },
   etherscan: {
     apiKey: {
-      polygon: POLYGON_SCAN_API_KEY,
+      polygon: process.env.POLYGON_SCAN_API_KEY,
       sepolia: process.env.SEPOLIA_SCAN_API_KEY,
       holesky: process.env.ETHER_SCAN_API_KEY,
       fuji: process.env.SNOW_SCAN_API_KEY,
