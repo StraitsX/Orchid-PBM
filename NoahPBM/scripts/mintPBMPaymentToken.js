@@ -3,7 +3,7 @@ const { ethers, getNamedAccounts } = require("hardhat");
 async function main() {
   const { deployer } = await getNamedAccounts();
   const deployerSigner = ethers.provider.getSigner(deployer);
-  console.log("wallet public address: " + deployerSigner._address);
+  console.log("Minter Wallet public address: " + deployerSigner._address);
 
 
   // STX subnet PBMPayment: 0xba17a9f3C074d381D53D605590Eb13dde2d176a9
@@ -20,11 +20,13 @@ async function main() {
   const xsgd = await XSGD.attach(spotAddress).connect(deployerSigner);
 
   // How much to mint
-  const DOLLAR_VALUE_TO_MINT = "0.1"; // 0.1 stands for 10 cents, 1.0 stands for 1 dollar
+  const DOLLAR_VALUE_TO_MINT = "10"; // 0.1 stands for 10 cents, 1.0 stands for 1 dollar
 
   const receiverList = [
-    "0x2E78aF1d35644fedaeaaf8CA8ACb70D0B35d3b12", // Victor AVAX SAFE-WALLET
-    "0xF642be06350DAe9dD475E5A5ad6e25038F295B28", // Victor AVAX EOA Wallet
+    // "0x2E78aF1d35644fedaeaaf8CA8ACb70D0B35d3b12", // Victor AVAX SAFE-WALLET
+    // "0xF642be06350DAe9dD475E5A5ad6e25038F295B28", // Victor AVAX EOA Wallet
+    // "0x4F67e8Df00d66C36a6d63afC62A29058eC03551A", // Advait AVAX Safe-wallet
+    "0x57358A3280603F8863e0006c48c8Ba869fd85D83", // Tianwei avax safe-wallet
   ];
 
   for(const receiver of receiverList) {
@@ -39,7 +41,7 @@ async function main() {
 
     // PBM Mint to receiver
     const tx = await pbmPayment.mint(tokenID, amount, receiver);
-    console.log(`minted PBM token ${tokenID} to address ${receiver}`);
+    console.log(`minted PBM token ID ${tokenID} of $${DOLLAR_VALUE_TO_MINT} to address ${receiver}`);
     
     // wait for txn to truly be completed
     const receipt = await tx.wait();
