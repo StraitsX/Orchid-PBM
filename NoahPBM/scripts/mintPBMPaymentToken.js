@@ -8,6 +8,7 @@ async function main() {
 
   // fuji testnet XSGD 0xd769410dc8772695A7f55a304d2125320A65c2a5
   // c chain XSGD 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E
+  // stx subnet XSGD 0x49aB91610BfDA3493e7549176247060643A9108b
   // please change as needed
   const spotAddress = "0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E";
   const XSGD = await ethers.getContractFactory("Spot");
