@@ -3,7 +3,11 @@ async function main() {
   const { deployer } = await getNamedAccounts();
   const deployerSigner = ethers.provider.getSigner(deployer);
 
-  const noahPaymentManagerAddr = "0xEF19e8D2FDcD42a043807027f609d8EE105817eA";
+  // noah PBM payment manager on c-chain 0xEF19e8D2FDcD42a043807027f609d8EE105817eA
+  // noah PBM payment manager on straitsx subnet 0x5201D8EF22bA3090eA3329d57F082801783A8558
+  // change as needed
+
+  const noahPaymentManagerAddr = "0x5201D8EF22bA3090eA3329d57F082801783A8558";
   const noahPaymentManager = (await ethers.getContractFactory("NoahPaymentManager"))
     .attach(noahPaymentManagerAddr)
     .connect(deployerSigner);
