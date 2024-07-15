@@ -11,6 +11,11 @@ async function main() {
   const pbmPaymentAddr = "0xba17a9f3C074d381D53D605590Eb13dde2d176a9";
   const pbmPayment = (await ethers.getContractFactory("PBMPayment")).attach(pbmPaymentAddr).connect(deployerSigner);
 
+  // steps to mint stx subnet PBM
+  // 1. send c chain XSGD to 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E
+  // 2. mint same amount of stx subnet XSGD
+  // 3. mint PBM
+
   // fuji testnet XSGD 0xd769410dc8772695A7f55a304d2125320A65c2a5
   // c chain XSGD 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E
   // stx subnet XSGD 0x49aB91610BfDA3493e7549176247060643A9108b
