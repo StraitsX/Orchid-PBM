@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
 import "../pbm/ERC20Helper.sol";
+import "../pbm/IPBM.sol";
 
 /**
  * TODO TEST Cases listing:
@@ -27,6 +28,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
     // Pending payment details struct
     struct PendingPayment {
         address campaignPBM;
+        uint256[] pbmTokenIds; // for cancelling payments
+        uint256[] pbmTokenAmounts; // for cancelling payments
         address to;
         address erc20Token;
         uint256 erc20TokenValue;
@@ -231,7 +234,15 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         return keccak256(abi.encodePacked(from, sourceReferenceID));
     }
 
-    function _addToPendingPaymentList(bytes32 paymentUniqueID, address campaignPBM, address to, address erc20Token, uint256 erc20TokenValue) internal {
+    function _addToPendingPaymentList(
+        bytes32 paymentUniqueID,
+        address campaignPBM,
+        uint256[] memory pbmTokenIds,
+        uint256[] memory pbmTokenAmounts,
+        address to,
+        address erc20Token,
+        uint256 erc20TokenValue
+    ) internal {
         require(paymentUniqueID != bytes32(0), "Payment unique ID cannot be empty");
         require(Address.isContract(erc20Token), "Must be a valid ERC20 smart contract");
         require(Address.isContract(campaignPBM), "Must be a valid smart contract");
@@ -239,6 +250,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
 
         pendingPaymentList[paymentUniqueID] = PendingPayment({
             campaignPBM: campaignPBM,
+            pbmTokenIds: pbmTokenIds,
+            pbmTokenAmounts: pbmTokenAmounts,
             to: to,
             erc20Token: erc20Token,
             erc20TokenValue: erc20TokenValue
@@ -255,6 +268,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         address to,
         address erc20Token,
         uint256 erc20TokenValue,
+        uint256[] memory pbmTokenIds,
+        uint256[] memory pbmTokenAmounts,
         string memory sourceReferenceID,
         bytes memory metadata
     ) public whenNotPaused {
@@ -273,7 +288,15 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         require(pendingPaymentList[paymentUniqueID].erc20TokenValue == 0, "Payment request already exists");
 
         _markPendingTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
-        _addToPendingPaymentList(paymentUniqueID, campaignPBM, to, erc20Token, erc20TokenValue);
+        _addToPendingPaymentList(
+            paymentUniqueID,
+            campaignPBM,
+            pbmTokenIds,
+            pbmTokenAmounts,
+            to,
+            erc20Token,
+            erc20TokenValue
+        );
 
         // Inform Oracle to make payments
         emit MerchantPaymentCreated(campaignPBM, from, to, erc20Token, erc20TokenValue, sourceReferenceID, metadata);
@@ -331,11 +354,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
      *
      * Funds will be re-credited and a retry is allowed on the next block mined
      **/
-    function cancelPayment(
-        address from,
-        string memory sourceReferenceID,
-        bytes memory metadata
-    ) public whenNotPaused {
+    function cancelPayment(address from, string memory sourceReferenceID, bytes memory metadata) public whenNotPaused {
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
@@ -348,8 +367,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
         require(payment.erc20TokenValue > 0, "Token value should be more than 0");
 
-        // [TODO] inform campaign pbm to emit payment cancel. no money movement has occured
-        // [TODO] inform campaign pbm to refund PBM back to user.
+        // inform campaign pbm to refund PBM back to user. no money movement has occurred
+        IPBM(payment.campaignPBM).revertPayment(from, payment.pbmTokenIds, payment.pbmTokenAmounts);
 
         // Ensure funds are re-credited back
         _revertPendingTreasuryBalance(payment.campaignPBM, payment.erc20Token, payment.erc20TokenValue);

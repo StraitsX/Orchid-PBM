@@ -211,7 +211,16 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
 
         // Initiate payment of ERC20 tokens
         address spotToken = getSpotAddress(id);
-        NoahPaymentManager(noahPaymentManager).createPayment(from, to, spotToken, valueOfTokens, sourceReferenceID, data);
+        NoahPaymentManager(noahPaymentManager).createPayment(
+            from,
+            to,
+            spotToken,
+            valueOfTokens,
+            serialise(id),
+            serialise(amount),
+            sourceReferenceID,
+            data
+        );
 
         // Burn PBM ERC1155 Tokens
         _burn(from, id, amount);
@@ -270,6 +279,8 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
                 to,
                 commonTokenAddress,
                 sumOfTokens,
+                ids,
+                amounts,
                 sourceReferenceID,
                 data
             );
@@ -281,12 +292,17 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
-     * Called by noah payment manager to revert the payment process.
+     * @dev See {IPBM-revertPayment}.
+     * Called by noah payment manager to revert the payment process when canceling payment.
+     * no underlying ERC20 tokens movement will be done.
      */
-    function revertPayment() external {
-        // undo these 2:
-        // _burn(from, id, amount);
-        // PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
+    function revertPayment(address mintTo, uint256[] memory tokenIds, uint256[] memory tokenAmounts) external {
+        // check if caller is noah payment manager
+        require(msg.sender == noahPaymentManager, "PBM: Only noah payment manager can revert payment");
+
+        // Mint back the PBM ERC1155 without underlying ERC20 tokens movement
+        PBMTokenManager(pbmTokenManager).increaseBalanceSupply(tokenIds, tokenAmounts);
+        _mintBatch(mintTo, tokenIds, tokenAmounts, "");
     }
 
     /**
