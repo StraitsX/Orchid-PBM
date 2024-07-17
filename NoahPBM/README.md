@@ -84,3 +84,15 @@ Deploying or signing a transaction from the signer public wallet address will re
 By default, the derivation paths that are tried start [from m/44'/60'/0'/0'/0 and go way up to m/44'/60'/20'/0'/0](https://github.com/NomicFoundation/hardhat/blob/11f13e547d2b665c9335d7850dd928cf32ff60b1/packages/hardhat-ledger/src/provider.ts#L346). 
 
 Side note on how local providers are injected [can be found here](https://github.com/NomicFoundation/hardhat/blob/11f13e547d2b665c9335d7850dd928cf32ff60b1/packages/hardhat-core/src/internal/core/providers/accounts.ts#L19).
+
+
+# Minting PBM to users
+
+## Minting PBM on AVAX C Chain
+- Set `const SUBNET_MINT = false;`
+- Run the command `npx hardhat run scripts/mintPBMPaymentToken.js --network avax `
+
+## Minting PBM on STX Subnet
+- Send c chain XSGD to `0xb93600091f2c21D392B451569460F67dcB0D5DCe`, check and verify on blockchain explorer before running script.
+- Set `const SUBNET_MINT = true;`
+- Run the command `npx hardhat run scripts/mintPBMPaymentToken.js --network straitsxSubnet`

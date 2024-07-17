@@ -4,31 +4,47 @@ async function main() {
   const { deployer } = await getNamedAccounts();
   const deployerSigner = ethers.provider.getSigner(deployer);
   console.log("Minter Wallet public address: " + deployerSigner._address);
+  
+  // Set this to be true if want to mint to subnet pbm instead.
+  const SUBNET_MINT = false;
+  // How much to mint
+  const DOLLAR_VALUE_TO_MINT = "5"; // 0.1 stands for 10 cents, 1.0 stands for 1 dollar
 
   // C chain PBMPayment: 0x8bce8B6BAC1639f2AdB4496389FA2EfBf61BC454
   // STX subnet PBMPayment: 0xba17a9f3C074d381D53D605590Eb13dde2d176a9
-  // please change as needed
-  const pbmPaymentAddr = "0xba17a9f3C074d381D53D605590Eb13dde2d176a9";
+  const pbmPaymentAddr = (SUBNET_MINT)? "0xba17a9f3C074d381D53D605590Eb13dde2d176a9" : "0x8bce8B6BAC1639f2AdB4496389FA2EfBf61BC454";
   const pbmPayment = (await ethers.getContractFactory("PBMPayment")).attach(pbmPaymentAddr).connect(deployerSigner);
 
-  // steps to mint stx subnet PBM
-  // 1. send c chain XSGD to 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E
+  // Steps to mint stx subnet PBM
+  // 1. Send c chain XSGD to 0xb93600091f2c21D392B451569460F67dcB0D5DCe. Check and verify before running script.
   // 2. mint same amount of stx subnet XSGD
   // 3. mint PBM
 
-  // fuji testnet XSGD 0xd769410dc8772695A7f55a304d2125320A65c2a5
-  // c chain XSGD 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E
-  // stx subnet XSGD 0x49aB91610BfDA3493e7549176247060643A9108b
-  // please change as needed
-  const spotAddress = "0x49aB91610BfDA3493e7549176247060643A9108b";
+  let spotAddress; 
+  if (SUBNET_MINT) {
+    // stx subnet XSGD 0x49aB91610BfDA3493e7549176247060643A9108b
+    spotAddress = "0x49aB91610BfDA3493e7549176247060643A9108b";
+  }else {
+    // fuji testnet XSGD 0xd769410dc8772695A7f55a304d2125320A65c2a5
+    // c-chain XSGD 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E
+    spotAddress = "0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E";
+  }
+
   const XSGD = await ethers.getContractFactory("Spot");
   const xsgd = await XSGD.attach(spotAddress).connect(deployerSigner);
 
+  if (SUBNET_MINT) {
+    // subnet mint xsgd to deployer address
+    let tx = await xsgd.mint(deployerSigner._address, ethers.utils.parseUnits(DOLLAR_VALUE_TO_MINT, await xsgd.decimals()));
+    await tx.wait();
+    console.log("Succesfully minted XSGD on STX Subnet to deployer wallet");
+  }
+
   const receiverList = [
     // "0x2E78aF1d35644fedaeaaf8CA8ACb70D0B35d3b12", // Victor AVAX SAFE-WALLET
-    // "0xF642be06350DAe9dD475E5A5ad6e25038F295B28", // Victor AVAX EOA Wallet
+    "0xF642be06350DAe9dD475E5A5ad6e25038F295B28", // Victor AVAX EOA Wallet
     // "0x4F67e8Df00d66C36a6d63afC62A29058eC03551A", // Advait AVAX Safe-wallet
-    "0x77018cbA4eD6706028B679c47A44290d47f6B7D2", // Wong tse jian EOA Wallet
+    // "0x77018cbA4eD6706028B679c47A44290d47f6B7D2", // Wong tse jian EOA Wallet
   ];
 
   const orchidHeroTester = [
@@ -45,16 +61,19 @@ async function main() {
     // "0x57358A3280603F8863e0006c48c8Ba869fd85D83", // Tianwei avax safe-wallet
   ];
 
-  // How much to mint
-  const DOLLAR_VALUE_TO_MINT = "5"; // 0.1 stands for 10 cents, 1.0 stands for 1 dollar
+  const stxSubnetWalletList = [
+    "0xF642be06350DAe9dD475E5A5ad6e25038F295B28" // Victor
+  ];
 
   for (const receiver of receiverList) {
     // increase allowance for PBM
-    await xsgd.increaseAllowance(
+    let allowanceTx = await xsgd.increaseAllowance(
       pbmPayment.address,
       ethers.utils.parseUnits(DOLLAR_VALUE_TO_MINT, await xsgd.decimals())
     );
     console.log("increased allowance for PBM Contract deduction of: $" + DOLLAR_VALUE_TO_MINT + " XSGD");
+
+    await allowanceTx.wait();
 
     const tokenID = 0;
     // PBM token id 0 -> 0.01 xsgd
