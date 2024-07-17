@@ -87,6 +87,11 @@ interface IPBM {
     /// @return creator The creator of the PBM token type
     function getTokenDetails(uint256 tokenId) external view returns (string memory, uint256, uint256, address);
 
+    /// @notice Get the value of the PBM Token type
+    /// @param tokenId The identifier of the PBM token type
+    /// @return The amount of the underlying ERC-20 tokens the PBM type wraps around
+    function getTokenValue(uint256 tokenId) external view returns (uint256);
+
     /// @notice Get the spot address of the PBM Token type
     /// @param tokenId The identifier of the PBM token type
     /// @return spotAddress The address of the spot token

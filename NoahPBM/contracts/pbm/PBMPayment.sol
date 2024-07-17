@@ -115,7 +115,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      */
     function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused {
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
-        uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
+        uint256 valueOfNewTokens = amount * getTokenValue(tokenId);
 
         //Transfer the spot token from the user to this contract to wrap it
         address spotToken = getSpotAddress(tokenId);
@@ -161,7 +161,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 tokenId = tokenIds[i];
             uint256 amount = amounts[i];
-            uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
+            uint256 valueOfNewTokens = amount * getTokenValue(tokenId);
 
             // Get spotToken address based on tokenId
             address spotToken = getSpotAddress(tokenId);
@@ -207,7 +207,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
             "Payments can only be made to a merchant address."
         );
 
-        uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
+        uint256 valueOfTokens = amount * getTokenValue(id);
 
         // Initiate payment of ERC20 tokens
         address spotToken = getSpotAddress(id);
@@ -268,7 +268,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
                 );
 
                 uint256 amount = amounts[i];
-                uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
+                uint256 valueOfTokens = amount * getTokenValue(tokenId);
                 sumOfTokens += valueOfTokens;
             }
 
@@ -327,7 +327,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         _validateTransfer(from, to);
 
         if (IPBMMerchantAddressList(pbmAddressList).isMerchant(to)) {
-            uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
+            uint256 valueOfTokens = amount * getTokenValue(id);
 
             // Burn PBM ERC1155 Tokens
             _burn(from, id, amount);
@@ -386,7 +386,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
                 );
 
                 uint256 amount = amounts[i];
-                uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
+                uint256 valueOfTokens = amount * getTokenValue(tokenId);
                 sumOfTokens += valueOfTokens;
             }
 
@@ -448,6 +448,14 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         uint256 tokenId
     ) external view override returns (string memory, uint256, uint256, address) {
         return PBMTokenManager(pbmTokenManager).getTokenDetails(tokenId);
+    }
+
+    /**
+     * @dev See {IPBM-getTokenValue}.
+     *
+     */
+    function getTokenValue(uint256 tokenId) public view override returns (uint256) {
+        return PBMTokenManager(pbmTokenManager).getTokenValue(tokenId);
     }
 
     /**
