@@ -101,6 +101,8 @@ describe("Noah Payment Manager Test", () => {
             accounts[1].address,
             xsgdToken.address,
             parseUnits("500", await xsgdToken.decimals()),
+            [0],
+            [500],
             "example-id",
             "0x"
           )
@@ -212,7 +214,28 @@ describe("Noah Payment Manager Test", () => {
       expect(completedPayment[1]).to.equal(0);
     });
 
-    it("Should ensure a pending payment is removed from pendingPaymentList when cancelled a payment", async () => {
+    it("Should ensure only payment manager can call revertPayment on PBMPayment", async () => {
+      const merchant = accounts[3];
+      const aliOmnibus = accounts[4];
+      await xsgdToken.mint(aliOmnibus.address, parseUnits("10000", await xsgdToken.decimals()));
+
+      await addressList.addMerchantAddresses([merchant.address], "");
+      await xsgdToken.connect(aliOmnibus).increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
+      await pbm.connect(aliOmnibus).mint(0, 500, aliOmnibus.address);
+
+      // check treasury balance
+      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(parseUnits("500", await xsgdToken.decimals()));
+
+      // Request payment
+      await pbm
+          .connect(aliOmnibus)
+          .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+
+      await expect(pbm.connect(aliOmnibus).revertPayment(aliOmnibus.address, [0], [500])).to.be.revertedWith("PBM: Only noah payment manager can revert payment");
+
+    });
+
+    it("Should ensure only granted role can call cancelPayment on NoahPaymentManager", async () => {
       const merchant = accounts[3];
       const aliOmnibus = accounts[4];
       const noahCrawler = accounts[5];
@@ -222,10 +245,45 @@ describe("Noah Payment Manager Test", () => {
       await xsgdToken.connect(aliOmnibus).increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
       await pbm.connect(aliOmnibus).mint(0, 500, aliOmnibus.address);
 
+      // check treasury balance
+      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(parseUnits("500", await xsgdToken.decimals()));
+
+      // Request payment
+      await pbm
+          .connect(aliOmnibus)
+          .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+
+      // Check if pbm token is burnt
+      expect(await pbm.balanceOf(aliOmnibus.address, 0)).to.equal(0);
+
+      const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
+      expect(pendingPayment[0]).to.equal(xsgdToken.address);
+      expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
+
+      // Cancel payment without granted role
+      await expect(noahPaymentManager.connect(noahCrawler).cancelPayment(aliOmnibus.address, "unique_payment_id", "0x")).to.be.reverted;
+    });
+
+    it("Should ensure a pending payment is removed from pendingPaymentList and PBMToken minted back to from address when cancelled a payment", async () => {
+      const merchant = accounts[3];
+      const aliOmnibus = accounts[4];
+      const noahCrawler = accounts[5];
+      await xsgdToken.mint(aliOmnibus.address, parseUnits("10000", await xsgdToken.decimals()));
+
+      await addressList.addMerchantAddresses([merchant.address], "");
+      await xsgdToken.connect(aliOmnibus).increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
+      await pbm.connect(aliOmnibus).mint(0, 500, aliOmnibus.address);
+
+      // check treasury balance
+      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(parseUnits("500", await xsgdToken.decimals()));
+
       // Request payment
       await pbm
         .connect(aliOmnibus)
         .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+
+      // Check if pbm token is burnt
+      expect(await pbm.balanceOf(aliOmnibus.address, 0)).to.equal(0);
 
       const pendingPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(pendingPayment[0]).to.equal(xsgdToken.address);
@@ -243,6 +301,12 @@ describe("Noah Payment Manager Test", () => {
       const cancelledPayment = await noahPaymentManager.getPendingPayment(aliOmnibus.address, "unique_payment_id");
       expect(cancelledPayment[0]).to.equal(xsgdToken.address);
       expect(cancelledPayment[1]).to.equal(0);
+
+      // Check if treasury balance stays the same
+      expect(await noahPaymentManager.getPBMCampaignTreasuryBalance(pbm.address, xsgdToken.address)).to.equal(parseUnits("500", await xsgdToken.decimals()));
+
+      // Check if pbm token is minted back to from address
+      expect(await pbm.balanceOf(aliOmnibus.address, 0)).to.equal(500);
     });
 
     it("Should ensure ERC20 balance and treasury balance are NOT changed after payment Created for ali use case", async () => {
