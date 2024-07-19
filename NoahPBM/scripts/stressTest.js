@@ -1,8 +1,9 @@
-const axios = require('axios');
+const autocannon = require('autocannon');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
 
-const USER_INITIATE_PAY_URL = 'https//ali.sandbox.straitsx.com/api/stress-testing/user-initiate-pay';
-const PUSH_PAYMENT_URL = 'https//ali.sandbox.straitsx.com/api/stress-testing/push-payment';
+const USER_INITIATE_PAY_URL = 'https://ali.sandbox.straitsx.com/api/stress-testing/user-initiate-pay';
+const PUSH_PAYMENT_URL = 'https://ali.sandbox.straitsx.com/api/stress-testing/push-payment';
 
 async function userInitiatePay(acquirerId, pspId, codeValue, customerId) {
     const data = {
@@ -58,16 +59,16 @@ async function pushPayment(acquirerId, pspId, codeValue, paymentId, paymentReque
     }
 }
 
-async function runThread(threadId) {
+async function makeRequests() {
+    const testQR = "00020101021226520008com.grab0136907f3c50-c6a0-4466-8996-7aebae838de75204729953037025402305802SG5917Ayataka Tea House6009Singapore610538897624005076LwenX80725a088aea3c3b7e5efaade9e2fc64270002EN0117Ayataka Tea House63044888"
     try {
-        const testQR = "00020101021226520008com.grab0136907f3c50-c6a0-4466-8996-7aebae838de75204729953037025402305802SG5917Ayataka Tea House6009Singapore610538897624005076LwenX80725a088aea3c3b7e5efaade9e2fc64270002EN0117Ayataka Tea House63044888"
         const userInitiatePayResponse = await userInitiatePay('acquirerId', 'pspId', testQR, 'jacobtest');
         const paymentRequestId = userInitiatePayResponse.paymentRequestId;
 
         const paymentId = uuidv4();
         const timestamp = new Date().toISOString();
 
-        const pushPaymentResponse = await pushPayment(
+        await pushPayment(
             'acquirerId',
             'pspId',
             testQR,
@@ -79,25 +80,66 @@ async function runThread(threadId) {
             'pay_1089760038715670_102775745070001',
             'stxStressTest'
         );
-        console.log(`Thread ${threadId}: Success - Payment ID: ${paymentId}, Timestamp: ${timestamp}`);
+        console.log(`Success - Payment ID: ${paymentId}, Timestamp: ${timestamp}`);
     } catch (error) {
-        console.error(`Thread ${threadId}: Failed`);
+        console.error('Request failed', error);
     }
 }
 
-async function stressTest() {
-    const threads = 20;
-
-    while (true) {
-        const promises = [];
-
-        for (let i = 0; i < threads; i++) {
-            promises.push(runThread(i));
-        }
-
-        await Promise.all(promises);
-        console.log('Batch completed. Starting new batch...');
-    }
+async function startStressTest() {
+    autocannon({
+        url: 'https://ali.sandbox.straitsx.com', // Base URL, not used directly in our requests
+        connections: 20, // Number of concurrent connections
+        duration: 60, // Test duration in seconds
+        requests: [
+            {
+                method: 'POST',
+                path: '/api/stress-testing/user-initiate-pay',
+                setupRequest: async (req) => {
+                    const testQR = "00020101021226520008com.grab0136907f3c50-c6a0-4466-8996-7aebae838de75204729953037025402305802SG5917Ayataka Tea House6009Singapore610538897624005076LwenX80725a088aea3c3b7e5efaade9e2fc64270002EN0117Ayataka Tea House63044888";
+                    const data = await userInitiatePay('acquirerId', 'pspId', testQR, 'jacobtest');
+                    req.body = JSON.stringify(data);
+                    req.headers = {
+                        'Content-Type': 'application/json',
+                        'Client-Id': 'jacob-test',
+                        'Request-Time': new Date().toISOString(),
+                        'Signature': 'jacob1STRESS2TEST3key4'
+                    };
+                    return req;
+                }
+            },
+            {
+                method: 'POST',
+                path: '/api/stress-testing/push-payment',
+                setupRequest: async (req) => {
+                    const testQR = "00020101021226520008com.grab0136907f3c50-c6a0-4466-8996-7aebae838de75204729953037025402305802SG5917Ayataka Tea House6009Singapore610538897624005076LwenX80725a088aea3c3b7e5efaade9e2fc64270002EN0117Ayataka Tea House63044888";
+                    const userInitiatePayResponse = await userInitiatePay('acquirerId', 'pspId', testQR, 'jacobtest');
+                    const paymentRequestId = userInitiatePayResponse.paymentRequestId;
+                    const paymentId = uuidv4();
+                    const data = {
+                        acquirerId: 'acquirerId',
+                        pspId: 'pspId',
+                        codeValue: testQR,
+                        paymentId,
+                        paymentRequestId,
+                        customerId: 'jacobtest',
+                        paymentAmount: { currency: 'SGD', value: '1' },
+                        settlementAmount: { currency: 'SGD', value: '1' },
+                        mppPaymentId: 'pay_1089760038715670_102775745070001',
+                        walletBrandName: 'stxStressTest'
+                    };
+                    req.body = JSON.stringify(data);
+                    req.headers = {
+                        'Content-Type': 'application/json',
+                        'Client-Id': 'jacob-test',
+                        'Request-Time': new Date().toISOString(),
+                        'Signature': 'jacob1STRESS2TEST3key4'
+                    };
+                    return req;
+                }
+            }
+        ]
+    }, console.log);
 }
 
-stressTest();
+startStressTest();
