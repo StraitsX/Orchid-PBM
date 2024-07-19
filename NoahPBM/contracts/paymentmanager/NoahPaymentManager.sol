@@ -26,20 +26,22 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
     // Keeps track of pending balances
     mapping(address => mapping(address => uint256)) internal pendingPBMTokenBalance;
 
+    enum PaymentStatus { NOT_CREATED, PENDING, COMPLETED, CANCELLED, REFUNDED, PARTIAL_REFUNDED }
+
     // Pending payment details struct
-    struct PendingPayment {
+    struct Payment {
         address campaignPBM;
-        uint256[] pbmTokenIds; // for cancelling payments
-        uint256[] pbmTokenAmounts; // for cancelling payments
         address to;
         address erc20Token;
         uint256 erc20TokenValue;
+        uint256 refundedValue;
+        PaymentStatus status;
     }
 
     // Keeps track of erc20 token value of each paymentUniqueID
     // paymentUniqueID is a keccak256 hash of from address and sourceReferenceID
-    // paymentUniqueID => PendingPayment
-    mapping(bytes32 => PendingPayment) internal pendingPaymentList;
+    // paymentUniqueID => Payment
+    mapping(bytes32 => Payment) internal paymentList;
 
     bytes32 public constant NOAH_CRAWLER_ROLE = keccak256("NOAH_PAYMENT_CRAWLER");
 
@@ -169,11 +171,11 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
     }
 
     /// @dev Returns the pending payment details of a sourceReferenceID
-    function getPendingPayment(address from, string memory sourceReferenceID) public view returns (address, uint256) {
+    function getPayment(address from, string memory sourceReferenceID) public view returns (address, uint256, uint256, PaymentStatus) {
         // Generate the unique payment ID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
-        PendingPayment memory payment = pendingPaymentList[paymentUniqueID];
-        return (payment.erc20Token, payment.erc20TokenValue);
+        Payment memory payment = paymentList[paymentUniqueID];
+        return (payment.erc20Token, payment.erc20TokenValue, payment.refundedValue, payment.status);
     }
 
     function _increaseTreasuryBalance(address campaignPBM, address erc20token, uint256 value) internal whenNotPaused {
@@ -245,11 +247,9 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         return keccak256(abi.encodePacked(from, sourceReferenceID));
     }
 
-    function _addToPendingPaymentList(
+    function _addToPaymentList(
         bytes32 paymentUniqueID,
         address campaignPBM,
-        uint256[] memory pbmTokenIds,
-        uint256[] memory pbmTokenAmounts,
         address to,
         address erc20Token,
         uint256 erc20TokenValue
@@ -259,13 +259,13 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         require(Address.isContract(campaignPBM), "Must be a valid smart contract");
         require(erc20TokenValue > 0, "token value must be more than 0");
 
-        pendingPaymentList[paymentUniqueID] = PendingPayment({
+        paymentList[paymentUniqueID] = Payment({
             campaignPBM: campaignPBM,
-            pbmTokenIds: pbmTokenIds,
-            pbmTokenAmounts: pbmTokenAmounts,
             to: to,
             erc20Token: erc20Token,
-            erc20TokenValue: erc20TokenValue
+            erc20TokenValue: erc20TokenValue,
+            refundedValue: 0,
+            status: PaymentStatus.PENDING
         });
     }
 
@@ -279,8 +279,6 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         address to,
         address erc20Token,
         uint256 erc20TokenValue,
-        uint256[] memory pbmTokenIds,
-        uint256[] memory pbmTokenAmounts,
         string memory sourceReferenceID,
         bytes memory metadata
     ) public whenNotPaused {
@@ -295,15 +293,13 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
 
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
-        // Check whether the uniquePaymentID already exists in pendingPaymentList
-        require(pendingPaymentList[paymentUniqueID].erc20TokenValue == 0, "Payment request already exists");
+        // Check whether the uniquePaymentID already exists in paymentList
+        require(paymentList[paymentUniqueID].status == PaymentStatus.NOT_CREATED, "Payment request already exists");
 
         _markPendingTreasuryBalance(campaignPBM, erc20Token, erc20TokenValue);
-        _addToPendingPaymentList(
+        _addToPaymentList(
             paymentUniqueID,
             campaignPBM,
-            pbmTokenIds,
-            pbmTokenAmounts,
             to,
             erc20Token,
             erc20TokenValue
@@ -327,11 +323,11 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
         // Retrieve the pending payment details
-        PendingPayment memory payment = pendingPaymentList[paymentUniqueID];
+        Payment memory payment = paymentList[paymentUniqueID];
 
         require(Address.isContract(payment.campaignPBM), "Must be a valid smart contract");
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
-        require(payment.erc20TokenValue > 0, "Token value should be more than 0");
+        require(payment.status == PaymentStatus.PENDING, "Payment must be in pending state");
 
         require(
             pendingPBMTokenBalance[payment.campaignPBM][payment.erc20Token] >= payment.erc20TokenValue,
@@ -344,8 +340,8 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         // ERC20 token movement: Disburse the custodied ERC20 tokens from this smart contract to destination.
         ERC20Helper.safeTransfer(payment.erc20Token, payment.to, payment.erc20TokenValue);
 
-        // Set the pending payment value to 0 to mark paymentUniqueID as completed
-        pendingPaymentList[paymentUniqueID].erc20TokenValue = 0;
+        // Set the pending payment to completed to mark paymentUniqueID as completed
+        payment.status = PaymentStatus.COMPLETED;
 
         emit MerchantPaymentCompleted(
             payment.campaignPBM,
@@ -370,22 +366,22 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
         // Retrieve the pending payment details
-        PendingPayment memory payment = pendingPaymentList[paymentUniqueID];
+        Payment memory payment = paymentList[paymentUniqueID];
 
         require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
         require(Address.isContract(payment.campaignPBM), "Must be a valid smart contract");
 
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
-        require(payment.erc20TokenValue > 0, "Token value should be more than 0");
+        require(payment.status == PaymentStatus.PENDING, "Payment must be in pending state");
 
         // inform campaign pbm to refund PBM back to user. no money movement has occurred
-        IPBM(payment.campaignPBM).revertPayment(from, payment.pbmTokenIds, payment.pbmTokenAmounts);
+        IPBM(payment.campaignPBM).revertPaymentForCancel(from, sourceReferenceID);
 
         // Ensure funds are re-credited back
         _revertPendingTreasuryBalance(payment.campaignPBM, payment.erc20Token, payment.erc20TokenValue);
 
-        // Set the pending payment value to 0 to mark paymentUniqueID as cancelled
-        pendingPaymentList[paymentUniqueID].erc20TokenValue = 0;
+        // Set the pending payment to cancelled
+        paymentList[paymentUniqueID].status = PaymentStatus.CANCELLED;
 
         // Emit payment cancel for accounting purposes
         emit MerchantPaymentCancelled(
@@ -405,6 +401,7 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         address from,
         string memory sourceReferenceID,
         string memory refundUniqueId,
+        uint256 refundValue,
         bytes memory metadata
     ) public whenNotPaused nonReentrant{
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
@@ -414,39 +411,36 @@ contract NoahPaymentManager is Ownable, Pausable, AccessControl, INoahPaymentSta
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
         // Retrieve the pending payment details
-        PendingPayment memory payment = pendingPaymentList[paymentUniqueID];
+        Payment memory payment = paymentList[paymentUniqueID];
 
         require(Address.isContract(payment.campaignPBM), "Must be a valid smart contract");
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
 
-        // payment erc20TokenValue must be zero to ensure that the payment has been completed
-        // payment pbmTokenIds and pbmTokenAmounts must not be empty to ensure that the payment has been created
-        require(payment.erc20TokenValue == 0, "Payment must be completed before refunding");
-        require(payment.pbmTokenIds.length > 0, "Payment PBM token IDs must not be empty");
-        require(payment.pbmTokenAmounts.length > 0, "Payment PBM token amounts must not be empty");
-
-        // calculate the value of the ERC20 tokens to be refunded
-        uint256 refundErc20TokenValue;
-        for (uint256 i = 0; i < payment.pbmTokenIds.length; i++) {
-            uint256 tokenId = payment.pbmTokenIds[i];
-            uint256 amount = payment.pbmTokenAmounts[i];
-            uint256 valueOfNewTokens = amount * IPBM(payment.campaignPBM).getTokenValue(tokenId);
-            refundErc20TokenValue += valueOfNewTokens;
-        }
+        require(payment.status == PaymentStatus.COMPLETED || payment.status == PaymentStatus.PARTIAL_REFUNDED, "Payment must be COMPLETED or PARTIAL_REFUNDED before refunding");
+        require(refundValue > 0, "Refund value must be more than 0");
+        require(refundValue <= (payment.erc20TokenValue - payment.refundedValue), "Refund value must be less than or equal to remaining paid value");
 
         // deposit for campaignPBM
         // Directly call the internal function to avoid reentrancy guard
-        _internalDepositForPBMAddress(payment.campaignPBM, payment.erc20Token, refundErc20TokenValue);
+        _internalDepositForPBMAddress(payment.campaignPBM, payment.erc20Token, refundValue);
 
         // mint back the tokens
-        IPBM(payment.campaignPBM).revertPayment(from, payment.pbmTokenIds, payment.pbmTokenAmounts);
+        IPBM(payment.campaignPBM).revertPaymentForRefund(from, sourceReferenceID, refundValue);
+        // update refundedValue
+        payment.refundedValue += refundValue;
+        // update payment status
+        if ((refundValue + payment.refundedValue) == payment.erc20TokenValue) {
+            payment.status = PaymentStatus.REFUNDED;
+        } else {
+            payment.status = PaymentStatus.PARTIAL_REFUNDED;
+        }
 
         emit MerchantPaymentRefunded(
             payment.campaignPBM,
             from,
             payment.to,
             payment.erc20Token,
-            refundErc20TokenValue,
+            refundValue,
             sourceReferenceID,
             refundUniqueId,
             metadata
