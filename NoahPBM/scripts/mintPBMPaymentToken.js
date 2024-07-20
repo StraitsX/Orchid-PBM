@@ -6,13 +6,13 @@ async function main() {
   console.log("Minter Wallet public address: " + deployerSigner._address);
   
   // Set this to be true if want to mint to subnet pbm instead.
-  const SUBNET_MINT = false;
+  const SUBNET_MINT = true;
   // How much to mint
-  const DOLLAR_VALUE_TO_MINT = "5"; // 0.1 stands for 10 cents, 1.0 stands for 1 dollar
+  const DOLLAR_VALUE_TO_MINT = "10000000"; // 0.1 stands for 10 cents, 1.0 stands for 1 dollar
 
   // C chain PBMPayment: 0x8bce8B6BAC1639f2AdB4496389FA2EfBf61BC454
   // STX subnet PBMPayment: 0xba17a9f3C074d381D53D605590Eb13dde2d176a9
-  const pbmPaymentAddr = (SUBNET_MINT)? "0xba17a9f3C074d381D53D605590Eb13dde2d176a9" : "0x8bce8B6BAC1639f2AdB4496389FA2EfBf61BC454";
+  const pbmPaymentAddr = (SUBNET_MINT)? "0x5D95B020AA8DA9315C9D59593c83A762C9A5A402" : "0x8bce8B6BAC1639f2AdB4496389FA2EfBf61BC454";
   const pbmPayment = (await ethers.getContractFactory("PBMPayment")).attach(pbmPaymentAddr).connect(deployerSigner);
 
   // Steps to mint stx subnet PBM
@@ -23,7 +23,7 @@ async function main() {
   let spotAddress; 
   if (SUBNET_MINT) {
     // stx subnet XSGD 0x49aB91610BfDA3493e7549176247060643A9108b
-    spotAddress = "0x49aB91610BfDA3493e7549176247060643A9108b";
+    spotAddress = "0x4B68D02791986Ce280072C558dc56a25b8A1E079";
   }else {
     // fuji testnet XSGD 0xd769410dc8772695A7f55a304d2125320A65c2a5
     // c-chain XSGD 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E
@@ -35,14 +35,17 @@ async function main() {
 
   if (SUBNET_MINT) {
     // subnet mint xsgd to deployer address
-    let tx = await xsgd.mint(deployerSigner._address, ethers.utils.parseUnits(DOLLAR_VALUE_TO_MINT, await xsgd.decimals()));
-    await tx.wait();
+    let tx1 = await xsgd.mint(deployer, ethers.utils.parseUnits(DOLLAR_VALUE_TO_MINT, await xsgd.decimals()));
+    await tx1.wait();
+    let tx2 = await xsgd.mint(deployer, ethers.utils.parseUnits(DOLLAR_VALUE_TO_MINT, await xsgd.decimals()));
+    await tx2.wait();
     console.log("Succesfully minted XSGD on STX Subnet to deployer wallet");
   }
 
   const receiverList = [
+      "0x6476D19e528375209E8a529D32e2cBEcF7634EFB",
     // "0x2E78aF1d35644fedaeaaf8CA8ACb70D0B35d3b12", // Victor AVAX SAFE-WALLET
-    "0xF642be06350DAe9dD475E5A5ad6e25038F295B28", // Victor AVAX EOA Wallet
+    // "0xF642be06350DAe9dD475E5A5ad6e25038F295B28", // Victor AVAX EOA Wallet
     // "0x4F67e8Df00d66C36a6d63afC62A29058eC03551A", // Advait AVAX Safe-wallet
     // "0x77018cbA4eD6706028B679c47A44290d47f6B7D2", // Wong tse jian EOA Wallet
   ];
