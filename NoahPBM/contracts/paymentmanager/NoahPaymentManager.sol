@@ -329,7 +329,7 @@ contract NoahPaymentManager is
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
         // Retrieve the pending payment details
-        Payment memory payment = paymentList[paymentUniqueID];
+        Payment storage payment = paymentList[paymentUniqueID];
 
         require(Address.isContract(payment.campaignPBM), "Must be a valid smart contract");
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
@@ -376,7 +376,7 @@ contract NoahPaymentManager is
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
         // Retrieve the pending payment details
-        Payment memory payment = paymentList[paymentUniqueID];
+        Payment storage payment = paymentList[paymentUniqueID];
 
         require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
         require(Address.isContract(payment.campaignPBM), "Must be a valid smart contract");
@@ -421,7 +421,7 @@ contract NoahPaymentManager is
         // Generate the unique payment ID from from address and sourceReferenceID
         bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
         // Retrieve the pending payment details
-        Payment memory payment = paymentList[paymentUniqueID];
+        Payment storage payment = paymentList[paymentUniqueID];
 
         require(Address.isContract(payment.campaignPBM), "Must be a valid smart contract");
         require(Address.isContract(payment.erc20Token), "Must be a valid ERC20 smart contract");
@@ -442,14 +442,16 @@ contract NoahPaymentManager is
 
         // mint back the tokens
         ICurrencyPBM(payment.campaignPBM).revertPaymentForRefund(from, sourceReferenceID, refundValue);
-        // update refundedValue
-        payment.refundedValue += refundValue;
+
         // update payment status
         if ((refundValue + payment.refundedValue) == payment.erc20TokenValue) {
             payment.status = PaymentStatus.REFUNDED;
         } else {
             payment.status = PaymentStatus.PARTIAL_REFUNDED;
         }
+
+        // update refundedValue
+        payment.refundedValue += refundValue;
 
         emit MerchantPaymentRefunded(
             payment.campaignPBM,
