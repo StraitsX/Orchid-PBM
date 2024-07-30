@@ -502,7 +502,7 @@ describe("Noah Payment Manager Test", () => {
           .refundPayment(
             aliOmnibus.address,
             "unique_payment_id",
-            "refund_unique_id",
+            "refund_unique_id_2",
             parseUnits("400", await xsgdToken.decimals()),
             "0x"
           )
@@ -517,7 +517,99 @@ describe("Noah Payment Manager Test", () => {
       expect(await pbm.balanceOf(aliOmnibus.address, 0)).to.equal(200);
     });
 
-    it("Should ensure a partial refund payment is updated to PARTIAL_REFUNDED and correct amount of PBMToken minted back to from address when partial refund a payment", async () => {
+    it("Should ensure refund unique id is not used before", async () => {
+      const merchant = accounts[3];
+      const aliOmnibus = accounts[4];
+      const aliOperator = accounts[5];
+      const noahCrawler = accounts[6];
+      await xsgdToken.mint(aliOmnibus.address, parseUnits("10000", await xsgdToken.decimals()));
+      await xsgdToken.mint(noahCrawler.address, parseUnits("500", await xsgdToken.decimals()));
+
+      await addressList.addMerchantAddresses([merchant.address], "");
+      await xsgdToken.connect(aliOmnibus).increaseAllowance(pbm.address, parseUnits("500", await xsgdToken.decimals()));
+      await pbm.connect(aliOmnibus).mint(0, 500, aliOmnibus.address);
+
+      // grant aliOperator to spend aliOmnibus's PBM for payment
+      await pbm.connect(aliOmnibus).setApprovalForAll(aliOperator.address, true);
+
+      await pbm
+        .connect(aliOperator)
+        .requestPayment(aliOmnibus.address, merchant.address, 0, 500, "unique_payment_id", "0x");
+
+      // Check if pbm token is burnt
+      expect(await pbm.balanceOf(aliOmnibus.address, 0)).to.equal(0);
+
+      const pendingPayment = await noahPaymentManager.getPayment(aliOmnibus.address, "unique_payment_id");
+      expect(pendingPayment[0]).to.equal(xsgdToken.address);
+      expect(pendingPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
+      expect(pendingPayment[2]).to.equal(0); // refunded value
+      expect(pendingPayment[3]).to.equal(1); // status PENDING
+
+      // complete payment
+
+      await noahPaymentManager
+        .connect(accounts[0])
+        .grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), noahCrawler.address);
+      await noahPaymentManager.connect(noahCrawler).completePayment(aliOmnibus.address, "unique_payment_id", "0x");
+
+      // Check if pending payment is complete
+      const completedPayment = await noahPaymentManager.getPayment(aliOmnibus.address, "unique_payment_id");
+      expect(completedPayment[0]).to.equal(xsgdToken.address);
+      expect(completedPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
+      expect(completedPayment[2]).to.equal(0); // refunded value
+      expect(completedPayment[3]).to.equal(2); // status COMPLETED
+
+      // grant noah payment manager to spend noah crawler's stablecoin for refund
+      await xsgdToken
+        .connect(noahCrawler)
+        .increaseAllowance(noahPaymentManager.address, parseUnits("1000", await xsgdToken.decimals()));
+
+      // first partial refund
+      // partial refund payment (full amount 500, refund amount 200)
+      await noahPaymentManager
+        .connect(noahCrawler)
+        .refundPayment(
+          aliOmnibus.address,
+          "unique_payment_id",
+          "refund_unique_id",
+          parseUnits("200", await xsgdToken.decimals()),
+          "0x"
+        );
+
+      // Check if payment is refunded
+      const refundedPayment = await noahPaymentManager.getPayment(aliOmnibus.address, "unique_payment_id");
+      expect(refundedPayment[0]).to.equal(xsgdToken.address);
+      expect(refundedPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
+      expect(refundedPayment[2]).to.equal(parseUnits("200", await xsgdToken.decimals())); // refunded value
+      expect(refundedPayment[3]).to.equal(5); // status PARTIAL_REFUNDED
+
+      // check if pbm token balance is minted back to from address
+      expect(await pbm.balanceOf(aliOmnibus.address, 0)).to.equal(200);
+
+      // second partial refund try to refund more than remaining paid amount
+
+      await expect(
+        noahPaymentManager
+          .connect(noahCrawler)
+          .refundPayment(
+            aliOmnibus.address,
+            "unique_payment_id",
+            "refund_unique_id",
+            parseUnits("400", await xsgdToken.decimals()),
+            "0x"
+          )
+      ).to.be.revertedWith("Refund Unique ID has already been used");
+
+      // Check if payment is refunded
+      const notRefundedPayment = await noahPaymentManager.getPayment(aliOmnibus.address, "unique_payment_id");
+      expect(notRefundedPayment[0]).to.equal(xsgdToken.address);
+      expect(notRefundedPayment[1]).to.equal(parseUnits("500", await xsgdToken.decimals()));
+      expect(notRefundedPayment[2]).to.equal(parseUnits("200", await xsgdToken.decimals())); // refunded value
+      expect(notRefundedPayment[3]).to.equal(5); // status COMPLETED
+      expect(await pbm.balanceOf(aliOmnibus.address, 0)).to.equal(200);
+    });
+
+    it("Should ensure refund payment is updated to PARTIAL_REFUNDED and correct amount of PBMToken minted back to from address when partial refund a payment", async () => {
       const merchant = accounts[3];
       const aliOmnibus = accounts[4];
       const aliOperator = accounts[5];
@@ -663,7 +755,7 @@ describe("Noah Payment Manager Test", () => {
         .refundPayment(
           aliOmnibus.address,
           "unique_payment_id",
-          "refund_unique_id",
+          "refund_unique_id_2",
           parseUnits("300", await xsgdToken.decimals()),
           "0x"
         );

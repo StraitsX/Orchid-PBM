@@ -57,6 +57,9 @@ contract NoahPaymentManager is
     // paymentUniqueID => Payment
     mapping(bytes32 => Payment) internal paymentList;
 
+    // hashed refundUniqueId => bool (used or not)
+    mapping(bytes32 => bool) private usedRefundUniqueIds;
+
     bytes32 public constant NOAH_CRAWLER_ROLE = keccak256("NOAH_PAYMENT_CRAWLER");
 
     // tracks contract initialisation
@@ -185,7 +188,7 @@ contract NoahPaymentManager is
         string memory sourceReferenceID
     ) public view returns (address, uint256, uint256, PaymentStatus) {
         // Generate the unique payment ID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
+        bytes32 paymentUniqueID = _generateHashedID(from, sourceReferenceID);
         Payment memory payment = paymentList[paymentUniqueID];
         return (payment.erc20Token, payment.erc20TokenValue, payment.refundedValue, payment.status);
     }
@@ -255,8 +258,8 @@ contract NoahPaymentManager is
         emit TreasuryPendingBalanceDecrease(campaignPBM, erc20Token, erc20TokenValue);
     }
 
-    function _generatePaymentUniqueID(address from, string memory sourceReferenceID) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(from, sourceReferenceID));
+    function _generateHashedID(address from, string memory sourceUniqueID) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(from, sourceUniqueID));
     }
 
     function _addToPaymentList(
@@ -304,7 +307,7 @@ contract NoahPaymentManager is
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
 
         // Generate the unique payment ID from from address and sourceReferenceID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
+        bytes32 paymentUniqueID = _generateHashedID(from, sourceReferenceID);
         // Check whether the uniquePaymentID already exists in paymentList
         require(paymentList[paymentUniqueID].status == PaymentStatus.NOT_CREATED, "Payment request already exists");
 
@@ -327,7 +330,7 @@ contract NoahPaymentManager is
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
 
         // Generate the unique payment ID from from address and sourceReferenceID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
+        bytes32 paymentUniqueID = _generateHashedID(from, sourceReferenceID);
         // Retrieve the pending payment details
         Payment storage payment = paymentList[paymentUniqueID];
 
@@ -374,7 +377,7 @@ contract NoahPaymentManager is
     ) public whenNotPaused nonReentrant {
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
         // Generate the unique payment ID from from address and sourceReferenceID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
+        bytes32 paymentUniqueID = _generateHashedID(from, sourceReferenceID);
         // Retrieve the pending payment details
         Payment storage payment = paymentList[paymentUniqueID];
 
@@ -417,9 +420,11 @@ contract NoahPaymentManager is
         require(bytes(sourceReferenceID).length != 0, "Source Reference ID cannot be empty");
         require(bytes(refundUniqueId).length != 0, "Refund Unique ID cannot be empty");
         require(hasRole(NOAH_CRAWLER_ROLE, _msgSender()));
+        bytes32 hashedRefundUniqueID = _generateHashedID(from, refundUniqueId);
+        require(!usedRefundUniqueIds[hashedRefundUniqueID], "Refund Unique ID has already been used");
 
         // Generate the unique payment ID from from address and sourceReferenceID
-        bytes32 paymentUniqueID = _generatePaymentUniqueID(from, sourceReferenceID);
+        bytes32 paymentUniqueID = _generateHashedID(from, sourceReferenceID);
         // Retrieve the pending payment details
         Payment storage payment = paymentList[paymentUniqueID];
 
@@ -452,6 +457,9 @@ contract NoahPaymentManager is
 
         // update refundedValue
         payment.refundedValue += refundValue;
+
+        // Mark the refund unique ID as used
+        usedRefundUniqueIds[hashedRefundUniqueID] = true;
 
         emit MerchantPaymentRefunded(
             payment.campaignPBM,
