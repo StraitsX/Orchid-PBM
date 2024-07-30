@@ -102,17 +102,6 @@ interface IPBM {
     /// @return uri The URI link , which will povide a response that follows the Opensea metadata standard
     function uri(uint256 tokenId) external view returns (string memory);
 
-    /// @notice Reverts the PBM token for a cancelled payment
-    /// @param mintTo The account to which the PBM ( NFT ) is minted back to
-    /// @param sourceReferenceID The identifier of the payment
-    function revertPaymentForCancel(address mintTo, string memory sourceReferenceID) external;
-
-    /// @notice Reverts the PBM for a refunded payment
-    /// @param mintTo The account to which the PBM ( NFT ) is minted back to
-    /// @param sourceReferenceID The identifier of the payment
-    /// @param refundValue The ERC-20 token value that is refunded
-    function revertPaymentForRefund(address mintTo, string memory sourceReferenceID, uint256 refundValue) external;
-
     /// @notice Emitted when underlying ERC-20 tokens are transferred to a whitelisted merchant ( payment )
     /// @param from The account from which the PBM ( NFT )(s) is moving from
     /// @param to The account which is receiving the PBM ( NFT )(s)

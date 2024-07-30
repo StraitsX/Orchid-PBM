@@ -242,47 +242,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "mintTo",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "sourceReferenceID",
-        "type": "string"
-      }
-    ],
-    "name": "revertPaymentForCancel",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "mintTo",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "sourceReferenceID",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "refundValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "revertPaymentForRefund",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"

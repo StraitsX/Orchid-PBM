@@ -31,15 +31,6 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM, ReentrancyGuard {
     // time of expiry ( epoch )
     uint256 public contractExpiry;
 
-    struct Payment {
-        uint256[] tokenIds;
-        uint256[] amounts;
-        uint256 totalValue;
-        uint256 refundedValue;
-    }
-    // sourceReferenceID => paymentIDAmount
-    mapping(string => Payment) public paymentList;
-
     constructor() ERC1155("") {
         pbmTokenManager = address(new PBMTokenManager());
     }
@@ -57,18 +48,6 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM, ReentrancyGuard {
         noahPaymentManager = _noahPaymentManager;
 
         initialised = true;
-    }
-
-    function _addToPaymentList(
-        string memory sourceReferenceID,
-        uint256[] memory tokenIds,
-        uint256[] memory amounts,
-        uint256 totalValue
-    ) internal {
-        require(paymentList[sourceReferenceID].totalValue == 0, "Payment already exists");
-        require(tokenIds.length == amounts.length, "Unequal ids and amounts supplied");
-        require(totalValue > 0, "Total value should be greater than 0");
-        paymentList[sourceReferenceID] = Payment(tokenIds, amounts, totalValue, 0);
     }
 
     /**
@@ -135,7 +114,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM, ReentrancyGuard {
      * - caller should have approved the PBM contract to spend the ERC-20 tokens
      * - receiver should not be blacklisted
      */
-    function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused nonReentrant{
+    function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused nonReentrant {
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
         uint256 valueOfNewTokens = amount * getTokenValue(tokenId);
 
@@ -176,7 +155,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM, ReentrancyGuard {
         uint256[] memory tokenIds,
         uint256[] memory amounts,
         address receiver
-    ) external override whenNotPaused nonReentrant{
+    ) external override whenNotPaused nonReentrant {
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
         require(tokenIds.length == amounts.length, "Unequal ids and amounts supplied");
 
@@ -201,160 +180,6 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM, ReentrancyGuard {
         }
 
         _mintBatch(receiver, tokenIds, amounts, "");
-    }
-
-    /**
-     * @dev Creates a payment request via NoahpaymentManager to
-     * initiate an ERC20 token transfer to merchant.
-     * @param from Wallet to deduct PBM From
-     * @param to PBM payment address. Must be a merchant address.
-     * @param id PBM Token Id
-     * @param amount Number of PBM to send
-     * @param sourceReferenceID payment source unique identifier.
-     * Must be guaranteed to be unique globally across all chains to allow oracle fallback to another
-     * chain if necessary
-     * @param data metadata to include
-     */
-    function requestPayment(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        string memory sourceReferenceID,
-        bytes memory data
-    ) external whenNotPaused nonReentrant {
-        _validateTransfer(from, to);
-        require(
-            IPBMMerchantAddressList(pbmAddressList).isMerchant(to),
-            "Payments can only be made to a merchant address."
-        );
-
-        uint256 valueOfTokens = amount * getTokenValue(id);
-
-        // Initiate payment of ERC20 tokens
-        address spotToken = getSpotAddress(id);
-        // Add to payment list
-        _addToPaymentList(sourceReferenceID, serialise(id), serialise(amount), valueOfTokens);
-
-        NoahPaymentManager(noahPaymentManager).createPayment(
-            from,
-            to,
-            spotToken,
-            valueOfTokens,
-            sourceReferenceID,
-            data
-        );
-
-        // Burn PBM ERC1155 Tokens
-        _burn(from, id, amount);
-        PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
-
-        emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, valueOfTokens);
-    }
-
-    /**
-     * @dev Creates a payment request via NoahpaymentManager to initiate an ERC20 token transfer to merchant.
-     * Call this function to combine different PBM types token ids to create a payment.
-     */
-    function requestBatchPayment(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        string memory sourceReferenceID,
-        bytes memory data
-    ) external whenNotPaused nonReentrant {
-        _validateTransfer(from, to);
-        require(
-            IPBMMerchantAddressList(pbmAddressList).isMerchant(to),
-            "Payments can only be made to a merchant address."
-        );
-        require(ids.length == amounts.length, "Unequal ids and amounts supplied");
-
-        uint256 sumOfTokens = 0;
-
-        // ensure underlying spot token are fungible.
-        address commonTokenAddress = address(0);
-
-        for (uint256 i = 0; i < ids.length; i++) {
-            uint256 tokenId = ids[i];
-            address underlyingSpotToken = getSpotAddress(tokenId);
-
-            if (i == 0) {
-                commonTokenAddress = underlyingSpotToken;
-            }
-
-            require(
-                commonTokenAddress == underlyingSpotToken,
-                "Batched tokens must all share the same underlying spot token type. Swap underlying if required first"
-            );
-
-            uint256 amount = amounts[i];
-            uint256 valueOfTokens = amount * getTokenValue(tokenId);
-            sumOfTokens += valueOfTokens;
-        }
-
-        // Add to payment list
-        _addToPaymentList(sourceReferenceID, ids, amounts, sumOfTokens);
-
-        _burnBatch(from, ids, amounts);
-        PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(ids, amounts);
-        NoahPaymentManager(noahPaymentManager).createPayment(
-            from,
-            to,
-            commonTokenAddress,
-            sumOfTokens,
-            sourceReferenceID,
-            data
-        );
-
-        emit MerchantPayment(from, to, ids, amounts, commonTokenAddress, sumOfTokens);
-    }
-
-    /**
-     * @dev See {IPBM-revertPaymentForCancel}.
-     * Called by noah payment manager to revert the payment process when canceling payment.
-     * no underlying ERC20 tokens movement will be done.
-     */
-    function revertPaymentForCancel(address mintTo, string memory sourceReferenceID) external {
-        // check if caller is noah payment manager
-        require(msg.sender == noahPaymentManager, "PBM: Only noah payment manager can revert payment");
-        Payment memory payment = paymentList[sourceReferenceID];
-
-        // Mint back the PBM ERC1155 without underlying ERC20 tokens movement
-        PBMTokenManager(pbmTokenManager).increaseBalanceSupply(payment.tokenIds, payment.amounts);
-        _mintBatch(mintTo, payment.tokenIds, payment.amounts, "");
-    }
-
-    /**
-     * @dev See {IPBM-revertPaymentForRefund}.
-     * Called by noah payment manager to revert the payment process when refund a payment.
-     * no underlying ERC20 tokens movement will be done.
-     */
-    function revertPaymentForRefund(address mintTo, string memory sourceReferenceID, uint256 refundValue) external {
-        // check if caller is noah payment manager
-        require(msg.sender == noahPaymentManager, "PBM: Only noah payment manager can revert payment");
-        Payment memory payment = paymentList[sourceReferenceID];
-        require(refundValue <= (payment.totalValue - payment.refundedValue), "PBM: Refund value exceeds remaining value");
-
-        if (refundValue == payment.totalValue) {
-            // full refund
-            // Mint back the PBM ERC1155 without underlying ERC20 tokens movement
-            PBMTokenManager(pbmTokenManager).increaseBalanceSupply(payment.tokenIds, payment.amounts);
-            _mintBatch(mintTo, payment.tokenIds, payment.amounts, "");
-        } else {
-            // partial refund
-            // assume token id 0 will always be $0.01 in XSGD (10000) and partial refund only refund in token id 0
-            require(getTokenValue(0) == 10000, "PBM: Token id 0 is not $0.01 in XSGD");
-            uint256 tokenAmount = refundValue / 10000;
-
-            // Mint back the PBM ERC1155 without underlying ERC20 tokens movement
-            PBMTokenManager(pbmTokenManager).increaseBalanceSupply(serialise(0), serialise(tokenAmount));
-            _mint(mintTo, 0, tokenAmount, "");
-        }
-
-        // update refundedValue
-        paymentList[sourceReferenceID].refundedValue += refundValue;
     }
 
     /**
