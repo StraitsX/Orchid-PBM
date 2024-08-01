@@ -7,12 +7,12 @@ async function main() {
   // noah PBM payment manager on straitsx subnet 0x5201D8EF22bA3090eA3329d57F082801783A8558
   // change as needed
 
-  const noahPaymentManagerAddr = "0x5201D8EF22bA3090eA3329d57F082801783A8558";
+  const noahPaymentManagerAddr = "0x6ff41690ceEeA9e9780A1CC30172d450cddD4028";
   const noahPaymentManager = (await ethers.getContractFactory("NoahPaymentManager"))
     .attach(noahPaymentManagerAddr)
     .connect(deployerSigner);
 
-  const grantRoleTo = "0xf563f50Af3F1D105829f484064B6Ec3d094bF0f7";
+  const grantRoleTo = "0xfD50de2Bc2c7B08CC1147A3a030cd478CFd2CcDD";
   await noahPaymentManager.grantRole(noahPaymentManager.NOAH_CRAWLER_ROLE(), grantRoleTo);
 
   console.log("Granted role to", grantRoleTo);

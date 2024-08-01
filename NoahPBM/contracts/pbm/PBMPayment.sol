@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
 import "./ERC20Helper.sol";
@@ -14,7 +15,7 @@ import "../compliance/IPBMMerchantAddressList.sol";
 import "../paymentmanager/NoahPaymentManager.sol";
 
 /// @title A payment PBM relies on an external smart contract to manage the underlying ERC-20 tokens.
-contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
+contract PBMPayment is ERC1155, Ownable, Pausable, IPBM, ReentrancyGuard {
     // address of the token manager. Token manager is incharge of managing the wrapped ERC-20 tokens
     address public pbmTokenManager = address(0);
 
@@ -113,9 +114,9 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      * - caller should have approved the PBM contract to spend the ERC-20 tokens
      * - receiver should not be blacklisted
      */
-    function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused {
+    function mint(uint256 tokenId, uint256 amount, address receiver) external override whenNotPaused nonReentrant {
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
-        uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
+        uint256 valueOfNewTokens = amount * getTokenValue(tokenId);
 
         //Transfer the spot token from the user to this contract to wrap it
         address spotToken = getSpotAddress(tokenId);
@@ -154,14 +155,14 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         uint256[] memory tokenIds,
         uint256[] memory amounts,
         address receiver
-    ) external override whenNotPaused {
+    ) external override whenNotPaused nonReentrant {
         require(!IPBMMerchantAddressList(pbmAddressList).isBlacklisted(receiver), "PBM: 'to' address blacklisted");
         require(tokenIds.length == amounts.length, "Unequal ids and amounts supplied");
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 tokenId = tokenIds[i];
             uint256 amount = amounts[i];
-            uint256 valueOfNewTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId));
+            uint256 valueOfNewTokens = amount * getTokenValue(tokenId);
 
             // Get spotToken address based on tokenId
             address spotToken = getSpotAddress(tokenId);
@@ -182,114 +183,6 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
     }
 
     /**
-     * @dev Creates a payment request via NoahpaymentManager to
-     * initiate an ERC20 token transfer to merchant.
-     * @param from Wallet to deduct PBM From
-     * @param to PBM payment address. Must be a merchant address.
-     * @param id PBM Token Id
-     * @param amount Number of PBM to send
-     * @param sourceReferenceID payment source unique identifier.
-     * Must be guaranteed to be unique globally across all chains to allow oracle fallback to another
-     * chain if necessary
-     * @param data metadata to include
-     */
-    function requestPayment(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        string memory sourceReferenceID,
-        bytes memory data
-    ) external whenNotPaused {
-        _validateTransfer(from, to);
-        require(
-            IPBMMerchantAddressList(pbmAddressList).isMerchant(to),
-            "Payments can only be made to a merchant address."
-        );
-
-        uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
-
-        // Initiate payment of ERC20 tokens
-        address spotToken = getSpotAddress(id);
-        NoahPaymentManager(noahPaymentManager).createPayment(from, to, spotToken, valueOfTokens, sourceReferenceID, data);
-
-        // Burn PBM ERC1155 Tokens
-        _burn(from, id, amount);
-        PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
-
-        emit MerchantPayment(from, to, serialise(id), serialise(amount), spotToken, valueOfTokens);
-    }
-
-    /**
-     * @dev Creates a payment request via NoahpaymentManager to initiate an ERC20 token transfer to merchant.
-     * Call this function to combine different PBM types token ids to create a payment.
-     */
-    function requestBatchPayment(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        string memory sourceReferenceID,
-        bytes memory data
-    ) external whenNotPaused {
-        _validateTransfer(from, to);
-        require(
-            IPBMMerchantAddressList(pbmAddressList).isMerchant(to),
-            "Payments can only be made to a merchant address."
-        );
-        require(ids.length == amounts.length, "Unequal ids and amounts supplied");
-
-        if (IPBMMerchantAddressList(pbmAddressList).isMerchant(to)) {
-            uint256 sumOfTokens = 0;
-
-            // ensure underlying spot token are fungible.
-            address commonTokenAddress = address(0);
-
-            for (uint256 i = 0; i < ids.length; i++) {
-                uint256 tokenId = ids[i];
-                address underlyingSpotToken = getSpotAddress(tokenId);
-
-                if (i == 0) {
-                    commonTokenAddress = underlyingSpotToken;
-                }
-
-                require(
-                    commonTokenAddress == underlyingSpotToken,
-                    "Batched tokens must all share the same underlying spot token type. Swap underlying if required first"
-                );
-
-                uint256 amount = amounts[i];
-                uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
-                sumOfTokens += valueOfTokens;
-            }
-
-            _burnBatch(from, ids, amounts);
-            PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(ids, amounts);
-            NoahPaymentManager(noahPaymentManager).createPayment(
-                from,
-                to,
-                commonTokenAddress,
-                sumOfTokens,
-                sourceReferenceID,
-                data
-            );
-
-            emit MerchantPayment(from, to, ids, amounts, commonTokenAddress, sumOfTokens);
-        } else {
-            _safeBatchTransferFrom(from, to, ids, amounts, data);
-        }
-    }
-
-    /**
-     * Called by noah payment manager to revert the payment process.
-     */
-    function revertPayment() external {
-        // undo these 2:
-        // _burn(from, id, amount);
-        // PBMTokenManager(pbmTokenManager).decreaseBalanceSupply(serialise(id), serialise(amount));
-    }
-
-    /**
      * @dev See {IPBM-safeTransferFrom}.
      *
      *
@@ -307,11 +200,11 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         uint256 id,
         uint256 amount,
         bytes memory data
-    ) public override(ERC1155, IPBM) whenNotPaused {
+    ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
         _validateTransfer(from, to);
 
         if (IPBMMerchantAddressList(pbmAddressList).isMerchant(to)) {
-            uint256 valueOfTokens = amount * (PBMTokenManager(pbmTokenManager).getTokenValue(id));
+            uint256 valueOfTokens = amount * getTokenValue(id);
 
             // Burn PBM ERC1155 Tokens
             _burn(from, id, amount);
@@ -346,7 +239,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) public override(ERC1155, IPBM) whenNotPaused {
+    ) public override(ERC1155, IPBM) whenNotPaused nonReentrant {
         _validateTransfer(from, to);
         require(ids.length == amounts.length, "Unequal ids and amounts supplied");
 
@@ -370,7 +263,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
                 );
 
                 uint256 amount = amounts[i];
-                uint256 valueOfTokens = (amount * (PBMTokenManager(pbmTokenManager).getTokenValue(tokenId)));
+                uint256 valueOfTokens = amount * getTokenValue(tokenId);
                 sumOfTokens += valueOfTokens;
             }
 
@@ -405,7 +298,7 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
      * Hence anyone who minted the tokenId PBM and is not the original
      * creator would not be refunded upon token revoked
      */
-    function revokePBM(uint256 tokenId) external override whenNotPaused {
+    function revokePBM(uint256 tokenId) external override whenNotPaused nonReentrant {
         uint256 valueOfTokens = PBMTokenManager(pbmTokenManager).getPBMRevokeValue(tokenId);
 
         // Revoke + Verify msg.sender is the creator of the PBM
@@ -432,6 +325,14 @@ contract PBMPayment is ERC1155, Ownable, Pausable, IPBM {
         uint256 tokenId
     ) external view override returns (string memory, uint256, uint256, address) {
         return PBMTokenManager(pbmTokenManager).getTokenDetails(tokenId);
+    }
+
+    /**
+     * @dev See {IPBM-getTokenValue}.
+     *
+     */
+    function getTokenValue(uint256 tokenId) public view override returns (uint256) {
+        return PBMTokenManager(pbmTokenManager).getTokenValue(tokenId);
     }
 
     /**
